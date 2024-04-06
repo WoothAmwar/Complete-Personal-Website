@@ -1,0 +1,14 @@
+automaticChannelIdInfo.txt --> Gets the channel id based on the channels subscribed API
+channelIDInfo.txt --> dictionary channel name : channel id, based on pyautogui
+channels.json --> complete response for all channels in json format
+channels.txt --> channel names based on the channels subcribed API
+embedHTML.json --> contains embed links in their entirety for the various videos
+videoId.txt --> Used for pyautogui, a channel from each channel manually
+
+### All of these files correspond to each other. This means line 1 on all files correspond to the same channel
+* automaticChannelIdInfo.txt
+* channels.txt
+
+### Actually important Files
+* automaticChannelIdInfo.txt
+* channels.txt
