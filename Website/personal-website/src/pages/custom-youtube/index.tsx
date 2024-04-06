@@ -71,19 +71,29 @@ function DropDown() {
   )
 }
 
-const useTime = () => {
+function UseTime(props: {order:string}) {
+  if (props.order == "byTime") {
+    return (
+      <div className="grid grid-cols-3 font-mono">
+        {<OrderByTime />}
+      </div>
+    );
+  }
   return (
-    <div className="grid grid-cols-3 font-mono">
-      {<OrderByTime />}
-    </div>
+    <div></div>
   );
 }
 
-const useChannel = () => {
+function UseChannel(props: {order:string}) {
+  if (props.order == "byOrder") {
+    return (
+      <div className="grid grid-cols-1 font-mono">
+        {<OrderByChannel />}
+      </div>
+    );
+  }
   return (
-    <div className="grid grid-cols-1 font-mono">
-      {<OrderByChannel />}
-    </div>
+    <div></div>
   );
 }
 
@@ -108,16 +118,26 @@ function QueryOrder() {
   }
 }
 
+// function GetHomepageLayout(props: {order:string}) {
+//   if (props.order === "byChannel") {
+//     return useChannel();
+//   }
+//   else if (props.order === "byTime") {
+//     return useTime();
+//   }
+//   else {
+//     return props.order;
+//   }
+// }
+
 function GetHomepageLayout(props: {order:string}) {
-  if (props.order == "byChannel") {
-    return useChannel();
-  }
-  else if (props.order == "byTime") {
-    return useTime();
-  }
-  else {
-    return props.order;
-  }
+  // Unconditionally call useChannel and useTime at the top level of the component
+  return (
+    <div>
+      <UseChannel order={props.order} />
+      <UseTime order={props.order} />
+    </div>
+  );
 }
 
 // TODO: Create a function that accepts orderMethod and return the function depending on the value
@@ -135,7 +155,7 @@ export default function HomePage() {
     <main className="flex flex-col items-center">
       <div className="grid items-center font-mono">
         <h2 className="text-center font-semibold text-lg py-4">
-          Get Started with Youtube 2.0
+          Get Started with Youtube 
         </h2>
       </div>
       <GetHomepageLayout order={orderMethod} />

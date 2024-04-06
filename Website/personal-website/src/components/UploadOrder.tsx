@@ -18,7 +18,7 @@ export default function OrderByTime() {
     const [isLoading, setIsLoading] = useState(true);
 
     var finalData = [];
-    var uploadDict: { [key: number]: string } = {};
+    var uploadDict: { [key: number]: {videoId: string, videoTitle: string, videoThumbnail: string, uploadDate: string} } = {};
 
     var wd = 360  // 480
     var ht = wd / 480 * 270  // 270
