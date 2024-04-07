@@ -85,7 +85,7 @@ function UseTime(props: {order:string}) {
 }
 
 function UseChannel(props: {order:string}) {
-  if (props.order == "byOrder") {
+  if (props.order == "byChannel") {
     return (
       <div className="grid grid-cols-1 font-mono">
         {<OrderByChannel />}
