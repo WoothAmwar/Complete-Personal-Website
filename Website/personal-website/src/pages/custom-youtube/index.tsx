@@ -152,12 +152,17 @@ export default function HomePage() {
   
 
   return (
-    <main className="flex flex-col items-center">
-      <div className="grid items-center font-mono">
-        <h2 className="text-center font-semibold text-lg py-4">
+    <main className="flex flex-col">
+
+      <div className="grid items-center font-mono grid-cols-3 justify-items-end">
+        <h2 className="col-start-2 text-center justify-self-center font-semibold text-lg py-4">
           Get Started with Youtube 
         </h2>
+        <div className="col-start-3 pr-4">
+          {DropDown()}
+        </div>
       </div>
+
       <GetHomepageLayout order={orderMethod} />
     </main>
   )

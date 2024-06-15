@@ -63,18 +63,6 @@ function DropDown() {
   )
 }
 export default function About() {
-    /* Python Flask Testing Stuff
-        const [message, setMessage] = useState("Loading");
-    
-        useEffect(() => {
-            fetch("http://localhost:8080/api/home")
-            .then(response => response.json())
-            .then(data => {
-                setMessage(data.yt_data);
-            })
-    
-        }, [])
-        */
 
     return (
         <div>

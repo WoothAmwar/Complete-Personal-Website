@@ -20,7 +20,6 @@ export default function VideoScreen() {
 
     return (
         <div className="grid justify-center text-center">
-            <p className="text-7xl mb-2">Navbar</p>
             <iframe width={wd.toString()} height={ht.toString()} src={embedLink.concat(videoId)} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share;\">
             </iframe>
         </div>

@@ -6,7 +6,7 @@ export default function OrderByChannel() {
   const [responseVideoData, setResponseVideoData] = useState<any []>([]);
   const [responseChannelData, setResponseChannelData] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(true);
-  const [isLoadingChannels, setIsLoadingChannels] = useState(true)
+  const [isLoadingChannels, setIsLoadingChannels] = useState(true);
 
   var wd = 360  // 480
   var ht = wd/480*270  // 270

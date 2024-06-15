@@ -5,12 +5,12 @@ import datetime
 import json
 
 from googleapiclient.discovery import build  # referred to as google-api-python-client
-import pyautogui
+# import pyautogui
 from time import sleep
-from youtube_database import replace_videos_many_db, replace_channels_many_db
+from .youtube_database  import replace_videos_many_db, replace_channels_many_db
 
-pyautogui.PAUSE = 0.2
-pyautogui.FAILSAFE = True
+# pyautogui.PAUSE = 0.2
+# pyautogui.FAILSAFE = True
 
 api_key = "AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w"
 service = build('youtube', 'v3', developerKey=api_key)
@@ -195,40 +195,45 @@ def embed_links(videoID, embedFile):
         f.write(json.dumps(response["items"][0]["player"]["embedHtml"]) + "\n")
 
 
-def automate_scuff(total_url):
-    # Get to the right url
-    pyautogui.moveTo(800, 120, duration=0.5)
-    pyautogui.hotkey('alt', 'tab')
-    pyautogui.click()
-    pyautogui.click()
-    pyautogui.click()
-    for letter in total_url:
-        pyautogui.press(letter)
-    pyautogui.press("enter")
-    sleep(1.5)
-
-    # Copy all content into file
-    pyautogui.moveTo(800, 800, duration=0.5)
-    pyautogui.click()
-    pyautogui.hotkey("ctrl", "a")
-    pyautogui.hotkey("ctrl", "c")
-    #  switch back to python
-    pyautogui.hotkey('alt', 'tab')
-    pyautogui.hotkey('ctrl', 'tab')
-    pyautogui.hotkey('ctrl', 'a')
-    pyautogui.hotkey('ctrl', 'v')
-    pyautogui.click()
-    pyautogui.hotkey('ctrl', 's')
-    pyautogui.hotkey('ctrl', 'tab')
-
-    # Get info from json file
-    with open('text_info.txt', "r", encoding="utf8") as f:
-        info = json.loads(f.read())
-        channelID = info["items"][0]["snippet"]["channelId"]
-        channelTITLE = info["items"][0]["snippet"]["channelTitle"]
-        with open("channelIDInfo.txt", "a+", encoding="utf8") as g:
-            appStr = "{{{0}:{1}}}".format(channelTITLE, channelID)
-            g.write(str(appStr) + ",")
+# def automate_scuff(total_url):
+#     """
+#     Not putting into the AWS Deployed version, I guess not allowed
+#     :param total_url: The url for the information
+#     :return: None, writes to a files
+#     """
+#     # Get to the right url
+#     pyautogui.moveTo(800, 120, duration=0.5)
+#     pyautogui.hotkey('alt', 'tab')
+#     pyautogui.click()
+#     pyautogui.click()
+#     pyautogui.click()
+#     for letter in total_url:
+#         pyautogui.press(letter)
+#     pyautogui.press("enter")
+#     sleep(1.5)
+#
+#     # Copy all content into file
+#     pyautogui.moveTo(800, 800, duration=0.5)
+#     pyautogui.click()
+#     pyautogui.hotkey("ctrl", "a")
+#     pyautogui.hotkey("ctrl", "c")
+#     #  switch back to python
+#     pyautogui.hotkey('alt', 'tab')
+#     pyautogui.hotkey('ctrl', 'tab')
+#     pyautogui.hotkey('ctrl', 'a')
+#     pyautogui.hotkey('ctrl', 'v')
+#     pyautogui.click()
+#     pyautogui.hotkey('ctrl', 's')
+#     pyautogui.hotkey('ctrl', 'tab')
+#
+#     # Get info from json file
+#     with open('text_info.txt', "r", encoding="utf8") as f:
+#         info = json.loads(f.read())
+#         channelID = info["items"][0]["snippet"]["channelId"]
+#         channelTITLE = info["items"][0]["snippet"]["channelTitle"]
+#         with open("channelIDInfo.txt", "a+", encoding="utf8") as g:
+#             appStr = "{{{0}:{1}}}".format(channelTITLE, channelID)
+#             g.write(str(appStr) + ",")
 
 
 def write_to_new_embed(embedFile):
@@ -258,7 +263,7 @@ def main_write_files(channelIdInfo, channelNameInfo, channelImageInfo):
         f.write(json.dumps({"channelImages": channelImageInfo}))
 
 
-def main():
+def complete_reload(doReturn=False):
     # TODO - add Kurzgesagt channel, couldn't because illegal character
     # embedLink = "embedFiles/embedHTML-" + str(datetime.datetime.now().strftime("-%m-%d-%H-%M-%S")) + ".txt"
     # print(embedLink)
@@ -267,12 +272,11 @@ def main():
 
     single_reset_files(doEmbed=False)
     # doMinimum means only updateDaily, doesn't even look at weekly or monthly
-    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(doMinimum=False)
+    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(doMinimum=True)
     # main_write_files(
     #     channelIdInfo=channelIdInfo,
     #     channelNameInfo=channelNameInfo,
     #     channelImageInfo=channelImageInfo)
-
 
     totalVideoIdList = []
     totalVideoTitleList = []
@@ -286,7 +290,7 @@ def main():
         totalVideoTitleList.append(titleList)
         totalVideoThumbnailList.append(thumbnailList)
 
-        print("#", idx+1, "-", channelIdInfo[idx], ":", videoIdList)
+        print("#", idx + 1, "-", channelIdInfo[idx], ":", videoIdList)
 
         uploadDateList = video_upload_date(videoIdList=videoIdList)
         totalUploadDateList.append(uploadDateList)
@@ -303,6 +307,17 @@ def main():
         channelIdList=channelIdInfo,
         channelImageList=channelImageInfo,
         channelNameList=channelNameInfo)
+
+    if doReturn:
+        return totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList
+
+
+def test():
+    return "BYEBYE"
+
+
+def main():
+    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(doReturn=True)
 
     with open("automaticVideoIdInfo.json", "w") as f:
         f.write(json.dumps({"videoIds": totalVideoIdList}))
