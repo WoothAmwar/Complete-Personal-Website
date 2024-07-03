@@ -71,29 +71,19 @@ function DropDown() {
   )
 }
 
-function UseTime(props: {order:string}) {
-  if (props.order == "byTime") {
-    return (
-      <div className="grid grid-cols-3 font-mono">
-        {<OrderByTime />}
-      </div>
-    );
-  }
+const UseTime = () => {
   return (
-    <div></div>
+    <div className="grid grid-cols-3 font-mono">
+      {<OrderByTime />}
+    </div>
   );
 }
 
-function UseChannel(props: {order:string}) {
-  if (props.order == "byChannel") {
-    return (
-      <div className="grid grid-cols-1 font-mono">
-        {<OrderByChannel />}
-      </div>
-    );
-  }
+const UseChannel = () => {
   return (
-    <div></div>
+    <div className="grid grid-cols-1 font-mono">
+      {<OrderByChannel />}
+    </div>
   );
 }
 
@@ -116,28 +106,7 @@ function QueryOrder() {
   } else {
     return "byChannel";
   }
-}
 
-// function GetHomepageLayout(props: {order:string}) {
-//   if (props.order === "byChannel") {
-//     return useChannel();
-//   }
-//   else if (props.order === "byTime") {
-//     return useTime();
-//   }
-//   else {
-//     return props.order;
-//   }
-// }
-
-function GetHomepageLayout(props: {order:string}) {
-  // Unconditionally call useChannel and useTime at the top level of the component
-  return (
-    <div>
-      <UseChannel order={props.order} />
-      <UseTime order={props.order} />
-    </div>
-  );
 }
 
 // TODO: Create a function that accepts orderMethod and return the function depending on the value
@@ -150,20 +119,41 @@ export default function HomePage() {
     setOrderMethod(getQueryOrder);
   }, [getQueryOrder])
   
-
-  return (
-    <main className="flex flex-col">
-
-      <div className="grid items-center font-mono grid-cols-3 justify-items-end">
-        <h2 className="col-start-2 text-center justify-self-center font-semibold text-lg py-4">
-          Get Started with Youtube 
-        </h2>
-        <div className="col-start-3 pr-4">
-          {DropDown()}
+  
+  if (orderMethod == "byChannel") {
+    return (
+      <main className="flex flex-col justify-items-center">
+        <div className="grid items-center font-mono">
+          <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
+            <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0 #1</p>
+            <div className="justify-self-end mr-5">{DropDown()}</div>
+          </h2>
         </div>
+        <UseChannel />
+      </main>
+    )
+  }
+  else if (orderMethod == "byTime") {
+    return (
+      <main className="flex flex-col justify-items-center">
+        <div className="grid items-center font-mono">
+          <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
+            <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0 #1</p>
+            <div className="justify-self-end mr-5">{DropDown()}</div>
+          </h2>
+        </div>
+        <UseTime />
+      </main>
+    )
+  }
+  return (
+    <main className="flex flex-col items-center">
+      <div className="grid items-center font-mono">
+        <h2 className="text-center font-semibold text-lg py-4">
+          Get Started with Youtube 2.0
+        </h2>
       </div>
-
-      <GetHomepageLayout order={orderMethod} />
+      {orderMethod}
     </main>
   )
 }

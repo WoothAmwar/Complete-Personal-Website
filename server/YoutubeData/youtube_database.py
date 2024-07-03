@@ -1,18 +1,26 @@
+import datetime
 import json
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 from random import randint
 
+import certifi
+
+ca = certifi.where()
+
 uri = "mongodb+srv://anwar09102005:w8kRzw681NZM6VHI@prod-yt.10vdjom.mongodb.net/?retryWrites=true&w=majority&appName" \
       "=prod-yt "
 
 # Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'))
+client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=ca)
 
 db = client["youtube"]  # prod-yt/youtube
 yt_videos_collection = db["videos"]  # prod-yt/youtube/videos
 yt_channel_collection = db["channels"]  # prod-yt/youtube/channels
+yt_update_schedule_collection = db["update_schedule"]  # prod-yt/youtube/update_schedule
+yt_test_collection = db["testing"]  # prod-yt/youtube/testing
+
 
 # def insert_single(channelId, videoId, videoThumbnail, videoTitle):
 #     videoInfo = {
@@ -46,83 +54,57 @@ def clear_channels_database():
     print(deleteAll)
 
 
-def get_video_info():
-    with open("automaticVideoIdInfo.json", "r") as f:
-        videoIds = json.loads(f.readlines()[0])["videoIds"]
-    with open("automaticVideoTitleInfo.json", "r") as f:
-        videoTitles = json.loads(f.readlines()[0])["videoTitles"]
-    with open("automaticVideoThumbnailInfo.json", "r") as f:
-        videoThumbnails = json.loads(f.readlines()[0])["videoThumbnails"]
-
-    return videoIds, videoTitles, videoThumbnails
-
-
-def get_channel_id_info():
-    with open('automaticChannelIdInfo.json', "r") as f:
-        channelIds = json.loads(f.readlines()[0])["channelIds"]
-
-    return channelIds
-
-
-def get_channel_info():
-    with open('automaticChannelImageInfo.json', "r") as f:
-        channelImages = json.loads(f.readlines()[0])["channelImages"]
-    with open('automaticChannelNameInfo.json', "r") as f:
-        channelNames = json.loads(f.readlines()[0])["names"]
-
-    return get_channel_id_info(), channelImages, channelNames
-
-
-def connect_videos_many_db():
-    videoIds, videoTitles, videoThumbnails = get_video_info()
-    channelIds = get_channel_id_info()
-
-    print(len(channelIds), len(videoIds), len(videoTitles), len(videoThumbnails))
-    item_list_db = []
-
-    if len(videoIds) != len(videoTitles) or len(videoTitles) != len(videoThumbnails):
-        print("Something is wrong")
-        return
-
-    for i in range(len(videoIds)):
-        for j in range(0, 3):
-            item_list_db.append({
-                "channelId": channelIds[i],
-                "videoId": videoIds[i][j],
-                "videoThumbnail": videoThumbnails[i][j],
-                "videoTitle": videoTitles[i][j]
-            })
-    try:
-        yt_videos_collection.insert_many(item_list_db).inserted_ids
-        print("Accomplished bulk insert videos")
-    except Exception as e:
-        print(e)
+# def connect_videos_many_db():
+#     videoIds, videoTitles, videoThumbnails = get_video_info()
+#     channelIds = get_channel_id_info()
+#
+#     print(len(channelIds), len(videoIds), len(videoTitles), len(videoThumbnails))
+#     item_list_db = []
+#
+#     if len(videoIds) != len(videoTitles) or len(videoTitles) != len(videoThumbnails):
+#         print("Something is wrong")
+#         return
+#
+#     for i in range(len(videoIds)):
+#         for j in range(0, 3):
+#             item_list_db.append({
+#                 "channelId": channelIds[i],
+#                 "videoId": videoIds[i][j],
+#                 "videoThumbnail": videoThumbnails[i][j],
+#                 "videoTitle": videoTitles[i][j]
+#             })
+#     try:
+#         yt_videos_collection.insert_many(item_list_db).inserted_ids
+#         print("Accomplished bulk insert videos")
+#     except Exception as e:
+#         print(e)
+#
 
 
-def connect_channels_many_db():
-    channelIds, channelImages, channelNames = get_channel_info()
-
-    print(len(channelIds), len(channelImages), len(channelNames))
-    item_list_db = []
-
-    if (len(channelIds) != len(channelImages)) or (len(channelImages) != len(channelNames)):
-        print("Something is wrong")
-        return
-
-    for i in range(len(channelIds)):
-        item_list_db.append({
-            "_id": i+1,
-            "channelId": channelIds[i],
-            "channelImage": channelImages[i],
-            "channelName": channelNames[i]
-        })
-
-    try:
-        yt_channel_collection.insert_many(item_list_db)
-        print("Accomplished bulk insert channels")
-    except Exception as e:
-        print(e)
-
+# def connect_channels_many_db():
+#     channelIds, channelImages, channelNames = get_channel_info()
+#
+#     print(len(channelIds), len(channelImages), len(channelNames))
+#     item_list_db = []
+#
+#     if (len(channelIds) != len(channelImages)) or (len(channelImages) != len(channelNames)):
+#         print("Something is wrong")
+#         return
+#
+#     for i in range(len(channelIds)):
+#         item_list_db.append({
+#             "_id": i+1,
+#             "channelId": channelIds[i],
+#             "channelImage": channelImages[i],
+#             "channelName": channelNames[i]
+#         })
+#
+#     try:
+#         yt_channel_collection.insert_many(item_list_db)
+#         print("Accomplished bulk insert channels")
+#     except Exception as e:
+#         print(e)
+#
 
 def videos_db(chId):
     # specificChannelInfo equals None if the channelId is not already in the database
@@ -171,8 +153,8 @@ def replace_channels_many_db(channelIdList, channelImageList, channelNameList):
         print(delV.deleted_count, "deleted accounts in channels database")
         total_item_list.append({
             "channelId": channelIdList[channelIdx],
-            "channelImage":channelImageList[channelIdx],
-            "channelName": channelNameList[channelIdx]
+            "channelImages": channelImageList[channelIdx],
+            "channelNames": channelNameList[channelIdx]
         })
     try:
         yt_channel_collection.insert_many(total_item_list)
@@ -181,6 +163,68 @@ def replace_channels_many_db(channelIdList, channelImageList, channelNameList):
         print(e)
 
 
+def set_update_schedules():
+    # Will have "category" and "channelName" in MongoDB
+
+    UPDATE_DAILY = "./updateScheduleFiles/updateDaily.json"
+    UPDATE_WEEKLY = "./updateScheduleFiles/updateWeekly.json"
+    UPDATE_MONTHLY = "./updateScheduleFiles/updateMonthly.json"
+
+    categories = ["daily", "weekly", "monthly"]
+    UPDATE_FILES = [UPDATE_DAILY, UPDATE_WEEKLY, UPDATE_MONTHLY]
+    total_item_list = []
+    for i in range(3):
+        with open(UPDATE_FILES[i], "r") as f:
+            fileText = json.loads(f.read())
+            for channel in fileText["channelNames"]:
+                total_item_list.append({
+                    "category": categories[i],
+                    "channelName": channel,
+                })
+    try:
+        yt_update_schedule_collection.insert_many(total_item_list)
+        print("Bulk added to", categories)
+    except Exception as e:
+        print(e)
+        return e
+
+
+def set_single_update(update_file):
+    """
+    Updates the content for the updateScheduleFiles
+    :param update_file: the file path for one of the update json
+    :return: Writes to the update file, no return
+    """
+    channelNames = []
+    with open("./updateScheduleFiles/formatFile.txt", "r") as f:
+        rawText = f.readlines()
+        channelNames = [x.rstrip("\n") for x in rawText]
+        print(channelNames)
+    with open(update_file, "w") as f:
+        f.write(json.dumps({"channelNames": channelNames}))
+
+
+def get_channel_name_info():
+    """
+    Finds the channels corresponding to the update schedule
+    :return: Daily, Weekly, and Monthly channels, in that order
+    """
+    daily_channels = list(yt_update_schedule_collection.find(filter={"category": "daily"}))
+    weekly_channels = list(yt_update_schedule_collection.find(filter={"category": "weekly"}))
+    monthly_channels = list(yt_update_schedule_collection.find(filter={"category": "monthly"}))
+
+    return mongo_name_extraction(daily_channels), mongo_name_extraction(weekly_channels), mongo_name_extraction(
+        monthly_channels)
+
+
+def mongo_name_extraction(mongo_list):
+    name_list = []
+    for itm in mongo_list:
+        name_list.append(itm["channelName"])
+    return name_list
+
+
+# --------- TESTING FUNCTIONS BELOW
 def get_random_data():
     r = randint(0, 10)
     data = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10"]
@@ -188,6 +232,15 @@ def get_random_data():
         return data[r]
     except Exception:
         return "r0"
+
+
+def mongo_insert_test(calledAsIntended):
+    name = get_random_data()
+    tm = datetime.datetime.now()
+    minu = datetime.datetime.now().minute
+    minmod = datetime.datetime.now().minute % 1
+    yt_test_collection.insert({"name": name, "time": tm, "Minute": minu, "Minute Mod 1": minmod, "intendedCall": calledAsIntended})
+
 
 def main():
     # clear_videos_database()
@@ -201,7 +254,14 @@ def main():
     # In it
     # UCMiJRAwDNSNzuYeN2uWa0pA
     # videos_db(chId="UCMiJRAwDNSNzuYeN2uWa0pA")
-    print("Done")
+
+    # set_update_schedules()
+    # Daily - 18
+    # Weekly - 40
+    # Monthly - 40
+    yt_test_collection.delete_many(filter={"intendedCall": True})
+    yt_test_collection.delete_many(filter={"intendedCall": False})
+    print("Deletion of Test Data Done")
 
 
 if __name__ == "__main__":

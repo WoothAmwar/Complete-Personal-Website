@@ -4,6 +4,12 @@ import "../app/globals.css";
 
 import OrderByTime from "../components/UploadOrder";
 
+import { googleLogout, useGoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
+import { CookiesProvider, useCookies } from 'react-cookie';
+
+import { CurrentUserCookieInfo } from "../helperFunctions/cookieManagement";
+
 function getFullDate() {
   const dt = new Date();
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -30,72 +36,103 @@ function getFullDate() {
   return day+", "+month+" "+date+", "+year+", at "+hour+":"+(minute<10 ? "0"+minute : minute)+" "+(isAM ? "AM" : "PM");
 }
 
-function isUpdateTime() {
-  const dt = new Date();
+// function LoginUser() {
+//   const [user, setUser] = useState(null);
+//   const [profile_cookie, setCookie] = useCookies(['profile']);
+//   const [userProfile, setUserProfile] = useState(null);
 
-  if ((dt.getHours() == 11) && (dt.getMinutes() == 29) && (dt.getSeconds() <= 52)) {
-    return true;
-  }
-  return false;
-}
+//   const login = useGoogleLogin({
+//     onSuccess: (codeResponse) => setUser(codeResponse),
+//     onError: (error) => console.log('Login Failed:', error)
+//   });
 
-function isResetTime() {
-  const dt = new Date();
+//   useEffect(() => {
+//     if (user) {
+//       axios
+//         .get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.access_token}`, {
+//           headers: {
+//             Authorization: `Bearer ${user.access_token}`,
+//             Accept: 'application/json'
+//           }
+//         })
+//         .then((res) => {
+//           setCookie('profile', [
+//             res.data.id,
+//             res.data.email,
+//             res.data.given_name,
+//             res.data.picture,
+//             res.data.verified_email
+//           ], { path: '/' });
+//         })
+//         .catch((err) => console.log(err));
+//     }
+//   }, [user, setCookie]);
 
-  if ((dt.getHours() == 23) && (dt.getMinutes() == 1) && (dt.getSeconds() == 1)) {
-    return true;
-  }
-  return false;
-}
+//   useEffect(() => {
+//     if (profile_cookie.profile) {
+//       const userProfile = CurrentUserCookieInfo(undefined);
+//       setUserProfile(userProfile);
+//     }
+//   }, [profile_cookie]);
+
+//   const logOut = () => {
+//     googleLogout();
+//     setCookie('profile', null, { path: '/' });
+//     setUserProfile(null);
+//   };
+
+//   return (
+//     <CookiesProvider>
+//       <div>
+//         <h2>React Google Login</h2>
+//         <br />
+//         <br />
+//         {userProfile ? (
+//           <div>
+//             <img src={userProfile.picture} alt="user image" />
+//             <h3>User Logged in</h3>
+//             <p>Name: {userProfile.name}</p>
+//             <p>Email Address: {userProfile.email}</p>
+//             <br />
+//             <br />
+//             <button onClick={logOut}>Log out</button>
+//           </div>
+//         ) : (
+//           <button onClick={() => login()}>Sign in with Google 🚀 </button>
+//         )}
+//       </div>
+//     </CookiesProvider>
+//   );
+// }
 
 var msg = "Loading...";
 export default function Test() {
 
-  const [message, setMessage] = useState("Loading...");
-  const [isTime, setIsTime] = useState("NOT NOW");
+  // const [message, setMessage] = useState("Loading...");
   const [date, setFullDate] = useState("Loading...");
 
-  var ranFunction = false;
   useEffect(() => {
     setInterval(() => {
-
-      if (isUpdateTime() && (!ranFunction)) {  // if it is time to update and you haven't already ran the function
-        setIsTime("NOW");
-        ranFunction = true;
-
-        // http://py-flask-env.eba-mk5qapv6.us-east-2.elasticbeanstalk.com
-        // http://localhost:5000
-        // anwarkader.com
-        fetch("https://anwarkader.com/api/home")
-          .then(response => response.json())
-          .then(data => {
-            // setMessage(data.py_data);
-            msg = data.py_data;
-          })
-
-      } else if (isResetTime()) {
-        ranFunction = false;
-      } 
     
       setFullDate(getFullDate());
-      setMessage(msg);
     }, 1000)
   }, [])
-  // console.log("MSG:", message);
 
 
   return (
     <main className="flex flex-col items-center">
       <h2 className="text-center font-semibold text-lg py-4">
-        Get Started with Test Place for Youtube 2.0 9:50
+        Get Started with Test Place for Youtube 2.0
       </h2>
 
       <div>
         <p>{date}</p> 
-        <p>{message}</p>
-        <p>{isTime}</p>
+        {/* <p>{message}</p> */}
       </div>
-
+{/* 
+      <div>
+        <LoginUser />
+      </div> */}
 
     </main>
   );

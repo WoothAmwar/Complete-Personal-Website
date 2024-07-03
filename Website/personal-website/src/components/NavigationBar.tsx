@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
 import "../app/globals.css";
+import LoginButton from "@/components/buttons/LoginButton";
+
 
 interface SingleLink {
     id: number,
@@ -18,10 +20,21 @@ function NavigateLink(props: SingleLink) {
 
 export default function NavigationBar() {
     return (
-        <div className="m-3 grid grid-rows-1 grid-flow-col text-center">
-            <NavigateLink id={1} text="Youtube" link="/custom-youtube" />
-            <NavigateLink id={2} text="Test" link="/test" />
-            <NavigateLink id={3} text="About" link="/about" />
+        <div className="text-center">
+            <div className="m-3 mt-5 grid grid-rows-1 grid-cols-5 grid-flow-col">
+                <div className="grid grid-flow-col float:left col-span-1">
+                    <NavigateLink id={1} text="Logo" link="/" />
+                </div>
+                <div className="grid grid-flow-col col-start-2 col-span-3">
+                    <NavigateLink id={2} text="About" link="/about" />
+                    <NavigateLink id={3} text="Youtube" link="/custom-youtube" />
+                    <NavigateLink id={4} text="Test" link="/test" />
+                </div>
+                <div className="grid grid-flow-col float:right col-span-1">
+                    <NavigateLink id={1} text="Dashboard" link="/dashboard" />
+                </div>
+            </div>
+
         </div>
     );
 }

@@ -7,7 +7,7 @@ import json
 from googleapiclient.discovery import build  # referred to as google-api-python-client
 # import pyautogui
 from time import sleep
-from .youtube_database  import replace_videos_many_db, replace_channels_many_db
+from .youtube_database import get_channel_name_info, replace_videos_many_db, replace_channels_many_db
 
 # pyautogui.PAUSE = 0.2
 # pyautogui.FAILSAFE = True
@@ -15,9 +15,9 @@ from .youtube_database  import replace_videos_many_db, replace_channels_many_db
 api_key = "AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w"
 service = build('youtube', 'v3', developerKey=api_key)
 
-UPDATE_DAILY = "./updateScheduleFiles/updateDaily.json"
-UPDATE_WEEKLY = "./updateScheduleFiles/updateWeekly.json"
-UPDATE_MONTHLY = "./updateScheduleFiles/updateMonthly.json"
+# UPDATE_DAILY = "./updateScheduleFiles/updateDaily.json"
+# UPDATE_WEEKLY = "./updateScheduleFiles/updateWeekly.json"
+# UPDATE_MONTHLY = "./updateScheduleFiles/updateMonthly.json"
 
 
 def subscribed_channels(nextPageToken):
@@ -39,7 +39,7 @@ def subscribed_channels(nextPageToken):
 
     response = request.execute()
 
-    service.close()
+    # service.close()
     return response
 
 
@@ -67,7 +67,7 @@ def check_text_in_file(text, fileName, doHalves, doFirstHalf):
     return text in fileText
 
 
-def full_subscribed_channels(doMinimum=False):
+def full_subscribed_channels():
     tokens = ["", "CDIQAA", "CGQQAA"]
     # tokens = ["CGQQAA"]
     fullChannelInfo = []
@@ -75,40 +75,63 @@ def full_subscribed_channels(doMinimum=False):
     channelNameInfo = []
     channelImageInfo = []
 
-    # Check if I should update first half or second half of channels
-    firstHalfDecider = (int(datetime.datetime.now().day) % 2) == 0
-
     for token in tokens:
         searchIndexes = []
+        curr_channelIds = []
         channels = subscribed_channels(nextPageToken=token)
 
         fullChannelInfo.append(channels)
+        print(channels)
+        items = channels["items"]
+        if len(items) < 1:
+            print("Yeah we out of here")
+            break
+        for i in range(len(items)):
+            curr_channelIds.append(items[i]["snippet"]["resourceId"]["channelId"])
+            channelImageInfo.append(items[i]["snippet"]["thumbnails"]["default"]["url"])
+        for channelId in curr_channelIds:
+            request = service.channels().list(
+                part='snippet',
+                id=channelId
+            )
+            response = request.execute()
+            channelNameInfo.append(response["items"][0]["snippet"]["title"])
+        channelIdInfo.extend(curr_channelIds)
 
-        with open("channels.txt", "a") as f:
-            for i in range(len(channels["items"])):
-                channelName = channels["items"][i]["snippet"]["title"]
-                if check_text_in_file(channelName, UPDATE_DAILY, doHalves=False, doFirstHalf=False):
-                    f.write(channelName + "\n")
-                    searchIndexes.append(i)
-                # If you are doing more than minimum, update weekly and monthly too
-                if not doMinimum:
-                    if check_text_in_file(channelName, UPDATE_WEEKLY, doHalves=True, doFirstHalf=firstHalfDecider):
-                        f.write(channelName + "\n")
-                        searchIndexes.append(i)
-                    if check_text_in_file(channelName, UPDATE_MONTHLY, doHalves=True, doFirstHalf=firstHalfDecider):
-                        f.write(channelName + "\n")
-                        searchIndexes.append(i)
+        # with open("channels.txt", "a") as f:
+        #     for i in range(len(channels["items"])):
+        #         channelName = channels["items"][i]["snippet"]["title"]
+        #         if check_text_in_file(channelName, UPDATE_DAILY, doHalves=False, doFirstHalf=False):
+        #             f.write(channelName + "\n")
+        #             searchIndexes.append(i)
+        #         # If you are doing more than minimum, update weekly and monthly too
+        #         if not doMinimum:
+        #             if check_text_in_file(channelName, UPDATE_WEEKLY, doHalves=True, doFirstHalf=firstHalfDecider):
+        #                 f.write(channelName + "\n")
+        #                 searchIndexes.append(i)
+        #             if check_text_in_file(channelName, UPDATE_MONTHLY, doHalves=True, doFirstHalf=firstHalfDecider):
+        #                 f.write(channelName + "\n")
+        #                 searchIndexes.append(i)
 
         # JSON Dumps Implementation
-        for i in searchIndexes:
-            channelIdInfo.append(check_illegal_characters(
-                channels["items"][i]["snippet"]["resourceId"]["channelId"]))
-            channelNameInfo.append(check_illegal_characters(
-                channels["items"][i]["snippet"]["title"]))
-            channelImageInfo.append(channels["items"][i]["snippet"]["thumbnails"]["default"]["url"])
+        # for i in searchIndexes:
+        #     channelIdInfo.append(check_illegal_characters(
+        #         channels["items"][i]["snippet"]["resourceId"]["channelId"]))
+        #     channelNameInfo.append(check_illegal_characters(
+        #         channels["items"][i]["snippet"]["title"]))
+        #     channelImageInfo.append(channels["items"][i]["snippet"]["thumbnails"]["default"]["url"])
 
-    with open("channels.json", "w") as f:
-        f.write(json.dumps(fullChannelInfo))
+    # with open("channels.json", "w") as f:
+    #     f.write(json.dumps(fullChannelInfo))
+        for idx in range(len(channelNameInfo)):
+            while channelNameInfo[idx][-1] == " ":
+                print(channelNameInfo[idx])
+                channelNameInfo[idx] = channelNameInfo[idx][0:-1]
+
+        with open("channels.txt", "a") as f:
+            for channel in channelNameInfo:
+                f.write(channel+"\n")
+        print("Written it all out")
 
     return channelIdInfo, channelNameInfo, channelImageInfo
 
@@ -263,6 +286,46 @@ def main_write_files(channelIdInfo, channelNameInfo, channelImageInfo):
         f.write(json.dumps({"channelImages": channelImageInfo}))
 
 
+def filter_by_update(channelIdInfo, channelNameInfo, channelImageInfo, doMinimum=False):
+    daily_channels, weekly_channels, monthly_channels = get_channel_name_info()
+    update_sched_channels = [daily_channels, weekly_channels, monthly_channels]
+
+    # Do every other, either start at index 0 or 1
+    startingIndex = int(datetime.datetime.now().day) % 2
+    # startingIndex = 0
+
+    full_update_list = []
+    full_update_list.extend(daily_channels)
+    name_index_list = []
+    for itm in daily_channels:
+        name_index_list.append(channelNameInfo.index(itm))
+
+    if not doMinimum:
+        for i in range(1, len(update_sched_channels)):
+            for j in range(startingIndex, len(update_sched_channels[i]), 2):
+                print(j, "-", update_sched_channels[i][j])
+                full_update_list.append(update_sched_channels[i][j])
+                name_index_list.append(channelNameInfo.index(update_sched_channels[i][j]))
+
+    newIdInfo = []
+    newNameInfo = []
+    newImageInfo = []
+    for idx in name_index_list:
+        newIdInfo.append(channelIdInfo[idx])
+        newNameInfo.append(channelNameInfo[idx])
+        newImageInfo.append(channelImageInfo[idx])
+
+    return newIdInfo, newNameInfo, newImageInfo
+
+
+def filter_by_length(videoId):
+    # https://www.googleapis.com/youtube/v3/videos?key=AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w&part=contentDetails&id=WDfAC4WI_GA
+    # Find when video less than 1 Min 10 Sec, including under 1 minute
+    # If so, skip this video, so return False
+    # Else, return true
+    pass
+
+
 def complete_reload(doReturn=False):
     # TODO - add Kurzgesagt channel, couldn't because illegal character
     # embedLink = "embedFiles/embedHTML-" + str(datetime.datetime.now().strftime("-%m-%d-%H-%M-%S")) + ".txt"
@@ -271,8 +334,15 @@ def complete_reload(doReturn=False):
     # write_to_new_embed(embedLink)
 
     single_reset_files(doEmbed=False)
+    # Gets list of all channels, regardless of value of doMinimum
+    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels()
+    # Only selects channels that will be updated on a specific day
     # doMinimum means only updateDaily, doesn't even look at weekly or monthly
-    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(doMinimum=True)
+    channelIdInfo, channelNameInfo, channelImageInfo = filter_by_update(
+        channelIdInfo, channelNameInfo, channelImageInfo,
+        doMinimum=False
+    )
+
     # main_write_files(
     #     channelIdInfo=channelIdInfo,
     #     channelNameInfo=channelNameInfo,
@@ -290,7 +360,7 @@ def complete_reload(doReturn=False):
         totalVideoTitleList.append(titleList)
         totalVideoThumbnailList.append(thumbnailList)
 
-        print("#", idx + 1, "-", channelIdInfo[idx], ":", videoIdList)
+        print("#", idx + 1, "-", channelNameInfo[idx], "=",channelIdInfo[idx], ":", videoIdList)
 
         uploadDateList = video_upload_date(videoIdList=videoIdList)
         totalUploadDateList.append(uploadDateList)
@@ -313,7 +383,7 @@ def complete_reload(doReturn=False):
 
 
 def test():
-    return "BYEBYE"
+    return "BYEBYEBYEBYE"
 
 
 def main():
