@@ -25,7 +25,9 @@ export default function Dashboard() {
     const userInfo = CurrentUserCookieInfo();
 
     useEffect(() => {
-        setUserProfile(userInfo);
+        if (userProfile === null) {
+            setUserProfile(userInfo);
+        }
     })
 
     const logOut = () => {
