@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
 import "../app/globals.css";
+import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 
 export default function OrderByChannel() {
   const [responseVideoData, setResponseVideoData] = useState<any []>([]);
   const [responseChannelData, setResponseChannelData] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(true);
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
+  const currentUserGoogleId = CurrentUserId();
 
   var wd = 360  // 480
   var ht = wd/480*270  // 270
@@ -14,62 +16,26 @@ export default function OrderByChannel() {
 
   var finalRow = []; 
 
-  
   useEffect(() => {
-    async function fetchVideoData() {
-      try { 
-        console.log("DID THAT")
-        const response = await fetch('/api/YoutubeDB/Videos', {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-        });
-        if (response.ok) {
-            const fullRes = await response.json();
-            setResponseVideoData(fullRes["data"]);
-        } else {
-            const data = await response.json();
-            alert('Something went wrong!' + JSON.stringify(data));
-        }
-      }
-      catch (err) {
-        console.log("Error fetching video data from mongodb", err);
-      }
-      finally {
+    fetch(`http://localhost:5000/api/videos/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
+      .then(response => response.json())
+      .then(data => {
+        setResponseVideoData(data);
         setIsLoadingVideos(false);
-      }
-    }
+      })
+  }, [])
 
-    async function fetchChannelData() {
-      try {
-        console.log("DID THAT")
-        const response = await fetch('/api/YoutubeDB/Channels', {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-        });
-        if (response.ok) {
-            const fullRes = await response.json();
-            setResponseChannelData(fullRes["data"]);
-        } else {
-            const data = await response.json();
-            alert('Something went wrong!' + JSON.stringify(data));
-        }
-      } catch (err) {
-        console.log("Error fetching channels from mongodb", err);
-      } finally {
+  useEffect(() => {
+    fetch(`http://localhost:5000/api/channels/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
+      .then(response => response.json())
+      .then(data => {
+        setResponseChannelData(data);
         setIsLoadingChannels(false);
-      }
-    }
-
-    fetchVideoData();
-    fetchChannelData();
-  }, []);
+      })
+  }, [])
 
   if (isLoadingChannels || isLoadingVideos) {
-    return ["Loading..."];
+    return ["Loading..."]
   }
 
   for (let i = 0; i < responseVideoData.length; i++) {

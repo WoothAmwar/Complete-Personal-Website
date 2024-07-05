@@ -4,11 +4,13 @@ import time
 from flask_apscheduler import APScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import utc
+import json
+from bson import json_util
 
 
 from flask import Flask, jsonify
 from flask_cors import CORS
-from YoutubeData.youtube_database import get_random_data, mongo_insert_test
+from YoutubeData.youtube_database import get_random_data, mongo_insert_test, get_all_channels, get_all_videos
 from YoutubeData.youtube import complete_reload, test
 from WebText.link_saving import Novel
 # from random import randint
@@ -22,7 +24,7 @@ class Config:
 # app instance
 application = Flask(__name__)
 application.config.from_object(Config())
-CORS(application, supports_credentials=True)
+CORS(application, supports_credentials=True, origins="http://localhost:3000")
 
 scheduler = APScheduler()
 scheduler.init_app(application)
@@ -127,6 +129,23 @@ def return_lotm_info():
     })
 
 
+@application.route("/api/channels/<googleID>", methods=['GET'])
+def return_all_channels(googleID):
+    # response = jsonify(json_util.dumps(get_all_channels(googleID)))
+    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+    # return response
+    print("That thing is here", googleID)
+    return json_util.dumps(get_all_channels(googleID))
+
+
+@application.route("/api/videos/<googleID>", methods=['GET'])
+def return_all_videos(googleID):
+    # response = jsonify(json_util.dumps(get_all_videos(googleID)))
+    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+    # return response
+    print("That thing is here", googleID)
+    return json_util.dumps(get_all_videos(googleID))
+
 # ----------------- TESTING -----------------
 # some bits of text for the page.
 header_text = '''
@@ -147,7 +166,7 @@ application.add_url_rule('/<username>', 'hello', (lambda username: header_text +
 
 
 if __name__ == "__main__":
-    scheduler.start()
+    # scheduler.start()
     # debug=True for development, remove for production
     # application.debug = True
     application.run(debug=True, port=5000)

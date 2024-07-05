@@ -21,20 +21,8 @@ yt_channel_collection = db["channels"]  # prod-yt/youtube/channels
 yt_update_schedule_collection = db["update_schedule"]  # prod-yt/youtube/update_schedule
 yt_test_collection = db["testing"]  # prod-yt/youtube/testing
 
-
-# def insert_single(channelId, videoId, videoThumbnail, videoTitle):
-#     videoInfo = {
-#         "channelId": channelId,
-#         "videoId": videoId,
-#         "videoThumbnail": videoThumbnail,
-#         "videoTitle": videoTitle
-#     }
-#     try:
-#         yt_collection.insert_one(videoInfo).inserted_id
-#         print("Inserted")
-#     except Exception as e:
-#         print(e)
-
+db_users = client["users"]  # prod-yt/users
+user_me = db_users["113385767862195154808"]  # prod-yt/users/113385767862195154808
 
 def clear_videos_database():
     doIt = input("Are you sure you want to clear the entire database of youtube/videos: Y or N: ")
@@ -54,59 +42,12 @@ def clear_channels_database():
     print(deleteAll)
 
 
-# def connect_videos_many_db():
-#     videoIds, videoTitles, videoThumbnails = get_video_info()
-#     channelIds = get_channel_id_info()
-#
-#     print(len(channelIds), len(videoIds), len(videoTitles), len(videoThumbnails))
-#     item_list_db = []
-#
-#     if len(videoIds) != len(videoTitles) or len(videoTitles) != len(videoThumbnails):
-#         print("Something is wrong")
-#         return
-#
-#     for i in range(len(videoIds)):
-#         for j in range(0, 3):
-#             item_list_db.append({
-#                 "channelId": channelIds[i],
-#                 "videoId": videoIds[i][j],
-#                 "videoThumbnail": videoThumbnails[i][j],
-#                 "videoTitle": videoTitles[i][j]
-#             })
-#     try:
-#         yt_videos_collection.insert_many(item_list_db).inserted_ids
-#         print("Accomplished bulk insert videos")
-#     except Exception as e:
-#         print(e)
-#
-
-
-# def connect_channels_many_db():
-#     channelIds, channelImages, channelNames = get_channel_info()
-#
-#     print(len(channelIds), len(channelImages), len(channelNames))
-#     item_list_db = []
-#
-#     if (len(channelIds) != len(channelImages)) or (len(channelImages) != len(channelNames)):
-#         print("Something is wrong")
-#         return
-#
-#     for i in range(len(channelIds)):
-#         item_list_db.append({
-#             "_id": i+1,
-#             "channelId": channelIds[i],
-#             "channelImage": channelImages[i],
-#             "channelName": channelNames[i]
-#         })
-#
-#     try:
-#         yt_channel_collection.insert_many(item_list_db)
-#         print("Accomplished bulk insert channels")
-#     except Exception as e:
-#         print(e)
-#
-
-def videos_db(chId):
+def videos_del_db(chId):
+    """
+    Deletes all of the videos for a specific channel
+    :param chId: Channel ID
+    :return: None, acts on db directly
+    """
     # specificChannelInfo equals None if the channelId is not already in the database
     specificChannelInfo = yt_videos_collection.find(filter={"channelId": chId})
     delV = yt_videos_collection.delete_many(filter={"channelId": chId})
@@ -224,6 +165,46 @@ def mongo_name_extraction(mongo_list):
     return name_list
 
 
+def get_all_channels(googleID):
+    user_chosen_channels = get_user_channels(googleID)
+    # Getting all of the channels in the database
+    all_channels = list(yt_channel_collection.find(filter={}))
+    channel_information = {}
+    output = []
+    for channel in all_channels:
+        # Only selecting the channels that the user has assigned an update schedule
+        if channel["channelNames"] in user_chosen_channels:
+            # output.append(channel)
+            channel_information[channel["channelNames"]] = channel
+
+    ordered_names = sorted(list(channel_information.keys()), key=str.casefold)
+    for name in ordered_names:
+        output.append(channel_information[name])
+
+    return output
+
+
+def get_all_videos(googleID):
+    all_channel_ids = []
+    for channel in get_all_channels(googleID):
+        all_channel_ids.append(channel["channelId"])
+
+    vidSeparateId = []
+    for channel_id in all_channel_ids:
+        vidSeparateId.append(yt_videos_collection.find(filter={"channelId": channel_id}))
+    return vidSeparateId
+
+
+def get_user_channels(googleID):
+    # Getting all of the channels that are assigned by the user into an update schedule
+    curr_user = db_users[googleID]
+    user_channels = list(curr_user.find(filter={"category": "updateSchedule"}))
+    user_chosen_output = []
+    for channel in user_channels:
+        user_chosen_output.append(channel["channelName"])
+    return user_chosen_output
+
+
 # --------- TESTING FUNCTIONS BELOW
 def get_random_data():
     r = randint(0, 10)
@@ -239,8 +220,38 @@ def mongo_insert_test(calledAsIntended):
     tm = datetime.datetime.now()
     minu = datetime.datetime.now().minute
     minmod = datetime.datetime.now().minute % 1
-    yt_test_collection.insert({"name": name, "time": tm, "Minute": minu, "Minute Mod 1": minmod, "intendedCall": calledAsIntended})
+    yt_test_collection.insert(
+        {"name": name, "time": tm, "Minute": minu, "Minute Mod 1": minmod, "intendedCall": calledAsIntended})
 
+
+def move_update_to_user(userID):
+
+    daily_channels = list(yt_update_schedule_collection.find(filter={"category": "daily"}))
+    weekly_channels = list(yt_update_schedule_collection.find(filter={"category": "weekly"}))
+    monthly_channels = list(yt_update_schedule_collection.find(filter={"category": "monthly"}))
+
+    curr_db = db_users[userID]
+    curr_db.delete_many(filter={})
+    print("Deleted all of user:", userID)
+
+    total_daily = []
+    for channel in daily_channels:
+        total_daily.append(channel["channelName"])
+    total_weekly = []
+    for channel in weekly_channels:
+        total_weekly.append(channel["channelName"])
+    total_monthly = []
+    for channel in monthly_channels:
+        total_monthly.append(channel["channelName"])
+
+    for channel in total_daily:
+        curr_db.insert_one({"category":"updateSchedule", "updateTime": "daily", "channelName": channel})
+    for channel in total_weekly:
+        curr_db.insert_one({"category":"updateSchedule", "updateTime": "weekly", "channelName": channel})
+    for channel in total_monthly:
+        curr_db.insert_one({"category":"updateSchedule", "updateTime": "monthly", "channelName": channel})
+
+    print("Added all of user:", userID)
 
 def main():
     # clear_videos_database()
@@ -253,15 +264,28 @@ def main():
     # UClCUtBCBJw1UB3PDwW_Jemg
     # In it
     # UCMiJRAwDNSNzuYeN2uWa0pA
-    # videos_db(chId="UCMiJRAwDNSNzuYeN2uWa0pA")
+    # videos_del_db(chId="UCMiJRAwDNSNzuYeN2uWa0pA")
 
     # set_update_schedules()
     # Daily - 18
     # Weekly - 40
     # Monthly - 40
-    yt_test_collection.delete_many(filter={"intendedCall": True})
-    yt_test_collection.delete_many(filter={"intendedCall": False})
-    print("Deletion of Test Data Done")
+    # yt_test_collection.delete_many(filter={"intendedCall": True})
+    # yt_test_collection.delete_many(filter={"intendedCall": False})
+
+    # all_videos = get_all_videos()
+    # with open("channels.txt", "w") as f:
+    #     f.write(str(all_videos))
+    # print(len(all_videos))
+
+    # user_me.insert_many(daily_channels)
+    # user_me.delete_many(filter={"category":"daily"})
+    # TODO - make sure to use the user's respective youtube API for this
+    # TODO - use the below function to do the update for each user
+    # move_update_to_user("113385767862195154808")
+    get_all_channels("113385767862195154808")
+    print(db_users.list_collection_names())
+    print("Added all of Test Data ")
 
 
 if __name__ == "__main__":

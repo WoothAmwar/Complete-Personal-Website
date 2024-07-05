@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
 import "../app/globals.css";
+import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 
 
 /**
@@ -16,6 +17,7 @@ function time_difference(time1: string) {
 export default function OrderByTime() {
     const [responseVideoData, setResponseVideoData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const currentUserGoogleId = CurrentUserId();
 
     var finalData = [];
     var uploadDict: { [key: number]: {videoId: string, videoTitle: string, videoThumbnail: string, uploadDate: string} } = {};
@@ -25,32 +27,13 @@ export default function OrderByTime() {
     var embedLink = "/custom-youtube/";
 
     useEffect(() => {
-        async function fetchVideoData() {
-            try {
-                console.log("DID THAT")
-                const response = await fetch('/api/YoutubeDB/Videos', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                if (response.ok) {
-                    const fullRes = await response.json();
-                    setResponseVideoData(await fullRes["data"]);
-                } else {
-                    const data = await response.json();
-                    alert('Something went wrong!' + JSON.stringify(data));
-                }
-            } catch (err) {
-                console.error("Error fetching video data from MongoDB", err);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-
-        fetchVideoData();
-    }, []);
+        fetch(`http://localhost:5000/api/videos/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
+          .then(response => response.json())
+          .then(data => {
+            setResponseVideoData(data);
+            setIsLoading(false);
+          })
+      }, [])
 
     if (isLoading) {
         return (

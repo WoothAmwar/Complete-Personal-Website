@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CookiesProvider, useCookies } from 'react-cookie';
 
+import { parseCookies } from 'nookies';
+
 interface UserInfo {
   id: string;
   email: string;
@@ -26,6 +28,13 @@ export function CurrentUserCookieInfo():UserInfo | null {
   return null;
 }
 
-
-
-
+export function CurrentUserId():string {
+  const [profile_cookie] = useCookies(['profile']);
+  if (profile_cookie.profile) {
+    return profile_cookie.profile[0];  
+  }
+  else {
+    return "";
+  }
+  // return CurrentUserCookieInfo()?.id;
+}
