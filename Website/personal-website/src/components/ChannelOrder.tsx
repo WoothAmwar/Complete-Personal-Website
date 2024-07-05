@@ -17,7 +17,9 @@ export default function OrderByChannel() {
   var finalRow = []; 
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/videos/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
+    // http://localhost:5000/
+    // https://anwarkader.com/
+    fetch(`https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
       .then(response => response.json())
       .then(data => {
         setResponseVideoData(data);
@@ -26,7 +28,9 @@ export default function OrderByChannel() {
   }, [])
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/channels/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
+    // http://localhost:5000/
+    // https://anwarkader.com/
+    fetch(`https://anwarkader.com/api/channels/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
       .then(response => response.json())
       .then(data => {
         setResponseChannelData(data);
