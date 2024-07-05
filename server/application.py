@@ -9,7 +9,7 @@ from bson import json_util
 
 
 from flask import Flask, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from YoutubeData.youtube_database import get_random_data, mongo_insert_test, get_all_channels, get_all_videos
 from YoutubeData.youtube import complete_reload, test
 from WebText.link_saving import Novel
@@ -24,7 +24,8 @@ class Config:
 # app instance
 application = Flask(__name__)
 application.config.from_object(Config())
-CORS(application, supports_credentials=True, origins="http://localhost:3000")
+CORS(application, supports_credentials=True,
+     origins=["http://localhost:3000", "https://complete-website-humanwooths-projects.vercel.app"])
 
 scheduler = APScheduler()
 scheduler.init_app(application)
@@ -89,6 +90,7 @@ info = ""
 
 # /api/home
 @application.route("/api/home", methods=['GET'])
+@cross_origin()
 def return_home():
     global t, info
     t = (datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second)
@@ -112,11 +114,8 @@ def return_home():
     })
 
 
-# # TODO - LIKE SOON, THIS IS A GOOD IDEA IDK WHY I DIDN"T DO THIS BEFORE
-# #   TODO - Add the logic that checks if it is a certain time to update into python
-# #   TODO - Thus, we always return the data, but if it is a certain time then we update
-# #   TODO - This makes like a lot more sense, a lot easier to implement, and just as good of a solution
 @application.route("/api/tracker", methods=['GET'])
+@cross_origin()
 def return_lotm_info():
     rdm_chapter = lotm.get_chapter_number()
     if isUpdateTime(upd_hour=17, upd_min=1, upd_sec=1, useModulus=True):
