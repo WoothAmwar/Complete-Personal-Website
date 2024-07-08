@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Link from "next/link";
 import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { guidGenerator, VideoBox } from "./VideoBox";
 
 
 /**
@@ -22,9 +23,7 @@ export default function OrderByTime() {
     var finalData = [];
     var uploadDict: { [key: number]: {videoId: string, videoTitle: string, videoThumbnail: string, uploadDate: string} } = {};
 
-    var wd = 360  // 480
-    var ht = wd / 480 * 270  // 270
-    var embedLink = "/custom-youtube/";
+    var wd = 420  // 480
 
     useEffect(() => {
         // http://localhost:5000/
@@ -53,15 +52,7 @@ export default function OrderByTime() {
 
     for (var i = 0; i < uploadKeys.length; i++) {
         finalData.push(
-            // <div>
-            //   <p>#{i} - {uploadDict[parseInt(uploadKeys[i])]}</p>
-            //   <p>{uploadKeys[i]}</p>
-            // </div>
-            <Link key={i} className="m-2" href={embedLink.concat(uploadDict[parseInt(uploadKeys[i])]["videoId"])}>
-                <img src={uploadDict[parseInt(uploadKeys[i])]["videoThumbnail"]} alt="Thumbnail" className="border-2 rounded-sm" width={wd} height={ht} />
-                <p className="font-semibold text-2x1">{uploadDict[parseInt(uploadKeys[i])]["videoTitle"]}</p>
-                <p className="font-['Garamond'] text-slate-300 text-2x1">Uploaded: {uploadDict[parseInt(uploadKeys[i])]["uploadDate"].substr(0, 10)}</p>
-            </Link>
+            <VideoBox key={guidGenerator()} includeDate={true} width={wd} fullVideoDetails={uploadDict[parseInt(uploadKeys[i])]}/>
         );
     }
 

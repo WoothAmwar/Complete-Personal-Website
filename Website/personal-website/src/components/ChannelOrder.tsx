@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Link from "next/link";
 import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { guidGenerator, VideoBox } from "./VideoBox";
 
 export default function OrderByChannel() {
   const [responseVideoData, setResponseVideoData] = useState<any []>([]);
@@ -52,14 +53,11 @@ export default function OrderByChannel() {
     )
     for (let j = 0; j < responseVideoData[i].length; j++) {
       currRow.push(
-        <Link key={i*3+j+1} className="mr-1 ml-1" href={embedLink.concat(responseVideoData[i][j]["videoId"])}>
-          <img src={responseVideoData[i][j]["videoThumbnail"]} alt="Thumbnail" className="border-2 rounded-sm" width={wd} height={ht} />
-          <p className="font-['Garamond'] text-2x1">{responseVideoData[i][j]["videoTitle"]}</p>
-        </Link>
+        <VideoBox key={guidGenerator()} includeDate={false} width={wd} fullVideoDetails={responseVideoData[i][j]}/>
       )
     }
     finalRow.push(
-      <div key={i} className="m-5 grid text-center lg:grid-cols-4 md:grid-cols-2"> 
+      <div key={guidGenerator()} className="my-5 grid text-left gap-x-2 lg:grid-cols-4 md:grid-cols-2"> 
         {currRow} 
       </div>
     );

@@ -24,6 +24,7 @@ yt_test_collection = db["testing"]  # prod-yt/youtube/testing
 db_users = client["users"]  # prod-yt/users
 user_me = db_users["113385767862195154808"]  # prod-yt/users/113385767862195154808
 
+
 def clear_videos_database():
     doIt = input("Are you sure you want to clear the entire database of youtube/videos: Y or N: ")
     if doIt.upper() != "Y":
@@ -203,6 +204,58 @@ def get_user_channels(googleID):
     for channel in user_channels:
         user_chosen_output.append(channel["channelName"])
     return user_chosen_output
+
+
+def get_channel_of_video(videoID):
+    channelID = yt_videos_collection.find_one(filter={"videoId": videoID})["channelId"]
+    channelInfo = yt_channel_collection.find_one(filter={"channelId": channelID})
+    return channelInfo
+
+
+def get_favorite_videos(googleID):
+    curr_user = db_users[googleID]
+    favorites = curr_user.find(filter={"category":"favoriteVideo"})
+    if favorites is None:
+        return []
+    output = []
+    for vid in favorites:
+        output.append(vid)
+    return output
+
+
+def check_video_in_favorite(googleID, fullVideoDetails):
+    curr_user = db_users[googleID]
+    findGiven = curr_user.find_one(filter={"category": "favoriteVideo", "videoId":fullVideoDetails["videoId"]})
+    if findGiven is None:
+        return False
+    return True
+
+
+def add_favorite_video(googleID, fullVideoDetails):
+    curr_user = db_users[googleID]
+    # print(fullVideoDetails)
+    if check_video_in_favorite(googleID, fullVideoDetails):
+        return "Already In"
+
+    videoChannelInfo = get_channel_of_video(fullVideoDetails["videoId"])
+    curr_user.insert_one({
+        "category": "favoriteVideo",
+        "videoId": fullVideoDetails["videoId"],
+        "videoTitle": fullVideoDetails["videoTitle"],
+        "uploadDate": fullVideoDetails["uploadDate"],
+        "videoThumbnail": fullVideoDetails["videoThumbnail"],
+        "channelName": videoChannelInfo["channelNames"]
+    })
+    return "Done"
+
+
+def remove_favorite_video(googleID, fullVideoDetails):
+    curr_user = db_users[googleID]
+    if not check_video_in_favorite(googleID, fullVideoDetails):
+        return "Data entry not in database, cannot be deleted"
+
+    curr_user.delete_one(filter={"category":"favoriteVideo", "videoId":fullVideoDetails["videoId"]})
+    return "Done"
 
 
 # --------- TESTING FUNCTIONS BELOW

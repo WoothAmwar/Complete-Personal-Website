@@ -13,6 +13,7 @@
     --foreground-rgb: 255, 255, 255;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 105, 0, 0;
+    color-scheme:dark;
   }
 }
 
@@ -45,3 +46,7 @@ footer {
   color: whitesmoke;
   font-size: 4rem;
 }
+
+.options:after {
+  content: '\2807';
+  }

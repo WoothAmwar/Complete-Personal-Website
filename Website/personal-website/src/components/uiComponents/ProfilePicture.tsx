@@ -13,6 +13,8 @@ export default function ProfilePicture({imageLink, imageSize}: ProfilePicturePro
     return (
         <img style={{
             borderRadius: "50%",
+            borderColor: "azure",
+            borderWidth: "2px",
             width: imageSize,
             height: imageSize,
             display: "block"

@@ -1,18 +1,18 @@
 import datetime
+import json
 import time
 
-from flask_apscheduler import APScheduler
-from apscheduler.schedulers.background import BackgroundScheduler
-from pytz import utc
-import json
 from bson import json_util
-
-
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from flask_apscheduler import APScheduler
 from flask_cors import CORS, cross_origin
-from YoutubeData.youtube_database import get_random_data, mongo_insert_test, get_all_channels, get_all_videos
-from YoutubeData.youtube import complete_reload, test
+
 from WebText.link_saving import Novel
+from YoutubeData.youtube import complete_reload, test
+from YoutubeData.youtube_database import get_random_data, mongo_insert_test, get_all_channels, get_all_videos, \
+    add_favorite_video, get_favorite_videos, remove_favorite_video
+
+
 # from random import randint
 
 
@@ -25,7 +25,8 @@ class Config:
 application = Flask(__name__)
 application.config.from_object(Config())
 CORS(application, supports_credentials=True,
-     origins=["http://localhost:3000", "https://complete-website-humanwooths-projects.vercel.app"])
+     origins=["http://localhost:3000", "https://complete-website-humanwooths-projects.vercel.app",
+              "https://complete-website-oxm354v7r-humanwooths-projects.vercel.app"])
 
 scheduler = APScheduler()
 scheduler.init_app(application)
@@ -58,7 +59,7 @@ def isUpdateTime(upd_hour, upd_min, upd_sec, useModulus=False, isDevelopment=Fal
         # Could also do
         real_hour = real_hour % 24
 
-    isMinute = False
+    # isMinute = False
     current_time = datetime.datetime.now()
     if useModulus:
         isMinute = (current_time.minute % upd_min) == 0
@@ -145,6 +146,28 @@ def return_all_videos(googleID):
     print("That thing is here", googleID)
     return json_util.dumps(get_all_videos(googleID))
 
+
+@application.route("/api/videos/favorites/<googleID>", methods=['GET', 'PUT', 'DELETE'])
+def manage_favorite_videos(googleID):
+    # response = jsonify(json_util.dumps(get_all_videos(googleID)))
+    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+    # return response
+    if request.method == 'GET':
+        favorites = json_util.dumps(get_favorite_videos(googleID))
+        return jsonify({'data': favorites})
+
+    elif request.method == 'PUT':
+        videoInfo_to_favorite = json.loads(request.data)["data"]
+
+        action = add_favorite_video(googleID, videoInfo_to_favorite)
+        return jsonify({'data': action})
+
+    elif request.method == 'DELETE':
+        videoInfo_to_favorite = json.loads(request.data)["data"]
+        action = remove_favorite_video(googleID, videoInfo_to_favorite)
+        return jsonify({'data': action})
+
+
 # ----------------- TESTING -----------------
 # some bits of text for the page.
 header_text = '''
@@ -163,9 +186,8 @@ application.add_url_rule('/', 'index', (lambda: header_text + instructions + foo
 # URL.
 application.add_url_rule('/<username>', 'hello', (lambda username: header_text + username + home_link + footer_text))
 
-
 if __name__ == "__main__":
-    # scheduler.start()
+    scheduler.start()
     # debug=True for development, remove for production
     # application.debug = True
-    application.run(debug=True, port=5000)
+    application.run(debug=False, port=5000)

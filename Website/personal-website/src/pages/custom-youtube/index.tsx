@@ -73,7 +73,7 @@ function DropDown() {
 
 const UseTime = () => {
   return (
-    <div className="grid grid-cols-3 font-mono">
+    <div className="grid grid-cols-3 gap-x-8 font-mono">
       {<OrderByTime />}
     </div>
   );
@@ -122,10 +122,10 @@ export default function HomePage() {
   
   if (orderMethod == "byChannel") {
     return (
-      <main className="flex flex-col justify-items-center">
+      <main className="flex flex-col justify-items-center mx-5">
         <div className="grid items-center font-mono">
           <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
-            <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0 #1</p>
+            <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0</p>
             <div className="justify-self-end mr-5">{DropDown()}</div>
           </h2>
         </div>
@@ -135,7 +135,7 @@ export default function HomePage() {
   }
   else if (orderMethod == "byTime") {
     return (
-      <main className="flex flex-col justify-items-center">
+      <main className="flex flex-col justify-items-center mx-5">
         <div className="grid items-center font-mono">
           <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
             <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0 #1</p>

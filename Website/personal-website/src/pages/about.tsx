@@ -15,20 +15,6 @@ function classNames(...classes: string[]) {
 export default function About() {
 
   const thing = CurrentUserId();
-  // Alternate implementation using Cron in Python being used instead of this
-  // useEffect(() => {
-  //   setInterval(() => {
-  //     // http://localhost:5000
-  //     // https://anwarkader.com
-  //     fetch("https://anwarkader.com/api/home", {method: 'GET', credentials: 'include'})
-  //     .then(response => response.json())
-  //     .then(data => {
-  //         setMessage(data.yt_data[0] + ":"+data.yt_data[1] + ":"+data.yt_data[2]);
-  //         console.log("UPDATED");
-  //     })
-  //   }, 1000)
-  // }, [])
-
 
   return (
     <CookiesProvider> 
