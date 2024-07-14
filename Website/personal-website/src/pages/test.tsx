@@ -127,12 +127,10 @@ export default function Test() {
 
       <div>
         <p>{date}</p> 
-        {/* <p>{message}</p> */}
+        <div className="lg:text-green-400 md:text-yellow-400 sm:text-red-400 text-orange-300">
+          Large screen has green text, medium screen has yellow text, small screen has red text, anything else has orange text
+        </div>
       </div>
-{/* 
-      <div>
-        <LoginUser />
-      </div> */}
 
     </main>
   );
