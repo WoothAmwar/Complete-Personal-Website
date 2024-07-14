@@ -9,8 +9,9 @@ from flask_cors import CORS, cross_origin
 
 from WebText.link_saving import Novel
 from YoutubeData.youtube import complete_reload, test
-from YoutubeData.youtube_database import get_random_data, mongo_insert_test, get_all_channels, get_all_videos, \
-    add_favorite_video, get_favorite_videos, remove_favorite_video
+from YoutubeData.youtube_database import get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos, \
+    add_favorite_video, get_favorite_videos, remove_favorite_video, get_update_user_channels, \
+    get_unassigned_user_channels, set_update_schedule_channel
 
 
 # from random import randint
@@ -25,8 +26,7 @@ class Config:
 application = Flask(__name__)
 application.config.from_object(Config())
 CORS(application, supports_credentials=True,
-     origins=["http://localhost:3000", "https://complete-website-humanwooths-projects.vercel.app",
-              "https://complete-website-oxm354v7r-humanwooths-projects.vercel.app"])
+     origins=["http://localhost:3000", "https://complete-website-humanwooths-projects.vercel.app"])
 
 scheduler = APScheduler()
 scheduler.init_app(application)
@@ -135,7 +135,7 @@ def return_all_channels(googleID):
     # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
     # return response
     print("That thing is here", googleID)
-    return json_util.dumps(get_all_channels(googleID))
+    return json_util.dumps(get_all_user_channels(googleID))
 
 
 @application.route("/api/videos/<googleID>", methods=['GET'])
@@ -145,6 +145,95 @@ def return_all_videos(googleID):
     # return response
     print("That thing is here", googleID)
     return json_util.dumps(get_all_videos(googleID))
+
+
+@application.route("/api/channels/daily/<googleID>", methods=['GET', 'PUT'])
+def return_daily_schedule_channels(googleID):
+    """
+    Finds the information for all of the channels that the user has specified as updateDaily
+    :param googleID: User ID used to store and retrieve information
+    :return: JSON of full information for updateDaily channels, descending order by channel name
+    """
+    if request.method == "GET":
+        return json_util.dumps(get_update_user_channels(googleID, updateSchedule="daily"))
+
+    elif request.method == "PUT":
+        request_data = json.loads(request.data)
+        channels_to_move = request_data["data"]
+        move_location = request_data["location"]
+        print("VINFO:", channels_to_move)
+        print("LOC:", move_location)
+        set_update_schedule_channel(googleID, channels_to_move, move_location)
+
+        return jsonify({"data": channels_to_move, "loc": move_location})
+
+
+@application.route("/api/channels/weekly/<googleID>", methods=['GET', 'PUT'])
+def return_weekly_schedule_channels(googleID):
+    """
+    Finds the information for all of the channels that the user has specified as updateWeekly
+    :param googleID: User ID used to store and retrieve information
+    :return: JSON of full information for updateWeekly channels, descending order by channel name
+    """
+    if request.method == "GET":
+        return json_util.dumps(get_update_user_channels(googleID, updateSchedule="weekly"))
+
+    elif request.method == "PUT":
+        request_data = json.loads(request.data)
+        channels_to_move = request_data["data"]
+        move_location = request_data["location"]
+        print("VINFO:", channels_to_move)
+        print("LOC:", move_location)
+        set_update_schedule_channel(googleID, channels_to_move, move_location)
+
+        return jsonify({"data": channels_to_move, "loc": move_location})
+
+
+@application.route("/api/channels/monthly/<googleID>", methods=['GET', 'PUT'])
+def return_monthly_schedule_channels(googleID):
+    """
+    Finds the information for all of the channels that the user has specified as updateMonthly
+    :param googleID: User ID used to store and retrieve information
+    :return: JSON of full information for updateMonthly channels, descending order by channel name
+    """
+    if request.method == "GET":
+        return json_util.dumps(get_update_user_channels(googleID, updateSchedule="monthly"))
+
+    elif request.method == "PUT":
+        request_data = json.loads(request.data)
+        channels_to_move = request_data["data"]
+        move_location = request_data["location"]
+        print("VINFO:", channels_to_move)
+        print("LOC:", move_location)
+        set_update_schedule_channel(googleID, channels_to_move, move_location)
+
+        return jsonify({"data": channels_to_move, "loc": move_location})
+
+
+@application.route("/api/channels/unassigned/<googleID>", methods=['GET', 'PUT'])
+def return_unassigned_schedule_channels(googleID):
+    """
+    Finds the information for all of the channels that the user has not specified
+    :param googleID: User ID used to store and retrieve information
+    :return: JSON of full information for unassigned channels, descending order by channel name
+    """
+    if request.method == "GET":
+        unassigned_channels = get_update_user_channels(googleID, updateSchedule="unassigned")
+        return json_util.dumps(unassigned_channels)
+        # TODO - add functionality that updates channels not subscribed to, but based solely on db content
+        #  Absent channels not in main youtube/update-schedule db collection, which is why not working probably
+        # absent_channels = get_unassigned_user_channels(googleID)
+        # return json_util.dumps(unassigned_channels + absent_channels)
+
+    elif request.method == "PUT":
+        request_data = json.loads(request.data)
+        channels_to_move = request_data["data"]
+        move_location = request_data["location"]
+        print("VINFO:", channels_to_move)
+        print("LOC:", move_location)
+        set_update_schedule_channel(googleID, channels_to_move, move_location)
+
+        return jsonify({"data": channels_to_move, "loc": move_location})
 
 
 @application.route("/api/videos/favorites/<googleID>", methods=['GET', 'PUT', 'DELETE'])
@@ -187,7 +276,7 @@ application.add_url_rule('/', 'index', (lambda: header_text + instructions + foo
 application.add_url_rule('/<username>', 'hello', (lambda username: header_text + username + home_link + footer_text))
 
 if __name__ == "__main__":
-    scheduler.start()
+    # scheduler.start()
     # debug=True for development, remove for production
     # application.debug = True
-    application.run(debug=False, port=5000)
+    application.run(debug=True, port=5000)

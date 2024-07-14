@@ -166,8 +166,8 @@ def mongo_name_extraction(mongo_list):
     return name_list
 
 
-def get_all_channels(googleID):
-    user_chosen_channels = get_user_channels(googleID)
+def get_all_user_channels(googleID):
+    user_chosen_channels = get_user_channels(googleID, includeUpdateSchedule=False)
     # Getting all of the channels in the database
     all_channels = list(yt_channel_collection.find(filter={}))
     channel_information = {}
@@ -187,7 +187,7 @@ def get_all_channels(googleID):
 
 def get_all_videos(googleID):
     all_channel_ids = []
-    for channel in get_all_channels(googleID):
+    for channel in get_all_user_channels(googleID):
         all_channel_ids.append(channel["channelId"])
 
     vidSeparateId = []
@@ -196,14 +196,66 @@ def get_all_videos(googleID):
     return vidSeparateId
 
 
-def get_user_channels(googleID):
-    # Getting all of the channels that are assigned by the user into an update schedule
+def get_user_channels(googleID, includeUpdateSchedule=False, updateSchedule="daily"):
+    # Getting all of the Names of channels that are assigned by the user into an update schedule
     curr_user = db_users[googleID]
-    user_channels = list(curr_user.find(filter={"category": "updateSchedule"}))
+    if includeUpdateSchedule:
+        user_channels = list(curr_user.find(filter={"category": "updateSchedule", "updateTime": updateSchedule}))
+    else:
+        user_channels = list(curr_user.find(filter={"category": "updateSchedule"}))
     user_chosen_output = []
     for channel in user_channels:
         user_chosen_output.append(channel["channelName"])
     return user_chosen_output
+
+
+def get_update_user_channels(googleID, updateSchedule):
+    """
+    Finds all of the channel info for a specific subset of user channels
+    :param googleID: User ID used to store and retrieve user information
+    :param updateSchedule: Daily, Weekly, or Monthly. Does not support None
+    :return: The full channel information for the subset of user channels
+    """
+    user_chosen_channels = get_user_channels(googleID, includeUpdateSchedule=True, updateSchedule=updateSchedule)
+    # Getting all of the channels in the database
+    all_channels = list(yt_channel_collection.find(filter={}))
+    channel_information = {}
+    output = []
+    for channel in all_channels:
+        # Only selecting the channels that the user has assigned an update schedule
+        if channel["channelNames"] in user_chosen_channels:
+            # output.append(channel)
+            channel_information[channel["channelNames"]] = channel
+
+    ordered_names = sorted(list(channel_information.keys()), key=str.casefold)
+    for name in ordered_names:
+        output.append(channel_information[name])
+
+    return output
+
+
+def get_unassigned_user_channels(googleID):
+    """
+    Finds all of the channel info for channels users do not have set
+    :param googleID: User ID used to store and retrieve user information
+    :return: The full channel information for the subset of channels users do not have scheduled to udpate
+    """
+    user_chosen_channels = get_user_channels(googleID, includeUpdateSchedule=False)
+    # Getting all of the channels in the database
+    all_channels = list(yt_channel_collection.find(filter={}))
+    channel_information = {}
+    output = []
+    for channel in all_channels:
+        # Only selecting the channels that the user has assigned an update schedule
+        if channel["channelNames"] not in user_chosen_channels:
+            # output.append(channel)
+            channel_information[channel["channelNames"]] = channel
+
+    ordered_names = sorted(list(channel_information.keys()), key=str.casefold)
+    for name in ordered_names:
+        output.append(channel_information[name])
+
+    return output
 
 
 def get_channel_of_video(videoID):
@@ -212,9 +264,28 @@ def get_channel_of_video(videoID):
     return channelInfo
 
 
+def set_update_schedule_channel(googleID, channelNames, finalUpdateTime):
+    curr_user = db_users[googleID]
+    for channel in channelNames:
+        if curr_user.find_one(filter={"category": "updateSchedule", "channelName":channel}) is None:
+            curr_user.insert_one({
+                "category": "updateScheduler",
+                "updateTime": "daily",
+                "channelName": channel
+            })
+            print(channel, "added to", finalUpdateTime, "!")
+
+        else:
+            curr_user.update_one(filter={"category": "updateSchedule", "channelName": channel},
+                                 update={"$set": {"updateTime": finalUpdateTime}})
+            print(channel, "moved to", finalUpdateTime, "?")
+
+    return finalUpdateTime
+
+
 def get_favorite_videos(googleID):
     curr_user = db_users[googleID]
-    favorites = curr_user.find(filter={"category":"favoriteVideo"})
+    favorites = curr_user.find(filter={"category": "favoriteVideo"})
     if favorites is None:
         return []
     output = []
@@ -225,7 +296,7 @@ def get_favorite_videos(googleID):
 
 def check_video_in_favorite(googleID, fullVideoDetails):
     curr_user = db_users[googleID]
-    findGiven = curr_user.find_one(filter={"category": "favoriteVideo", "videoId":fullVideoDetails["videoId"]})
+    findGiven = curr_user.find_one(filter={"category": "favoriteVideo", "videoId": fullVideoDetails["videoId"]})
     if findGiven is None:
         return False
     return True
@@ -254,7 +325,7 @@ def remove_favorite_video(googleID, fullVideoDetails):
     if not check_video_in_favorite(googleID, fullVideoDetails):
         return "Data entry not in database, cannot be deleted"
 
-    curr_user.delete_one(filter={"category":"favoriteVideo", "videoId":fullVideoDetails["videoId"]})
+    curr_user.delete_one(filter={"category": "favoriteVideo", "videoId": fullVideoDetails["videoId"]})
     return "Done"
 
 
@@ -278,7 +349,6 @@ def mongo_insert_test(calledAsIntended):
 
 
 def move_update_to_user(userID):
-
     daily_channels = list(yt_update_schedule_collection.find(filter={"category": "daily"}))
     weekly_channels = list(yt_update_schedule_collection.find(filter={"category": "weekly"}))
     monthly_channels = list(yt_update_schedule_collection.find(filter={"category": "monthly"}))
@@ -298,13 +368,14 @@ def move_update_to_user(userID):
         total_monthly.append(channel["channelName"])
 
     for channel in total_daily:
-        curr_db.insert_one({"category":"updateSchedule", "updateTime": "daily", "channelName": channel})
+        curr_db.insert_one({"category": "updateSchedule", "updateTime": "daily", "channelName": channel})
     for channel in total_weekly:
-        curr_db.insert_one({"category":"updateSchedule", "updateTime": "weekly", "channelName": channel})
+        curr_db.insert_one({"category": "updateSchedule", "updateTime": "weekly", "channelName": channel})
     for channel in total_monthly:
-        curr_db.insert_one({"category":"updateSchedule", "updateTime": "monthly", "channelName": channel})
+        curr_db.insert_one({"category": "updateSchedule", "updateTime": "monthly", "channelName": channel})
 
     print("Added all of user:", userID)
+
 
 def main():
     # clear_videos_database()
@@ -336,7 +407,7 @@ def main():
     # TODO - make sure to use the user's respective youtube API for this
     # TODO - use the below function to do the update for each user
     # move_update_to_user("113385767862195154808")
-    get_all_channels("113385767862195154808")
+    # get_all_user_channels("113385767862195154808")
     print(db_users.list_collection_names())
     print("Added all of Test Data ")
 

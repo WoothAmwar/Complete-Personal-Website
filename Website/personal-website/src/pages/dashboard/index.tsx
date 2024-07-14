@@ -45,7 +45,6 @@ function FavoriteVideosDisplay(props: { currentUserGoogleID: string }) {
     const getVideoInfo = async () => {
         try {
             const response = await getFavoriteVideos(props.currentUserGoogleID, false);
-            console.log("R:", response);
             setVideoInfo(response);
         } catch (err) {
             console.error("Error fetching video info", err);
@@ -53,31 +52,19 @@ function FavoriteVideosDisplay(props: { currentUserGoogleID: string }) {
     }
 
     useEffect(() => {
-        console.log("DO");
+        // console.log("DO");
         getVideoInfo();
     }, []);
 
     if (videoInfo == null) {
-        console.log(videoInfo);
         return (
             <div>Loading...</div>
         )
     }
-    // let vidObjects = [];
-    // for (let index = 0; index < videoInfo.length; index++) {
-    //     const element = videoInfo[index];
-    //     vidObjects.push(
-    //         <div key={index} className="shrink-0 snap-center w-1/4">
-    //             <VideoBox includeDate={false} width={480} fullVideoDetails={element} />
-    //         </div>
-    //     );
-    // }
 
-    // console.log(videoInfo);
-    // return vidObjects;
     return (
         <Carousel
-            swipeable={false}
+            swipeable={true}
             draggable={false}
             showDots={true}
             responsive={responsive}
@@ -149,14 +136,15 @@ export default function Dashboard() {
                 <div className="font-bold text-4xl mb-3">
                     Favorite Videos
                 </div>
-                <div className="col-span-full h-full">
+                <div className="col-span-full">
                     <FavoriteVideosDisplay currentUserGoogleID={currentUserGoogleID} />
                 </div>
 
-
-                {/* <FavoriteVideosDisplay currentUserGoogleID={currentUserGoogleID} /> */}
-
-
+                <div className="w-48 h-12 border-2 border-slate-800 rounded-full text-center place-content-center">
+                    <Link key={1} href="/custom-youtube/scheduler">
+                        <p className="font-['Garamond'] font-bold text-lg">YT Scheduler</p>
+                    </Link>
+                </div>
             </div>
         </main>
     );
