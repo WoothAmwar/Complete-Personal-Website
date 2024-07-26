@@ -118,7 +118,7 @@ interface TagSelectionDropDownProps {
   onTagSelect: (tagName: string) => void;
 }
 
-const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(({ onTagSelect }) => {
+const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function TagDropDown({onTagSelect}) {
   console.log("Reload options");
   const currentUserGoogleId = CurrentUserId();
   const [totalTagOptions, setTotalTagOptions] = useState<string[]>(["None"]);

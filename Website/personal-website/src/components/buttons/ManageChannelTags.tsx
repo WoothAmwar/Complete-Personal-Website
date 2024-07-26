@@ -1,7 +1,7 @@
 import Link from "next/link";
 import "@/app/globals.css";
 
-import { useState, useEffect, useRef, JSX, memo } from "react";
+import { useState, useEffect, useRef, JSX } from "react";
 
 import axios from "axios";
 
@@ -33,7 +33,7 @@ const style = {
 };
 
 
-export const ManageShowTag = memo(function ManageChannelTags(props: { channelName: any }) {
+export function ManageShowTag(props: { channelName: any }) {
     const [currentChannelTags, setChannelTags] = useState<string[]>([]);
     const [allTagOptions, setTotalTagOptions] = useState<string[]>([]);
     const [numTotalTags, setNumTotalTags] = useState(-1);
@@ -67,7 +67,7 @@ export const ManageShowTag = memo(function ManageChannelTags(props: { channelNam
         try {
             // http://localhost:5000/
             // https://anwarkader.com/
-            const response = await fetch(`http://localhost:5000/api/channels/tags/${currentUserGoogleId.toString()}`, {
+            const response = await fetch(`https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}`, {
                 method: 'PUT',
                 mode: 'cors',
                 credentials: 'include',
@@ -99,7 +99,7 @@ export const ManageShowTag = memo(function ManageChannelTags(props: { channelNam
         try {
             // http://localhost:5000/
             // https://anwarkader.com/
-            const response = await fetch(`http://localhost:5000/api/channels/tags/${currentUserGoogleId.toString()}`, {
+            const response = await fetch(`https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}`, {
                 method: 'DELETE',
                 mode: 'cors',
                 credentials: 'include',
@@ -127,7 +127,7 @@ export const ManageShowTag = memo(function ManageChannelTags(props: { channelNam
     useEffect(() => {
         // http://localhost:5000/
         // https://anwarkader.com/
-        fetch(`http://localhost:5000/api/channels/channelWithTags/${currentUserGoogleId.toString()}/${props.channelName.toString()}`, { method: 'GET', credentials: 'include' })
+        fetch(`https://anwarkader.com/api/channels/channelWithTags/${currentUserGoogleId.toString()}/${props.channelName.toString()}`, { method: 'GET', credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 const raw_data = JSON.parse(data["data"]);
@@ -147,7 +147,7 @@ export const ManageShowTag = memo(function ManageChannelTags(props: { channelNam
         // http://localhost:5000/
         // https://anwarkader.com/
         console.log("Got all tag options for channel")
-        fetch(`http://localhost:5000/api/channels/tags/${currentUserGoogleId.toString()}`, { method: 'GET', credentials: 'include' })
+        fetch(`https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}`, { method: 'GET', credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 // console.log(data);
@@ -165,7 +165,7 @@ export const ManageShowTag = memo(function ManageChannelTags(props: { channelNam
         try {
             // http://localhost:5000/
             // https://anwarkader.com/
-            const response = await fetch(`http://localhost:5000/api/channels/channelWithTags/${currentUserGoogleId}/${props.channelName}`, {
+            const response = await fetch(`https://anwarkader.com/api/channels/channelWithTags/${currentUserGoogleId}/${props.channelName}`, {
                 method: 'PUT',
                 mode: 'cors',
                 credentials: 'include',
@@ -197,7 +197,7 @@ export const ManageShowTag = memo(function ManageChannelTags(props: { channelNam
         try {
             // http://localhost:5000/
             // https://anwarkader.com/
-            const response = await fetch(`http://localhost:5000/api/channels/channelWithTags/${currentUserGoogleId}/${props.channelName}`, {
+            const response = await fetch(`https://anwarkader.com/api/channels/channelWithTags/${currentUserGoogleId}/${props.channelName}`, {
                 method: 'DELETE',
                 mode: 'cors',
                 credentials: 'include',
@@ -324,5 +324,5 @@ export const ManageShowTag = memo(function ManageChannelTags(props: { channelNam
             </Modal>
         </div>
     );
-});
+}
 

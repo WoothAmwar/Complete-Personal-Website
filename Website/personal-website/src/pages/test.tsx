@@ -130,12 +130,7 @@ export default function Test() {
         <div className="lg:text-green-400 md:text-yellow-400 sm:text-red-400 text-orange-300">
           Large screen has green text, medium screen has yellow text, small screen has red text, anything else has orange text
         </div>
-        <div>
-          Remember: 
-          <p>/users/googleID filter of category="tagTypes" ["userTagTypes"] is an Array where the user's current options for 
-            tags is stored</p>
-          <p>/users/googleID filter of category="channelTag" ["tagName"] is a String of the tag, which also contains "channelName"</p>
-        </div>
+
       </div>
 
     </main>
