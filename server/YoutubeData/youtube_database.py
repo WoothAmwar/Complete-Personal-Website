@@ -308,14 +308,14 @@ def add_favorite_video(googleID, fullVideoDetails):
     if check_video_in_favorite(googleID, fullVideoDetails):
         return "Already In"
 
-    videoChannelInfo = get_channel_of_video(fullVideoDetails["videoId"])
+    video_channel_info = get_channel_of_video(fullVideoDetails["videoId"])
     curr_user.insert_one({
         "category": "favoriteVideo",
         "videoId": fullVideoDetails["videoId"],
         "videoTitle": fullVideoDetails["videoTitle"],
         "uploadDate": fullVideoDetails["uploadDate"],
         "videoThumbnail": fullVideoDetails["videoThumbnail"],
-        "channelName": videoChannelInfo["channelNames"]
+        "channelName": video_channel_info["channelNames"]
     })
     return "Done"
 
@@ -327,6 +327,126 @@ def remove_favorite_video(googleID, fullVideoDetails):
 
     curr_user.delete_one(filter={"category": "favoriteVideo", "videoId": fullVideoDetails["videoId"]})
     return "Done"
+
+
+def get_all_tag_names(googleID):
+    """
+    Will find all current tag name options
+    :param googleID: To get specific user information
+    :return: String Array of all tag names
+    """
+    curr_user = db_users[googleID]
+    return curr_user.find_one(filter={"category":"tagTypes"})["userTagTypes"]
+
+
+def remove_tag_name(googleID, tag_name):
+    """
+    Will remove a tag from the available options and from all channels
+    :param tag_name: Tag name to remove
+    :param googleID: To get specific user information
+    :return: String of the removed tag name
+    """
+    curr_user = db_users[googleID]
+    tag_name = tag_name.replace('"', '')
+    old_tag_types = get_all_tag_names(googleID)
+    if tag_name not in old_tag_types:
+        return -1
+    old_tag_types.remove(tag_name)
+    curr_user.update_one(filter={"category": "tagTypes"},
+                         update={"$set": {"userTagTypes": old_tag_types}})
+
+    curr_user.delete_many(filter={"category": "channelTag", "tagName":tag_name})
+    return tag_name
+
+
+def add_tag_name(googleID, tag_name):
+    """
+    Adds a new tag in the tag options
+    :param googleID: To get specific user information
+    :param tag_name: Tag name to add
+    :return: The new tag that was added
+    """
+    curr_user = db_users[googleID]
+    tag_name = tag_name.replace('"', '')
+    old_tag_types = get_all_tag_names(googleID)
+    if tag_name in old_tag_types:
+        return -1
+    old_tag_types.append(tag_name)
+    curr_user.update_one(filter={"category": "tagTypes"},
+                         update={"$set": {"userTagTypes": old_tag_types}})
+    return tag_name
+
+
+def add_tag_channel(googleID, channel_name, tag_name):
+    """
+    Adds an entry to show that a channel has a specific tag
+    :param tag_name: The tag name to add to channel
+    :param channel_name: Name of channel to add tag entry for
+    :param googleID: To get specific user information
+    :return: The Tag and Channel of which were updated
+    """
+    curr_user = db_users[googleID]
+    # Make sure that the channel doesn't already have this tag
+    tag_name = tag_name.replace('"', '')
+    if tag_name in get_tags_of_channel(googleID, channel_name):
+        return -1, -1
+    curr_user.insert_one({
+        "category": "channelTag",
+        "channelName": channel_name,
+        "tagName": tag_name
+    })
+    return tag_name, channel_name
+
+
+def remove_tag_channel(googleID, channel_name, tag_name):
+    """
+    Remove the tag from a specific channel
+    :param tag_name: Tag name to add to channel
+    :param googleID: To get specific user information
+    :param channel_name: Channel Name to affect
+    :return: Channel and Tag name that was affected
+    """
+    curr_user = db_users[googleID]
+    # make sure that the channel does have this tag
+    tag_name = str(tag_name).replace('"', '')
+    if tag_name not in get_tags_of_channel(googleID, channel_name):
+        return -1, -1
+    curr_user.delete_one(filter={
+        "category": "channelTag",
+        "channelName": channel_name,
+        "tagName": tag_name
+    })
+    return tag_name, channel_name
+
+
+def get_tags_of_channel(googleID, channel_name):
+    """
+    Finds all the tags for a specific channel
+    :param googleID: To get specific user information
+    :param channel_name: Channel to find tags for
+    :return: String Array of the tags for a channel
+    """
+    curr_user = db_users[googleID]
+    full_channel_tag_info = list(curr_user.find(filter={"category":"channelTag", "channelName":channel_name}))
+    output = []
+    for channel_tag in full_channel_tag_info:
+        output.append(channel_tag["tagName"].replace('"', ''))
+    return output
+
+
+def get_channels_of_tag(googleID, tag_name):
+    """
+    Finds all the channels that have a specific tag
+    :param googleID: To get specific user information
+    :param tag_name: Tag to find channels which have it
+    :return: String Array of channel names with the
+    """
+    curr_user = db_users[googleID]
+    all_channel_info = list(curr_user.find(filter={"category":"channelTag", "tagName":tag_name}))
+    output = []
+    for channel in all_channel_info:
+        output.append(channel["channelName"])
+    return output
 
 
 # --------- TESTING FUNCTIONS BELOW
@@ -407,9 +527,11 @@ def main():
     # TODO - make sure to use the user's respective youtube API for this
     # TODO - use the below function to do the update for each user
     # move_update_to_user("113385767862195154808")
-    # get_all_user_channels("113385767862195154808")
-    print(db_users.list_collection_names())
-    print("Added all of Test Data ")
+    googleID = "113385767862195154808"
+    # print(db_users.list_collection_names())
+    # print("Added all of Test Data ")
+    # print("All tag names:", get_all_tag_names("113385767862195154808"))
+    print("Added tag programming:", add_tag_name(googleID, "programming"))
 
 
 if __name__ == "__main__":

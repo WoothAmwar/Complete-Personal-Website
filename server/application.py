@@ -9,9 +9,10 @@ from flask_cors import CORS, cross_origin
 
 from WebText.link_saving import Novel
 from YoutubeData.youtube import complete_reload, test
-from YoutubeData.youtube_database import get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos, \
+from YoutubeData.youtube_database import (get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos, \
     add_favorite_video, get_favorite_videos, remove_favorite_video, get_update_user_channels, \
-    get_unassigned_user_channels, set_update_schedule_channel
+    get_unassigned_user_channels, set_update_schedule_channel, get_all_tag_names, add_tag_channel, remove_tag_channel,
+    get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name)
 
 
 # from random import randint
@@ -213,7 +214,7 @@ def return_monthly_schedule_channels(googleID):
 @application.route("/api/channels/unassigned/<googleID>", methods=['GET', 'PUT'])
 def return_unassigned_schedule_channels(googleID):
     """
-    Finds the information for all of the channels that the user has not specified
+    Finds the information for all the channels that the user has not specified
     :param googleID: User ID used to store and retrieve information
     :return: JSON of full information for unassigned channels, descending order by channel name
     """
@@ -257,6 +258,55 @@ def manage_favorite_videos(googleID):
         return jsonify({'data': action})
 
 
+@application.route("/api/channels/tags/<googleID>", methods=['GET', 'PUT', 'DELETE'])
+def manage_tag_names(googleID):
+    if request.method == 'GET':
+        tags = json_util.dumps(get_all_tag_names(googleID))
+        return jsonify({'data': tags})
+
+    elif request.method == 'PUT':
+        print("RAW PUT TAG:", json.loads(request.data)["data"])
+        new_tag = json.loads(request.data)["data"]["db_text"]
+        added_tag = json_util.dumps(add_tag_name(googleID, new_tag))
+        return jsonify({"data": added_tag})
+
+    elif request.method == 'DELETE':
+        print("RAW DELETE DATA:", json.loads(request.data)["data"]["tagName"])
+        delete_tag = json.loads(request.data)["data"]["tagName"]
+        removed_tag = json_util.dumps(remove_tag_name(googleID, delete_tag))
+        print("Delete DTA RETURN:", removed_tag, "of type", type(removed_tag))
+        return jsonify({"data": removed_tag})
+
+
+@application.route("/api/channels/channelsOfTag/<googleID>/<tagName>", methods=['GET'])
+def return_channels_of_tag(googleID, tagName):
+    # filter_tag_name = json.loads(request.data)["data"]
+    if tagName == "None":
+        return jsonify({"data":json_util.dumps(["None"])})
+    channel_names = json_util.dumps(get_channels_of_tag(googleID, tagName))
+    return jsonify({"data": channel_names})
+
+
+@application.route("/api/channels/channelWithTags/<googleID>/<channelName>", methods=['GET', 'PUT', 'DELETE'])
+def operate_on_tags_of_channel(googleID, channelName):
+    if request.method == 'GET':
+        # Returns all the tags for a specific channel
+        tags_of_channel = json_util.dumps(get_tags_of_channel(googleID, channelName))
+        return jsonify({"data": tags_of_channel})
+
+    elif request.method == 'PUT':
+        # Adds the tag passed in as body to the channel
+        tag_to_add = json.loads(request.data)["data"]["tagName"]
+        added_tag_name, added_channel_name = add_tag_channel(googleID, channelName, tag_to_add)
+        return jsonify({"data":[added_tag_name, added_channel_name]})
+
+    elif request.method == 'DELETE':
+        # Removes the tag passed in as body to the channel
+        tag_to_remove = json.loads(request.data)["data"]["tagName"]
+        removed_tag_name, removed_channel_name = remove_tag_channel(googleID, channelName, tag_to_remove)
+        return jsonify({"data": [removed_tag_name, removed_channel_name]})
+
+
 # ----------------- TESTING -----------------
 # some bits of text for the page.
 header_text = '''
@@ -276,7 +326,7 @@ application.add_url_rule('/', 'index', (lambda: header_text + instructions + foo
 application.add_url_rule('/<username>', 'hello', (lambda username: header_text + username + home_link + footer_text))
 
 if __name__ == "__main__":
-    # scheduler.start()
+    scheduler.start()
     # debug=True for development, remove for production
     # application.debug = True
     application.run(debug=True, port=5000)

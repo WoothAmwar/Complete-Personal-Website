@@ -130,7 +130,7 @@ export default function Scheduler() {
                 // http://localhost:5000/
                 // https://anwarkader.com/
 
-                const response = await fetch(`http://localhost:5000/api/channels/${dbBtnOptions[selectedIndex]}/${currentUserGoogleID}`, {
+                const response = await fetch(`https://anwarkader.com/api/channels/${dbBtnOptions[selectedIndex]}/${currentUserGoogleID}`, {
                     method: 'PUT',
                     mode: 'cors',
                     credentials: 'include',
@@ -246,7 +246,7 @@ export default function Scheduler() {
             try {
                 // http://localhost:5000/
                 // https://anwarkader.com/
-                const response = await fetch(`http://localhost:5000/api/channels/${category}/${currentUserGoogleId.toString()}`, { 
+                const response = await fetch(`https://anwarkader.com/api/channels/${category}/${currentUserGoogleId.toString()}`, { 
                     method: 'GET', 
                     mode: 'cors',
                     credentials: 'include',

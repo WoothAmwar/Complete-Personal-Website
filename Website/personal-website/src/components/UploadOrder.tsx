@@ -52,7 +52,7 @@ export default function OrderByTime() {
 
     for (var i = 0; i < uploadKeys.length; i++) {
         finalData.push(
-            <VideoBox key={guidGenerator()} includeDate={true} width={wd} fullVideoDetails={uploadDict[parseInt(uploadKeys[i])]}/>
+            <VideoBox key={guidGenerator()} includeDate={true} fullVideoDetails={uploadDict[parseInt(uploadKeys[i])]}/>
         );
     }
 

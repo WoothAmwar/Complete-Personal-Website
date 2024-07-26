@@ -75,13 +75,13 @@ function FavoriteVideosDisplay(props: { currentUserGoogleID: string }) {
             customTransition="all .5"
             transitionDuration={500}
             containerClass="carousel-container"
-            removeArrowOnDeviceType={["tablet", "mobile"]}
+            removeArrowOnDeviceType={["mobile"]}
             dotListClass="custom-dot-list-style"
             itemClass="carousel-item-padding-40-px"
         >
             {videoInfo.map((element: any, index: number) => (
                 <div key={index} className="mb-10 mx-2">
-                    <VideoBox includeDate={false} width={480} fullVideoDetails={element} />
+                    <VideoBox includeDate={false} fullVideoDetails={element} />
                 </div>
             ))}
         </Carousel>

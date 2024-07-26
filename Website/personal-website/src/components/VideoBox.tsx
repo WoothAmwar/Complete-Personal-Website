@@ -185,14 +185,12 @@ function VideoActionItems(videoID: string, fullVideoDetails: any) {
     )
 }
 
-export function VideoBox(props: { includeDate: boolean, width: number, fullVideoDetails: any }) {
-    // var wd = 360  // 480
-    var ht = props.width / 480 * 270  // 270
+export function VideoBox(props: { includeDate: boolean, fullVideoDetails: any }) {
     var embedLink = "/custom-youtube/";
     return (
         <div key={guidGenerator()} className="rounded-xl mb-2">
             <Link href={embedLink.concat(props.fullVideoDetails["videoId"])}>
-                <img src={props.fullVideoDetails["videoThumbnail"]} alt="Thumbnail" className="mb-1 rounded-xl" width={props.width} height={ht} />
+                <img src={props.fullVideoDetails["videoThumbnail"]} alt="Thumbnail" className="mb-1 rounded-xl" width="100%" height="100%" />
             </Link>
             {/* <p className="font-semibold text-2x1">{props.fullVideoDetails["videoTitle"]}</p> */}
             <div className="grid grid-flow-col grid-cols-5 row-span-1">
