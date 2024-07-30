@@ -83,7 +83,7 @@ const UseTime = () => {
 }
 
 function UseChannel(props: { showChannels: string[] }) {
-  console.log("Show Channels:", props.showChannels)
+  // console.log("Show Channels:", props.showChannels)
   return (
     <div className="grid grid-cols-1 font-mono">
       {<OrderByChannel channelsToInclude={props.showChannels} />}
@@ -119,7 +119,7 @@ interface TagSelectionDropDownProps {
 }
 
 const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function TagDropDown({onTagSelect}) {
-  console.log("Reload options");
+  // console.log("Reload options");
   const currentUserGoogleId = CurrentUserId();
   const [totalTagOptions, setTotalTagOptions] = useState<string[]>(["None"]);
 

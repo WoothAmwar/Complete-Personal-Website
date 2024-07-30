@@ -12,7 +12,8 @@ from YoutubeData.youtube import complete_reload, test
 from YoutubeData.youtube_database import (get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos, \
     add_favorite_video, get_favorite_videos, remove_favorite_video, get_update_user_channels, \
     get_unassigned_user_channels, set_update_schedule_channel, get_all_tag_names, add_tag_channel, remove_tag_channel,
-    get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name)
+    get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name,
+    get_color_of_tag, add_color_of_tag, change_color_of_tag)
 
 
 # from random import randint
@@ -79,7 +80,7 @@ def youtube_job():
     Calls the return_home function at a specific time every day
     :return: None
     """
-    print("Doing the thing")
+    # print("Doing the thing")
     mongo_insert_test(calledAsIntended=False)
     complete_reload(doReturn=False)
     # with scheduler.app.app_context():
@@ -135,7 +136,7 @@ def return_all_channels(googleID):
     # response = jsonify(json_util.dumps(get_all_channels(googleID)))
     # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
     # return response
-    print("That thing is here", googleID)
+    # print("That thing is here", googleID)
     return json_util.dumps(get_all_user_channels(googleID))
 
 
@@ -144,7 +145,7 @@ def return_all_videos(googleID):
     # response = jsonify(json_util.dumps(get_all_videos(googleID)))
     # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
     # return response
-    print("That thing is here", googleID)
+    # print("That thing is here", googleID)
     return json_util.dumps(get_all_videos(googleID))
 
 
@@ -162,8 +163,8 @@ def return_daily_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        print("VINFO:", channels_to_move)
-        print("LOC:", move_location)
+        # print("VINFO:", channels_to_move)
+        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
@@ -183,8 +184,8 @@ def return_weekly_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        print("VINFO:", channels_to_move)
-        print("LOC:", move_location)
+        # print("VINFO:", channels_to_move)
+        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
@@ -204,8 +205,8 @@ def return_monthly_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        print("VINFO:", channels_to_move)
-        print("LOC:", move_location)
+        # print("VINFO:", channels_to_move)
+        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
@@ -230,8 +231,8 @@ def return_unassigned_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        print("VINFO:", channels_to_move)
-        print("LOC:", move_location)
+        # print("VINFO:", channels_to_move)
+        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
@@ -265,17 +266,36 @@ def manage_tag_names(googleID):
         return jsonify({'data': tags})
 
     elif request.method == 'PUT':
-        print("RAW PUT TAG:", json.loads(request.data)["data"])
+        # print("RAW PUT TAG:", json.loads(request.data)["data"])
         new_tag = json.loads(request.data)["data"]["db_text"]
-        added_tag = json_util.dumps(add_tag_name(googleID, new_tag))
+        added_tag = add_tag_name(googleID, new_tag)
+        # print(f"Adding the tag {added_tag} with default color gray")
+        add_color_of_tag(googleID, added_tag, tag_color="gray")
+        added_tag = json_util.dumps(added_tag)
         return jsonify({"data": added_tag})
 
     elif request.method == 'DELETE':
-        print("RAW DELETE DATA:", json.loads(request.data)["data"]["tagName"])
+        # print("RAW DELETE DATA:", json.loads(request.data)["data"]["tagName"])
         delete_tag = json.loads(request.data)["data"]["tagName"]
         removed_tag = json_util.dumps(remove_tag_name(googleID, delete_tag))
-        print("Delete DTA RETURN:", removed_tag, "of type", type(removed_tag))
+        # print("Delete DTA RETURN:", removed_tag, "of type", type(removed_tag))
         return jsonify({"data": removed_tag})
+
+
+@application.route("/api/channels/colorsOfTag/<googleID>/<tagName>", methods=['GET', 'PUT'])
+def manage_tag_colors(googleID, tagName):
+    if request.method == "GET":
+        tag_color = json_util.dumps(get_color_of_tag(googleID, tagName))
+        # print(f"Got the tag color of {tagName} as {tag_color}, which is type of {type(tag_color)}")
+        return jsonify({"data": tag_color})
+
+    elif request.method == "PUT":
+        # Error - tagColor not there
+        # print(json.loads(request.data))
+        new_color = json.loads(request.data)["data"]["tagColor"]
+        new_tag_color = json_util.dumps(change_color_of_tag(googleID, tagName, new_color))
+        # print(f"Changed the tag color of {tagName} to {new_tag_color}")
+        return jsonify({"data": new_tag_color})
 
 
 @application.route("/api/channels/channelsOfTag/<googleID>/<tagName>", methods=['GET'])

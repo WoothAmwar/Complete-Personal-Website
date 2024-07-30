@@ -55,7 +55,7 @@ export default function OrderByChannel(props: { channelsToInclude: string[] }) {
       </div>
     )
   } else if (props.channelsToInclude[0] === "None") {
-    console.log("No Channels to Filter with", props.channelsToInclude);
+    // console.log("No Channels to Filter with", props.channelsToInclude);
     doFilter = false;
   } else {
     doFilter = true;
@@ -65,10 +65,12 @@ export default function OrderByChannel(props: { channelsToInclude: string[] }) {
     let currRow = [];
     if (!doFilter || (doFilter && (props.channelsToInclude.indexOf(responseChannelData[i]["channelNames"]) != -1))) {
       currRow.push(
-        <div key={i} className="text-left">
+        <div key={i} className="text-left flex">
           <ManageShowTag channelName={responseChannelData[i]["channelNames"]} />
-          <img src={responseChannelData[i]["channelImages"]} alt="Channel Image" width={wd / 2 - 30} height={ht / 2 - 30} />
-          <p className="font-['Helvetica'] text-2xl font-semibold">{responseChannelData[i]["channelNames"]}</p>
+          <div>
+            <img src={responseChannelData[i]["channelImages"]} alt="Channel Image" width={wd / 2 - 30} height={ht / 2 - 30} />
+            <p className="font-['Helvetica'] text-2xl font-semibold">{responseChannelData[i]["channelNames"]}</p>
+          </div>
         </div>
       )
       for (let j = 0; j < responseVideoData[i].length; j++) {

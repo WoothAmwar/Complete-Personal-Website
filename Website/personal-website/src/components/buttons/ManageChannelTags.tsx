@@ -1,7 +1,7 @@
 import Link from "next/link";
 import "@/app/globals.css";
 
-import { useState, useEffect, useRef, JSX } from "react";
+import { useState, useEffect, useRef, JSX, Fragment, memo, useMemo, useCallback } from "react";
 
 import axios from "axios";
 
@@ -11,6 +11,11 @@ import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import TextField from '@mui/material/TextField';
 
+import { Menu, Transition } from '@headlessui/react'
+import { ChevronDownIcon } from '@heroicons/react/20/solid'
+
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CheckIcon from '@mui/icons-material/Check';
 
 import {
     CurrentUserId
@@ -32,6 +37,78 @@ const style = {
     p: 4
 };
 
+function classNames(...classes: string[]) {
+    return classes.filter(Boolean).join(' ')
+}
+
+const getTailwindBgColor = (color: string, strengthNumber: number) => {
+    return `bg-${color}-${strengthNumber}`;
+}
+
+function channelTagUI(tagNames: string[], updateVal: number, onButtonClick: () => void) {
+    const [uiSymbols, setUISymbols] = useState<string[]>([" ", " ", " "]);
+    const [uiBackgrounds, setUIBackgrouds] = useState<string[]>([]);
+    const DEFAULT_BG = "bg-gray-900";
+    const currentUserGoogleId = CurrentUserId();
+
+    // TODO - X - Get the background information from the db for each uiSymbol
+    useEffect(() => {
+        var defaultSymbolValues: string[] = [" ", " ", " "];
+        for (var i = 0; i < Math.min(tagNames.length, 3); i++) {
+            defaultSymbolValues[i] = tagNames[i].slice(0, 1);
+        }
+        setUIBackgrouds([]); // Reset the backgrounds
+
+        const fetchColorPromises = tagNames.map(tagname =>
+            // http://localhost:5000/
+            // https://anwarkader.com/
+            fetch(`https://anwarkader.com/api/channels/colorsOfTag/${currentUserGoogleId.toString()}/${tagname}`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(data => ({
+                    tagname,
+                    color: JSON.parse(data["data"])
+                }))
+        );
+
+        Promise.all(fetchColorPromises)
+            .then(results => {
+                setUIBackgrouds(results.map(result => result.color));
+                //console.log("Set colors for tags:", results);
+            })
+            .catch(error => {
+                console.error("Error fetching tag colors:", error);
+            });
+
+        setUISymbols(defaultSymbolValues);
+
+    }, [tagNames, updateVal])
+
+    return (
+        <div className="grid grid-cols-1 grid-rows-4 gap-y-1 text-center w-10">
+            <div className={`border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6 
+                ${(uiSymbols[0] != " ") ? (getTailwindBgColor(uiBackgrounds[0], 400)) : (DEFAULT_BG)}`}>
+                {uiSymbols[0]}
+            </div>
+            <div className={`border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6
+                ${(uiSymbols[1] != " ") ? (getTailwindBgColor(uiBackgrounds[1], 400)) : (DEFAULT_BG)}`}>
+                {uiSymbols[1]}
+            </div>
+            <div className={`border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6
+                ${(uiSymbols[2] != " ") ? (getTailwindBgColor(uiBackgrounds[2], 400)) : (DEFAULT_BG)}`}>
+                {uiSymbols[2]}
+            </div>
+            <div className="border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6">
+                <button onClick={onButtonClick} className="m-auto place-content-center text-slate-400 w-full h-full">
+                    :
+                </button>
+            </div>
+
+        </div>
+    )
+}
 
 export function ManageShowTag(props: { channelName: any }) {
     const [currentChannelTags, setChannelTags] = useState<string[]>([]);
@@ -47,22 +124,28 @@ export function ManageShowTag(props: { channelName: any }) {
     const [newTagText, setNewTagText] = useState("");
 
     const [openDeleteTagModal, setOpenDeleteModal] = useState(false);
-    const [deleteTagName, setDeleteTagName] = useState(""); 
+    const [deleteTagName, setDeleteTagName] = useState("");
     const handleDeleteModalClose = () => setOpenDeleteModal(false);
 
-    const handleOpenDeleteTag = (tagName: string) => {
+    // Used only to update channelTagUI
+    const [updateChannelTags, setUpdateChannelTags] = useState(0);
+
+    const handleOpenDeleteTag = useCallback((tagName: string) => {
         setOpenDeleteModal(true);
         setDeleteTagName(tagName);
-    }
+    }, []);
 
 
-    const handleChangeText = (event: any) => {
+    const handleChangeText = useCallback((event: any) => {
         setNewTagText(event.target.value);
-    };
+    }, []);
 
 
     const createNewTag = async () => {
-        console.log(newTagText);
+        // console.log(newTagText);
+        if (newTagText.length < 1) {
+            return;
+        }
         const db_text = newTagText.charAt(0).toUpperCase() + newTagText.slice(1);
         try {
             // http://localhost:5000/
@@ -83,10 +166,10 @@ export function ManageShowTag(props: { channelName: any }) {
             if (data["data"] == -1) {
                 return;
             }
-            console.log("Tag named", db_text, "added");
+            // console.log("Tag named", db_text, "added");
 
             setChannelTags(prevTotalTags => [...prevTotalTags, data["data"]]);
-            console.log(data["data"], "versus", data["data"].toString());
+            // console.log(data["data"], "versus", data["data"].toString());
             setNumTotalTags(numTotalTags + 1);
             add_to_favorite(data["data"])
         }
@@ -113,7 +196,7 @@ export function ManageShowTag(props: { channelName: any }) {
             }
             const data = await response.json();
 
-            console.log("DEL DATA:", data);
+            // console.log("DEL DATA:", data);
             setNumTotalTags(numTotalTags - 1);
             window.location.reload();
             return data;
@@ -135,7 +218,7 @@ export function ManageShowTag(props: { channelName: any }) {
                 for (var i = 0; i < raw_data.length; i++) {
                     tag_list.push(raw_data[i]);
                 }
-                console.log("Setting Channel Tags:", tag_list);
+                // console.log("Setting Channel Tags:", tag_list);
                 setChannelTags(tag_list);
                 // console.log("Setting Tags for", props.channelName.toString());
             })
@@ -146,7 +229,7 @@ export function ManageShowTag(props: { channelName: any }) {
     useEffect(() => {
         // http://localhost:5000/
         // https://anwarkader.com/
-        console.log("Got all tag options for channel")
+        // console.log("Got all tag options for channel")
         fetch(`https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}`, { method: 'GET', credentials: 'include' })
             .then(response => response.json())
             .then(data => {
@@ -161,7 +244,7 @@ export function ManageShowTag(props: { channelName: any }) {
     // function ListTags(props: { googleID: any, channelName: any, tagOptions: String[], currentTags: String[] }) {
 
     const add_to_favorite = async (tagName: string) => {
-        console.log("Add this:", tagName);
+        // console.log("Add this:", tagName);
         try {
             // http://localhost:5000/
             // https://anwarkader.com/
@@ -181,7 +264,7 @@ export function ManageShowTag(props: { channelName: any }) {
             }
 
             const data = await response.json();
-            console.log("Adding", data);
+            // console.log("Adding", data);
             if (data["data"][0] != -1) {
                 setChannelTags(prevTags => [...prevTags, data["data"][0]]);
             }
@@ -193,7 +276,7 @@ export function ManageShowTag(props: { channelName: any }) {
     };
 
     const delete_from_favorite = async (tagName: string) => {
-        console.log("Delete this:", tagName);
+        // console.log("Delete this:", tagName);
         try {
             // http://localhost:5000/
             // https://anwarkader.com/
@@ -213,7 +296,7 @@ export function ManageShowTag(props: { channelName: any }) {
             }
 
             const data = await response.json();
-            console.log("Delete dta:", data);
+            // console.log("Delete dta:", data);
             if (data["data"][0] != -1) {
                 // var saved_channel_tags = currentChannelTags;
                 // saved_channel_tags.splice(currentChannelTags.indexOf(tagName, 0), 1);
@@ -227,22 +310,131 @@ export function ManageShowTag(props: { channelName: any }) {
         }
     };
 
-    const ListItem: React.FC<{ tagName: any }> = ({ tagName }) => {
+    const TagColorSelectionDropdown = memo(function TagColDropDown(props: { tagName: string | any }) {
+        const TAG_COLORS = [["red", "orange", "amber", "yellow", "lime", "green"], ["emerald", "teal",
+            "cyan", "sky", "blue", "indigo"], ["violet", "purple", "fuchsia", "pink", "rose",
+            "stone"]
+        ]
+
+        const [currentTagBG, setCurrentTagBG] = useState("");
+
+        useEffect(() => {
+            // TODO - X - get the color for the corresponding tag, saved as "gray", "red", etc. not "bg-gray-400"
+            // const tagColor = "blue";
+            // setCurrentTagBG(getTailwindBgColor(tagColor, 400));
+            // http://localhost:5000/
+            // https://anwarkader.com/
+            fetch(`https://anwarkader.com/api/channels/colorsOfTag/${currentUserGoogleId.toString()}/${props.tagName}`, {
+                method: 'GET', credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    setCurrentTagBG(getTailwindBgColor(JSON.parse(data["data"]), 400));
+                    // console.log("Getting the color", data["data"], "for", props.tagName);
+                })
+        }, [props.tagName])
+
+        const onTagColorClick = (color: string) => {
+            // TODO - X - set the color of the corresponding tag in the db
+            // console.log(`Change ${props.tagName.toString()} to ${getTailwindBgColor(color, 00)}-400`);
+            // setCurrentTagBG(getTailwindBgColor(color, 400));
+
+            // http://localhost:5000/
+            // https://anwarkader.com/
+            fetch(`https://anwarkader.com/api/channels/colorsOfTag/${currentUserGoogleId.toString()}/${props.tagName}`, {
+                method: 'PUT',
+                mode: 'cors',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: { "tagColor": color } }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    setCurrentTagBG(getTailwindBgColor(JSON.parse(data["data"]), 400));
+                    setUpdateChannelTags(updateChannelTags + 1);
+                    // console.log("Setting the color", data["data"], "for", props.tagName);
+                })
+        }
+
         return (
-            <div className="grid grid-cols-2">
+            <Menu as="div" className="relative inline-block text-left">
                 <div>
-                    {currentChannelTags.includes(tagName) ? (
-                        <button onClick={() => delete_from_favorite(tagName)}>
-                            <p>{tagName} Already Added</p>
-                        </button>
-                    ) : (
-                        <button onClick={() => add_to_favorite(tagName)}>
-                            <p>{tagName} Not Added</p>
-                        </button>
-                    )}
+                    <Menu.Button className={`border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6 ${currentTagBG}`}>
+                        <ChevronDownIcon className="-mr-1 h-5 w-5 text-zinc-950" aria-hidden="true" />
+                    </Menu.Button>
                 </div>
+
+                <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-100"
+                    enterFrom="transform opacity-0 scale-95"
+                    enterTo="transform opacity-100 scale-100"
+                    leave="transition ease-in duration-75"
+                    leaveFrom="transform opacity-100 scale-100"
+                    leaveTo="transform opacity-0 scale-95"
+                >
+                    <Menu.Items className="absolute right-0 z-10 my-2 w-28 h-48 origin-top-right rounded-md bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 
+                    grid grid-flow-row grid-cols-3 auto-rows-min flex justify-center
+                    focus:outline-none">
+                        {
+                            TAG_COLORS.map((colorArray, arr_index) => (
+                                <div className="col-span-1" key={arr_index}>
+                                    {
+                                        colorArray.map((tagColor, index) => (
+                                            <Menu.Item key={index}>
+                                                {({ active }) => (
+                                                    <button
+                                                        className={classNames(
+                                                            active ? 'bg-gray-100 text-gray-400' : 'text-gray-200',
+                                                            'block px-2 py-1 text-sm'
+                                                        )}
+                                                        onClick={() => onTagColorClick(tagColor)}
+                                                    >
+                                                        <div className={`border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6 ${getTailwindBgColor(tagColor, 400)}`}>
+                                                        </div>
+                                                    </button>
+                                                )}
+                                            </Menu.Item>
+                                        ))
+                                    }
+                                </div>
+                            ))
+                        }
+                    </Menu.Items>
+                </Transition>
+            </Menu>
+        )
+    }, (prevProps, nextProps) => {
+        return prevProps.tagName === nextProps.tagName;
+    });
+
+    const ListItem: React.FC<{ tagName: any }> = memo(({ tagName }) => {
+        // const channelHasTag: Boolean = currentChannelTags.includes(tagName);
+        const MemoizedTagColorDropdown = useMemo(() => (
+            <TagColorSelectionDropdown tagName={tagName.toString()} />
+        ), [tagName]);
+
+        return (
+            <div className="grid grid-cols-5 row-span-1 justify-items-stretch ml-4">
                 <div>
-                    <button onClick={() => handleOpenDeleteTag(tagName)}>Delete Tag: {tagName}</button>
+                    {/* <TagColorSelectionDropdown tagName={tagName.toString()} /> */}
+                    {MemoizedTagColorDropdown}
+                </div>
+                <div className="col-start-2 col-span-3">
+                    <button className="grid grid-cols-3 w-full" onClick={() =>
+                        (currentChannelTags.includes(tagName) ? (delete_from_favorite(tagName)) : (add_to_favorite(tagName)))}
+                    >
+                        <p className="text-left col-span-2">{tagName}</p>
+                        <div>{(currentChannelTags.includes(tagName) ? (<CheckIcon />) : (""))}</div>
+                    </button>
+                </div>
+                <div className="col-start-5 justify-self-end">
+                    <button onClick={() => handleOpenDeleteTag(tagName)}>
+                        {/* Delete Tag: {tagName} */}
+                        <DeleteOutlineIcon />
+                    </button>
                     <Modal
                         open={openDeleteTagModal}
                         onClose={handleDeleteModalClose}
@@ -251,7 +443,7 @@ export function ManageShowTag(props: { channelName: any }) {
                     >
                         <Box sx={style} className="rounded-3xl">
                             <Typography id="modal-modal-title" variant="h4" component="h1" className="p-5">
-                                Tags
+                                Delete {deleteTagName}
                             </Typography>
 
                             <Typography id="modal-modal-description" sx={{ mt: 2 }}>
@@ -259,7 +451,7 @@ export function ManageShowTag(props: { channelName: any }) {
                             </Typography>
                             <div className="font-bold italic">{deleteTagName}</div>
                             <div className="grid grid-cols-2">
-                                <button onClick={() => { handleDeleteModalClose(); delete_from_favorite(deleteTagName); delete_tag(deleteTagName);}}>Yes</button>
+                                <button onClick={() => { handleDeleteModalClose(); delete_from_favorite(deleteTagName); delete_tag(deleteTagName); }}>Yes</button>
                                 <button onClick={handleDeleteModalClose}>Cancel</button>
                             </div>
 
@@ -268,15 +460,12 @@ export function ManageShowTag(props: { channelName: any }) {
                 </div>
             </div>
         )
-    };
-
-
-    // function ManageTagsModal(props: { googleID: any, channelName: any, tagOptions: String[], currentTags: String[] }) {
-
+    });
 
     return (
         <div>
-            <Button variant="contained"
+            {channelTagUI(currentChannelTags, updateChannelTags, handleOpen)}
+            {/* <Button variant="contained"
                 sx={{
                     "&.MuiButtonBase-root:hover": {
                         bgcolor: "#1e40af"
@@ -284,7 +473,7 @@ export function ManageShowTag(props: { channelName: any }) {
                 }} className="rounded-lg bg-black text-white font-['Garamond'] font-semibold text-md" onClick={handleOpen}
             >
                 {currentChannelTags.join(" ")}
-            </Button>
+            </Button> */}
             <Modal
                 open={open}
                 onClose={handleClose}
@@ -293,18 +482,18 @@ export function ManageShowTag(props: { channelName: any }) {
             >
                 <Box sx={style} className="rounded-3xl">
                     <Typography id="modal-modal-title" variant="h4" component="h1" className="p-5">
-                        Tags
+                        {props.channelName} Tags
                     </Typography>
 
-                    <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                    {/* <Typography id="modal-modal-description" sx={{ mt: 2 }}>
                         Modal Info
-                    </Typography>
+                    </Typography> */}
 
-                    <div>
+                    {/* <div>
                         <p>Name: {props.channelName}</p>
                         <p>All Tags: {allTagOptions}</p>
                         <p>Channel Tags: {currentChannelTags.join(" ")}</p>
-                    </div>
+                    </div> */}
 
                     <div>
                         {allTagOptions.map((tagName, index) => (
@@ -313,6 +502,7 @@ export function ManageShowTag(props: { channelName: any }) {
                             </div>
                         ))}
                         <div className="grid grid-cols-2 row-span-1 mt-2">
+
                             <TextField InputProps={{
                                 style: { color: '#e7e5e4' }
                             }} size="small" id="outlined-basic" label="New Tag Name" variant="outlined" value={newTagText} onChange={handleChangeText} color="primary" focused />

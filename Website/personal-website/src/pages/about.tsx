@@ -37,7 +37,7 @@ export default function About() {
       </div>
 
       <div>
-        Alter: {thing}
+        Alter ID: {thing}
       </div>
     </div>
     </CookiesProvider>

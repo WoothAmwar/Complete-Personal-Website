@@ -416,6 +416,12 @@ def remove_tag_channel(googleID, channel_name, tag_name):
         "channelName": channel_name,
         "tagName": tag_name
     })
+
+    curr_user.delete_one(filter={
+        "category": "tagColor",
+        "tagName": tag_name
+    })
+
     return tag_name, channel_name
 
 
@@ -447,6 +453,44 @@ def get_channels_of_tag(googleID, tag_name):
     for channel in all_channel_info:
         output.append(channel["channelName"])
     return output
+
+
+def get_color_of_tag(googleID, tag_name):
+    curr_user = db_users[googleID]
+    tag_color_info = curr_user.find_one(filter={
+        "category": "tagColor",
+        "tagName": tag_name
+    })
+    if tag_color_info:
+        # print(f"Color of {tag_name} is {tag_color_info["tagColor"]}")
+        return tag_color_info["tagColor"]
+    # print("Error: No Tag_Color_Info information for tag -", tag_name)
+    return "gray"
+
+
+def add_color_of_tag(googleID, tag_name, tag_color):
+    """
+
+    :param googleID: To get specific user information
+    :param tag_name: String of the tag name
+    :param tag_color: String like "blue", "red", etc.
+    :return: The tag name and color that were added
+    """
+    curr_user = db_users[googleID]
+    # print(f"------------------{tag_name} added with the color {tag_color}")
+    curr_user.insert_one({
+        "category": "tagColor",
+        "tagName": tag_name,
+        "tagColor": tag_color
+    })
+    return tag_name, tag_color
+
+
+def change_color_of_tag(googleID, tag_name, new_tag_color):
+    curr_user = db_users[googleID]
+    curr_user.update_one(filter={"category": "tagColor", "tagName": tag_name},
+                         update={"$set": {"tagColor": new_tag_color}})
+    return new_tag_color
 
 
 # --------- TESTING FUNCTIONS BELOW
