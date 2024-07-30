@@ -132,7 +132,7 @@ const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function T
       .then(data => {
         setTotalTagOptions(JSON.parse(data["data"]));
       })
-  }, [currentUserGoogleId]);
+  }, []);
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -216,7 +216,7 @@ export default function HomePage() {
         // console.log("Setting Tags for", props.channelName.toString());
       })
       .catch(err => console.error("Error getting channels of tag", err));
-  }, [currentUserGoogleId]);
+  }, []);
 
   if (orderMethod == "byChannel") {
     return (

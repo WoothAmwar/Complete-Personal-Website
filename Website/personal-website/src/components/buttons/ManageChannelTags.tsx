@@ -45,7 +45,7 @@ const getTailwindBgColor = (color: string, strengthNumber: number) => {
     return `bg-${color}-${strengthNumber}`;
 }
 
-function channelTagUI(tagNames: string[], updateVal: number, onButtonClick: () => void) {
+function ChannelTagUI(tagNames: string[], updateVal: number, onButtonClick: () => void) {
     const [uiSymbols, setUISymbols] = useState<string[]>([" ", " ", " "]);
     const [uiBackgrounds, setUIBackgrouds] = useState<string[]>([]);
     const DEFAULT_BG = "bg-gray-900";
@@ -464,7 +464,7 @@ export function ManageShowTag(props: { channelName: any }) {
 
     return (
         <div>
-            {channelTagUI(currentChannelTags, updateChannelTags, handleOpen)}
+            {ChannelTagUI(currentChannelTags, updateChannelTags, handleOpen)}
             {/* <Button variant="contained"
                 sx={{
                     "&.MuiButtonBase-root:hover": {
