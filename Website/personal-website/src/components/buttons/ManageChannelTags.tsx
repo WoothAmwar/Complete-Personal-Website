@@ -410,11 +410,11 @@ export function ManageShowTag(props: { channelName: any }) {
         return prevProps.tagName === nextProps.tagName;
     });
 
-    const ListItem: React.FC<{ tagName: any }> = memo(({ tagName }) => {
+    const ListItem: React.FC<{ tagName: any }> = memo(function SingularItem(props: { tagName:any }) {
         // const channelHasTag: Boolean = currentChannelTags.includes(tagName);
         const MemoizedTagColorDropdown = useMemo(() => (
-            <TagColorSelectionDropdown tagName={tagName.toString()} />
-        ), [tagName]);
+            <TagColorSelectionDropdown tagName={props.tagName.toString()} />
+        ), [props.tagName]);
 
         return (
             <div className="grid grid-cols-5 row-span-1 justify-items-stretch ml-4">
@@ -424,14 +424,14 @@ export function ManageShowTag(props: { channelName: any }) {
                 </div>
                 <div className="col-start-2 col-span-3">
                     <button className="grid grid-cols-3 w-full" onClick={() =>
-                        (currentChannelTags.includes(tagName) ? (delete_from_favorite(tagName)) : (add_to_favorite(tagName)))}
+                        (currentChannelTags.includes(props.tagName) ? (delete_from_favorite(props.tagName)) : (add_to_favorite(props.tagName)))}
                     >
-                        <p className="text-left col-span-2">{tagName}</p>
-                        <div>{(currentChannelTags.includes(tagName) ? (<CheckIcon />) : (""))}</div>
+                        <p className="text-left col-span-2">{props.tagName}</p>
+                        <div>{(currentChannelTags.includes(props.tagName) ? (<CheckIcon />) : (""))}</div>
                     </button>
                 </div>
                 <div className="col-start-5 justify-self-end">
-                    <button onClick={() => handleOpenDeleteTag(tagName)}>
+                    <button onClick={() => handleOpenDeleteTag(props.tagName)}>
                         {/* Delete Tag: {tagName} */}
                         <DeleteOutlineIcon />
                     </button>
