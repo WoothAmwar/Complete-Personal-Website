@@ -7,20 +7,30 @@ import json
 from googleapiclient.discovery import build  # referred to as google-api-python-client
 # import pyautogui
 from time import sleep
-from .youtube_database import get_channel_name_info, replace_videos_many_db, replace_channels_many_db
+
+# TODO - add a period before "youtube_database" before deployment
+from .youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
+                              add_new_channel, is_channel_in_db, get_unassigned_channel_name_info, get_user_api)
 
 # pyautogui.PAUSE = 0.2
 # pyautogui.FAILSAFE = True
 
-api_key = "AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w"
-service = build('youtube', 'v3', developerKey=api_key)
+
+# API Key 1:
+# AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w
+
+# API Key 2 - Different Google Cloud Project called "Testing API":
+# AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E
+
+# api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
+# service = build('youtube', 'v3', developerKey=api_key)
 
 # UPDATE_DAILY = "./updateScheduleFiles/updateDaily.json"
 # UPDATE_WEEKLY = "./updateScheduleFiles/updateWeekly.json"
 # UPDATE_MONTHLY = "./updateScheduleFiles/updateMonthly.json"
 
 
-def subscribed_channels(nextPageToken):
+def subscribed_channels(service, nextPageToken):
     # service = build('youtube', 'v3', developerKey=api_key)
 
     if nextPageToken:
@@ -67,7 +77,7 @@ def check_text_in_file(text, fileName, doHalves, doFirstHalf):
     return text in fileText
 
 
-def full_subscribed_channels():
+def full_subscribed_channels(service):
     tokens = ["", "CDIQAA", "CGQQAA"]
     # tokens = ["CGQQAA"]
     fullChannelInfo = []
@@ -78,10 +88,10 @@ def full_subscribed_channels():
     for token in tokens:
         searchIndexes = []
         curr_channelIds = []
-        channels = subscribed_channels(nextPageToken=token)
+        channels = subscribed_channels(service, nextPageToken=token)
 
         fullChannelInfo.append(channels)
-        print(channels)
+        # print(channels)
         items = channels["items"]
         if len(items) < 1:
             print("Yeah we out of here")
@@ -128,15 +138,15 @@ def full_subscribed_channels():
                 print(channelNameInfo[idx])
                 channelNameInfo[idx] = channelNameInfo[idx][0:-1]
 
-        with open("channels.txt", "a") as f:
-            for channel in channelNameInfo:
-                f.write(channel+"\n")
+        # with open("channels.txt", "a") as f:
+        #     for channel in channelNameInfo:
+        #         f.write(channel+"\n")
         print("Written it all out")
 
     return channelIdInfo, channelNameInfo, channelImageInfo
 
 
-def channel_info(channelID, numVideos):
+def channel_info(service, channelID, numVideos):
     videoIdList = []
     # request = youtube.search().list()
     # 100 quota cost for each service.search.list
@@ -157,7 +167,7 @@ def channel_info(channelID, numVideos):
     return videoIdList
 
 
-def video_titles(videoIdList):
+def video_titles(service, videoIdList):
     request = service.videos().list(
         part='snippet',
         id=videoIdList,
@@ -185,7 +195,7 @@ def video_titles(videoIdList):
     return titleList, thumbnailList
 
 
-def video_upload_date(videoIdList):
+def video_upload_date(service, videoIdList):
     request = service.videos().list(
         part='snippet',
         id=videoIdList,
@@ -204,7 +214,7 @@ def video_upload_date(videoIdList):
     return dateList
 
 
-def embed_links(videoID, embedFile):
+def embed_links(service, videoID, embedFile):
     # 1 quota cost for each service.videos.list
     request = service.videos().list(
         part='player',
@@ -286,9 +296,11 @@ def main_write_files(channelIdInfo, channelNameInfo, channelImageInfo):
         f.write(json.dumps({"channelImages": channelImageInfo}))
 
 
-def filter_by_update(channelIdInfo, channelNameInfo, channelImageInfo, doMinimum=False):
-    daily_channels, weekly_channels, monthly_channels = get_channel_name_info()
-    update_sched_channels = [daily_channels, weekly_channels, monthly_channels]
+def filter_by_update(googleID, channelIdInfo, channelNameInfo, channelImageInfo, doMinimum=False):
+    # TODO - to only update channels that are unassigned and are new channels, check if the channel is in
+    #  youtube/channels. If not, then update. If it is, then don't (it is unassigned)
+    daily_channels, weekly_channels, monthly_channels, unassigned_channels = get_channel_name_info(googleID)
+    update_sched_channels = [daily_channels, weekly_channels, monthly_channels, unassigned_channels]
 
     # Do every other, either start at index 0 or 1
     startingIndex = int(datetime.datetime.now().day) % 2
@@ -298,11 +310,20 @@ def filter_by_update(channelIdInfo, channelNameInfo, channelImageInfo, doMinimum
     full_update_list.extend(daily_channels)
     name_index_list = []
     for itm in daily_channels:
-        name_index_list.append(channelNameInfo.index(itm))
+        if itm in channelNameInfo:
+            name_index_list.append(channelNameInfo.index(itm))
 
     if not doMinimum:
         for i in range(1, len(update_sched_channels)):
-            for j in range(startingIndex, len(update_sched_channels[i]), 2):
+            skip_val = 2
+            if i == 3:
+                skip_val = 1
+
+            for j in range(startingIndex, len(update_sched_channels[i]), skip_val):
+                if update_sched_channels[i][j] not in channelNameInfo:
+                    print("Skipping", update_sched_channels[i][j])
+                    continue
+
                 print(j, "-", update_sched_channels[i][j])
                 full_update_list.append(update_sched_channels[i][j])
                 name_index_list.append(channelNameInfo.index(update_sched_channels[i][j]))
@@ -326,19 +347,60 @@ def filter_by_length(videoId):
     pass
 
 
-def complete_reload(doReturn=False):
+def try_add_new_channel(googleID, singleChannelName):
+    # TODO - Make sure to run this function using the googleID of the user
+    if is_channel_in_db(googleID, singleChannelName):
+        # print(singleChannelName,"in db already")
+        return False
+    add_result = add_new_channel(googleID, singleChannelName)
+    print("Added the channel", add_result)
+    return True
+
+
+def complete_reload(googleID, doReturn=False):
     # TODO - add Kurzgesagt channel, couldn't because illegal character
     # embedLink = "embedFiles/embedHTML-" + str(datetime.datetime.now().strftime("-%m-%d-%H-%M-%S")) + ".txt"
     # print(embedLink)
 
     # write_to_new_embed(embedLink)
+    # Useless function below
+    # single_reset_files(doEmbed=False)
 
-    single_reset_files(doEmbed=False)
+    # api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
+    api_key = get_user_api(googleID)
+    service = build('youtube', 'v3', developerKey=api_key)
+
     # Gets list of all channels, regardless of value of doMinimum
-    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels()
+    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(service)
+
+    # Adds any channels that are not in the database yet
+    unassigned_channel_names = get_unassigned_channel_name_info(googleID)
+    print("Unassigned Channels:", unassigned_channel_names)
+    remove_lst_name = []
+    remove_lst_id = []
+    remove_lst_image = []
+    for channelName in channelNameInfo:
+        # try_add_new_channel(channelName)
+        # If the channel is unassigned and not just added, remove from update list
+        # If the channel is unassigned and was just added, keep it in the update list
+        if not try_add_new_channel(googleID, channelName) and channelName in unassigned_channel_names:
+            print("Wish to delete", channelName, "with index", channelNameInfo.index(channelName))
+            idx = channelNameInfo.index(channelName)
+            remove_lst_name.append(channelName)
+            remove_lst_id.append(channelIdInfo[idx])
+            remove_lst_image.append(channelImageInfo[idx])
+
+    for rmIdx in range(len(remove_lst_name)):
+        print("Deleted", remove_lst_name[rmIdx], "from update list | ID:", remove_lst_id[rmIdx],
+              "| Image Link:", remove_lst_image[rmIdx])
+        channelNameInfo.remove(remove_lst_name[rmIdx])
+        channelIdInfo.remove(remove_lst_id[rmIdx])
+        channelImageInfo.remove(remove_lst_image[rmIdx])
+
     # Only selects channels that will be updated on a specific day
     # doMinimum means only updateDaily, doesn't even look at weekly or monthly
     channelIdInfo, channelNameInfo, channelImageInfo = filter_by_update(
+        googleID,
         channelIdInfo, channelNameInfo, channelImageInfo,
         doMinimum=False
     )
@@ -353,16 +415,16 @@ def complete_reload(doReturn=False):
     totalVideoThumbnailList = []
     totalUploadDateList = []
     for idx in range(len(channelIdInfo)):
-        videoIdList = channel_info(channelID=channelIdInfo[idx], numVideos=3)
+        videoIdList = channel_info(service, channelID=channelIdInfo[idx], numVideos=3)
         totalVideoIdList.append(videoIdList)
         # embed_links(videoIdList[0], embedFile=embedLink)
-        titleList, thumbnailList = video_titles(videoIdList=videoIdList)
+        titleList, thumbnailList = video_titles(service, videoIdList=videoIdList)
         totalVideoTitleList.append(titleList)
         totalVideoThumbnailList.append(thumbnailList)
 
         print("#", idx + 1, "-", channelNameInfo[idx], "=",channelIdInfo[idx], ":", videoIdList)
 
-        uploadDateList = video_upload_date(videoIdList=videoIdList)
+        uploadDateList = video_upload_date(service, videoIdList=videoIdList)
         totalUploadDateList.append(uploadDateList)
         print("Dates:", uploadDateList)
 
@@ -387,7 +449,8 @@ def test():
 
 
 def main():
-    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(doReturn=True)
+    googleID = ""
+    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
 
     with open("automaticVideoIdInfo.json", "w") as f:
         f.write(json.dumps({"videoIds": totalVideoIdList}))

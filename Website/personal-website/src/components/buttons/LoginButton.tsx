@@ -14,6 +14,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 
+
 import {
     CurrentUserCookieInfo
 } from "../../helperFunctions/cookieManagement";
@@ -40,7 +41,7 @@ interface UserInfo {
     email: string;
     name: string;
     picture: string;
-    verified: boolean; 
+    verified: boolean;
 }
 
 function GoogleSignIn() {
@@ -50,7 +51,9 @@ function GoogleSignIn() {
     const userInfo = CurrentUserCookieInfo();
 
     const login = useGoogleLogin({
-        onSuccess: (codeResponse) => setUser(codeResponse),
+        onSuccess: (codeResponse) => {
+            setUser(codeResponse);
+        },
         onError: (error) => console.log("Login Failed:", error),
     });
 
@@ -77,7 +80,26 @@ function GoogleSignIn() {
                             res.data.verified_email,
                         ],
                         { path: "/" }
+
                     );
+                    console.log("User ID:", res.data.id);
+                    // http://localhost:5000/
+                    // https://anwarkader.com/
+                    fetch(`https://anwarkader.com/api/users/googleID`,
+                        {
+                            method: 'PUT',
+                            mode: 'cors',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ data: res.data.id }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Added", data);
+                        })
+                        .catch(err => console.error("Error adding google id of channel", err));
                 })
                 .catch((err) => console.log(err));
         }
@@ -86,7 +108,7 @@ function GoogleSignIn() {
     useEffect(() => {
         // if (profile_cookie.profile) {
         setUserProfile(userInfo);
-        
+
     }, [profile_cookie]);
 
     const logOut = () => {
@@ -101,7 +123,7 @@ function GoogleSignIn() {
                 {userProfile ? (
                     <div className="grid grid-cols-3 place-content-end">
                         <div className="justify-self-center col-span-1 place-content-center">
-                            <img src={userProfile?.picture} alt="user image" width="40em"/>
+                            <img src={userProfile?.picture} alt="user image" width="40em" />
                         </div>
                         <div className="col-span-2">
                             <button onClick={logOut} className="w-full h-12 border-2 border-black rounded-full">
@@ -124,12 +146,12 @@ function LoginModalButton() {
 
     return (
         <div>
-            <Button variant="contained" 
-             sx={{
-              "&.MuiButtonBase-root:hover": {
-                bgcolor: "black"
-              }
-            }} className="rounded-lg bg-black text-white font-['Garamond'] font-semibold text-md" onClick={handleOpen}>Log In</Button>
+            <Button variant="contained"
+                sx={{
+                    "&.MuiButtonBase-root:hover": {
+                        bgcolor: "black"
+                    }
+                }} className="rounded-lg bg-black text-white font-['Garamond'] font-semibold text-md" onClick={handleOpen}>Log In</Button>
             <Modal
                 open={open}
                 onClose={handleClose}
@@ -168,8 +190,8 @@ export default function LoginButton() {
     useEffect(() => {
         const userSignedIn = cookies.profile !== null && cookies.profile !== undefined;
         setSignedIn(userSignedIn);
-    }, 
-    [cookies]);
+    },
+        [cookies]);
 
     return (
         <div>

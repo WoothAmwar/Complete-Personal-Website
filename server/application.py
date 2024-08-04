@@ -10,10 +10,13 @@ from flask_cors import CORS, cross_origin
 from WebText.link_saving import Novel
 from YoutubeData.youtube import complete_reload, test
 from YoutubeData.youtube_database import (get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos, \
-    add_favorite_video, get_favorite_videos, remove_favorite_video, get_update_user_channels, \
-    get_unassigned_user_channels, set_update_schedule_channel, get_all_tag_names, add_tag_channel, remove_tag_channel,
-    get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name,
-    get_color_of_tag, add_color_of_tag, change_color_of_tag)
+                                          add_favorite_video, get_favorite_videos, remove_favorite_video,
+                                          get_update_user_channels, \
+                                          get_unassigned_user_channels, set_update_schedule_channel, get_all_tag_names,
+                                          add_tag_channel, remove_tag_channel,
+                                          get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name,
+                                          get_color_of_tag, add_color_of_tag, change_color_of_tag, get_all_user_google,
+                                          add_user_google, add_user_api, get_user_api)
 
 
 # from random import randint
@@ -77,12 +80,14 @@ def isUpdateTime(upd_hour, upd_min, upd_sec, useModulus=False, isDevelopment=Fal
 @scheduler.task('cron', id='youtube_job', hour=15, minute=30, second=0)
 def youtube_job():
     """
-    Calls the return_home function at a specific time every day
+    Calls the complete_reload function at a specific time every day
     :return: None
     """
     # print("Doing the thing")
     mongo_insert_test(calledAsIntended=False)
-    complete_reload(doReturn=False)
+    all_user_google_ids = get_all_user_google()
+    for googleID in all_user_google_ids:
+        complete_reload(googleID, doReturn=False)
     # with scheduler.app.app_context():
     # complete_reload(doReturn=False)
 
@@ -325,6 +330,30 @@ def operate_on_tags_of_channel(googleID, channelName):
         tag_to_remove = json.loads(request.data)["data"]["tagName"]
         removed_tag_name, removed_channel_name = remove_tag_channel(googleID, channelName, tag_to_remove)
         return jsonify({"data": [removed_tag_name, removed_channel_name]})
+
+
+@application.route("/api/users/googleID", methods=['GET', 'PUT'])
+def manage_user_google_id():
+    if request.method == "GET":
+        return get_all_user_google()
+
+    elif request.method == "PUT":
+        print("DTA:", json.loads(request.data))
+        insert_id = json.loads(request.data)["data"]
+        added_id = add_user_google(str(insert_id))
+        return jsonify({"data":added_id})
+
+
+@application.route("/api/users/apiKey/<googleID>", methods=['GET', 'PUT'])
+def manage_user_api(googleID):
+    if request.method == 'GET':
+        return get_user_api(googleID)
+    
+    elif request.method == "PUT":
+        print("DTA API:", json.loads(request.data))
+        user_api_key = json.loads(request.data)["data"]
+        added_id, added_api = add_user_api(googleID, user_api_key)
+        return added_api, added_api
 
 
 # ----------------- TESTING -----------------

@@ -20,6 +20,7 @@ yt_videos_collection = db["videos"]  # prod-yt/youtube/videos
 yt_channel_collection = db["channels"]  # prod-yt/youtube/channels
 yt_update_schedule_collection = db["update_schedule"]  # prod-yt/youtube/update_schedule
 yt_test_collection = db["testing"]  # prod-yt/youtube/testing
+yt_user_collection = db["users"]  # prod-yt/youtube/users
 
 db_users = client["users"]  # prod-yt/users
 user_me = db_users["113385767862195154808"]  # prod-yt/users/113385767862195154808
@@ -146,18 +147,35 @@ def set_single_update(update_file):
         f.write(json.dumps({"channelNames": channelNames}))
 
 
-def get_channel_name_info():
+def get_channel_name_info(googleID):
     """
     Finds the channels corresponding to the update schedule
-    :return: Daily, Weekly, and Monthly channels, in that order
+    :param googleID: User ID used to store and retrieve information
+    :return: Daily, Weekly, Monthly, and Unassigned channels, in that order
     """
-    daily_channels = list(yt_update_schedule_collection.find(filter={"category": "daily"}))
-    weekly_channels = list(yt_update_schedule_collection.find(filter={"category": "weekly"}))
-    monthly_channels = list(yt_update_schedule_collection.find(filter={"category": "monthly"}))
+    # daily_channels = list(yt_update_schedule_collection.find(filter={"category": "daily"}))
+    # weekly_channels = list(yt_update_schedule_collection.find(filter={"category": "weekly"}))
+    # monthly_channels = list(yt_update_schedule_collection.find(filter={"category": "monthly"}))
+    # unassigned_channels = list(yt_update_schedule_collection.find(filter={"category": "unassigned"}))
+    curr_user = db_users[googleID]
+    daily_channels = list(curr_user.find(filter={"category": "updateSchedule", "updateTime": "daily"}))
+    weekly_channels = list(curr_user.find(filter={"category": "updateSchedule", "updateTime": "weekly"}))
+    monthly_channels = list(curr_user.find(filter={"category": "updateSchedule", "updateTime": "monthly"}))
+    unassigned_channels = list(curr_user.find(filter={"category": "updateSchedule", "updateTime": "unassigned"}))
 
     return mongo_name_extraction(daily_channels), mongo_name_extraction(weekly_channels), mongo_name_extraction(
-        monthly_channels)
+        monthly_channels), mongo_name_extraction(unassigned_channels)
 
+
+def get_unassigned_channel_name_info(googleID):
+    """
+    Finds the channels corresponding to the unassigned schedule
+    :return: Unassigned channels
+    """
+    curr_user = db_users[googleID]
+    unassigned_channels = list(curr_user.find(filter={"category": "updateSchedule", "updateTime": "unassigned"}))
+
+    return mongo_name_extraction(unassigned_channels)
 
 def mongo_name_extraction(mongo_list):
     name_list = []
@@ -197,6 +215,7 @@ def get_all_videos(googleID):
 
 
 def get_user_channels(googleID, includeUpdateSchedule=False, updateSchedule="daily"):
+    # TODO - Make it so it does not return channels with "unassigned" update Schedule
     # Getting all of the Names of channels that are assigned by the user into an update schedule
     curr_user = db_users[googleID]
     if includeUpdateSchedule:
@@ -356,6 +375,10 @@ def remove_tag_name(googleID, tag_name):
                          update={"$set": {"userTagTypes": old_tag_types}})
 
     curr_user.delete_many(filter={"category": "channelTag", "tagName":tag_name})
+    curr_user.delete_one(filter={
+        "category": "tagColor",
+        "tagName": tag_name
+    })
     return tag_name
 
 
@@ -414,11 +437,6 @@ def remove_tag_channel(googleID, channel_name, tag_name):
     curr_user.delete_one(filter={
         "category": "channelTag",
         "channelName": channel_name,
-        "tagName": tag_name
-    })
-
-    curr_user.delete_one(filter={
-        "category": "tagColor",
         "tagName": tag_name
     })
 
@@ -493,6 +511,69 @@ def change_color_of_tag(googleID, tag_name, new_tag_color):
     return new_tag_color
 
 
+def is_channel_in_db(googleID, channel_name):
+    """
+    Determines if a channel is in the database. Used in youtube.py instead of in the API
+    :param googleID: To get specific user information
+    :param channel_name: String of the channel to find if in the database
+    :return: Boolean of if the channel is in the database
+    """
+    curr_user = db_users[googleID]
+    channel_info = curr_user.find_one(filter={"category": "updateSchedule", "channelName": channel_name})
+    if channel_info is None:
+        return False
+    return True
+
+
+def add_new_channel(googleID, channel_name):
+    """
+    Will set a channel as unassigned in update schedule for a user
+    This makes sure all channels that a person is subscribed to will be updated daily in the system
+    :param googleID: To get specific user information
+    :param channel_name: String of the channel to add (as unassigned)
+    :return: The channel name and update that was added, or None if nothing was added
+    """
+    curr_user = db_users[googleID]
+    channel_info = curr_user.find_one(filter={"category": "updateSchedule", "channelName": channel_name})
+    if channel_info is None:
+        curr_user.insert_one({"category": "updateSchedule", "updateTime": "unassigned", "channelName": channel_name})
+        yt_update_schedule_collection.insert_one({"category":"unassigned", "channelName": channel_name})
+        return channel_name, "unassigned"
+    return None
+
+
+def get_all_user_google():
+    user_info = list(yt_user_collection.find(filter={}))
+    user_gid_lst = []
+    for user in user_info:
+        user_gid_lst.append(user["googleID"])
+
+    print("Total ID List:", user_gid_lst)
+    return user_gid_lst
+
+
+def add_user_google(googleID):
+    if googleID in get_all_user_google():
+        print("Recently tried to add", googleID, "but it was already in the database")
+        return False
+    yt_user_collection.insert_one({"googleID": googleID})
+    print(googleID, "added to the collection")
+    return googleID
+
+
+def get_user_api(googleID):
+    return yt_user_collection.find(filter={"googleID": googleID})["apiKey"]
+
+
+def add_user_api(googleID, user_api_key):
+    user_info = list(yt_user_collection.find(filter={"googleID": googleID}))
+    if len(user_info) == 0:
+        print("User with ID:", googleID, "not in the database, API key",user_api_key,"cannot be added")
+    yt_user_collection.update_one(filter={"googleID": googleID},
+                                 update={"$set": {"apiKey": user_api_key}})
+    print("Adding the api key", user_api_key, "for GoogleID:", googleID)
+    return googleID, user_api_key
+
 # --------- TESTING FUNCTIONS BELOW
 def get_random_data():
     r = randint(0, 10)
@@ -509,7 +590,7 @@ def mongo_insert_test(calledAsIntended):
     minu = datetime.datetime.now().minute
     minmod = datetime.datetime.now().minute % 1
     yt_test_collection.insert(
-        {"name": name, "time": tm, "Minute": minu, "Minute Mod 1": minmod, "intendedCall": calledAsIntended})
+        {"After Update 8/3": "True", "name": name, "time": tm, "Minute": minu, "Minute Mod 1": minmod, "intendedCall": calledAsIntended})
 
 
 def move_update_to_user(userID):

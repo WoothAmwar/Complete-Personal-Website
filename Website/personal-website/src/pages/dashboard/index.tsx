@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
 import "../../app/globals.css";
 import { CookiesProvider, useCookies } from "react-cookie";
@@ -6,6 +6,9 @@ import { googleLogout, useGoogleLogin } from "@react-oauth/google";
 
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
+
+import Button from "@mui/material/Button";
+import TextField from '@mui/material/TextField';
 
 import {
     CurrentUserCookieInfo, CurrentUserId
@@ -96,17 +99,48 @@ export default function Dashboard() {
     const userInfo = CurrentUserCookieInfo();
     const currentUserGoogleID = CurrentUserId();
 
+    const [newApiText, setNewApiText] = useState("");
+
     useEffect(() => {
         if (userProfile === null) {
             setUserProfile(userInfo);
         }
     })
 
+    // TODO - Add the option to get API and set that as the default text
+    // Have the thing where the api key is shown as asterisks to hide it, and have a button to show the text
+    // Make this a toggle button, so it switched back every time you click it
+
     const logOut = () => {
         googleLogout();
         setCookie("profile", null, { path: "/" });
         setUserProfile(null);
     };
+
+    const handleChangeText = useCallback((event: any) => {
+        setNewApiText(event.target.value);
+    }, []);
+
+    const updateYoutubeAPi = () => {
+        console.log("New API:", newApiText);
+        // http://localhost:5000/
+        // https://anwarkader.com/
+        fetch(`https://anwarkader.com/api/users/apiKey/${currentUserGoogleID.toString()}`,
+            {
+                method: 'PUT',
+                mode: 'cors',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: newApiText }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Added", data);
+            })
+            .catch(err => console.error("Error adding google id of channel", err));
+    }
 
     return (
         <main className="grid grid-cols-5 grid-rows-1 divide-x-2 divide-slate-800 gap-x-2">
@@ -121,6 +155,12 @@ export default function Dashboard() {
                     </div>
                     <div>
                         {userProfile?.email}
+                    </div>
+                    <div>
+                        <TextField InputProps={{
+                            style: { color: '#e7e5e4' }
+                        }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeText} color="primary" focused />
+                        <Button onClick={updateYoutubeAPi}>Update API Key</Button>
                     </div>
                 </div>
 
