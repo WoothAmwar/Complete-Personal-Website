@@ -196,7 +196,7 @@ export default function Dashboard() {
                     </div>
 
                     <div>
-                        Don't Know what API Key or Channel ID Means? Check out the <span>
+                        Do not Know what API Key or Channel ID Means? Check out the <span>
                             <a key={9} href={"/about"} className="text-blue-400">About</a>
                         </span> Page for more information!
                     </div>
