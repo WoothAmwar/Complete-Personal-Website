@@ -32,7 +32,8 @@ export default function NavigationBar() {
                 <div className="grid grid-flow-col col-start-2 col-span-3">
                     <NavigateLink id={2} text="About" link="/about" />
                     <NavigateLink id={3} text="Youtube" link="/custom-youtube" />
-                    <NavigateLink id={4} text="Test" link="/test" />
+                    {/* <NavigateLink id={4} text="Test" link="/test" /> */}
+                    <NavigateLink id={5} text="Tracker" link="/tracker" />
                 </div>
                 <div className="grid grid-flow-col float:right col-span-1">
                     <NavigateLink id={1} text="Dashboard" link="/dashboard" />

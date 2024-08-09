@@ -10,47 +10,41 @@ from time import sleep
 
 # TODO - add a period before "youtube_database" before deployment
 from .youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
-                              add_new_channel, is_channel_in_db, get_unassigned_channel_name_info, get_user_api)
+                              add_new_channel, is_channel_in_db, get_unassigned_channel_name_info, get_user_api,
+                              get_all_user_google, get_user_channel_id)
 
 # pyautogui.PAUSE = 0.2
 # pyautogui.FAILSAFE = True
-
-
-# API Key 1:
-# AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w
-
-# API Key 2 - Different Google Cloud Project called "Testing API":
-# AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E
-
-# api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
-# service = build('youtube', 'v3', developerKey=api_key)
 
 # UPDATE_DAILY = "./updateScheduleFiles/updateDaily.json"
 # UPDATE_WEEKLY = "./updateScheduleFiles/updateWeekly.json"
 # UPDATE_MONTHLY = "./updateScheduleFiles/updateMonthly.json"
 
 
-def subscribed_channels(service, nextPageToken):
+def subscribed_channels(service, channel_id, nextPageToken, total_response):
     # service = build('youtube', 'v3', developerKey=api_key)
 
     if nextPageToken:
         request = service.subscriptions().list(
             part="snippet, contentDetails",
-            channelId="UCkWMnxYYIoAwHgfhWENzZZg",
+            channelId=channel_id,
             maxResults=50,
             pageToken=nextPageToken
         )
     else:
         request = service.subscriptions().list(
             part="snippet, contentDetails",
-            channelId="UCkWMnxYYIoAwHgfhWENzZZg",
+            channelId=channel_id,
             maxResults=50
         )
 
     response = request.execute()
+    total_response.append(response)
+    if "nextPageToken" in response:
+        subscribed_channels(service, channel_id, response["nextPageToken"], total_response)
 
     # service.close()
-    return response
+    return total_response
 
 
 def check_illegal_characters(text):
@@ -77,22 +71,17 @@ def check_text_in_file(text, fileName, doHalves, doFirstHalf):
     return text in fileText
 
 
-def full_subscribed_channels(service):
-    tokens = ["", "CDIQAA", "CGQQAA"]
+def full_subscribed_channels(service, channel_id):
+    # tokens = ["", "CDIQAA", "CGQQAA"]
     # tokens = ["CGQQAA"]
-    fullChannelInfo = []
     channelIdInfo = []
     channelNameInfo = []
     channelImageInfo = []
+    channels = subscribed_channels(service, channel_id, nextPageToken="", total_response=[])
 
-    for token in tokens:
-        searchIndexes = []
+    for channel_items in channels:
         curr_channelIds = []
-        channels = subscribed_channels(service, nextPageToken=token)
-
-        fullChannelInfo.append(channels)
-        # print(channels)
-        items = channels["items"]
+        items = channel_items["items"]
         if len(items) < 1:
             print("Yeah we out of here")
             break
@@ -135,13 +124,13 @@ def full_subscribed_channels(service):
     #     f.write(json.dumps(fullChannelInfo))
         for idx in range(len(channelNameInfo)):
             while channelNameInfo[idx][-1] == " ":
-                print(channelNameInfo[idx])
+                print(channelNameInfo[idx],"has extra space at the end")
                 channelNameInfo[idx] = channelNameInfo[idx][0:-1]
 
         # with open("channels.txt", "a") as f:
         #     for channel in channelNameInfo:
         #         f.write(channel+"\n")
-        print("Written it all out")
+        print("Written the page all out")
 
     return channelIdInfo, channelNameInfo, channelImageInfo
 
@@ -347,6 +336,25 @@ def filter_by_length(videoId):
     pass
 
 
+def get_single_video_info(googleID, videoID):
+    api_key = get_user_api(googleID)
+    # channel_id = get_user_channel_id(googleID)
+    service = build('youtube', 'v3', developerKey=api_key)
+
+    request = service.videos().list(
+        part='snippet',
+        id=videoID,
+        maxResults=2
+    )
+    response = request.execute()
+    video_title = response["items"][0]["snippet"]["title"]
+    video_thumbnail = response["items"][0]["snippet"]["thumbnails"]["high"]["url"]
+
+    return video_title, video_thumbnail
+
+    # with open("testFile.json", "w") as f:
+    #     f.write(json.dumps(response))
+
 def try_add_new_channel(googleID, singleChannelName):
     # TODO - Make sure to run this function using the googleID of the user
     if is_channel_in_db(googleID, singleChannelName):
@@ -368,10 +376,14 @@ def complete_reload(googleID, doReturn=False):
 
     # api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
     api_key = get_user_api(googleID)
+    channel_id = get_user_channel_id(googleID)
+    if api_key == "None" or channel_id == "None":
+        return -1
+
     service = build('youtube', 'v3', developerKey=api_key)
 
     # Gets list of all channels, regardless of value of doMinimum
-    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(service)
+    channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(service, channel_id)
 
     # Adds any channels that are not in the database yet
     unassigned_channel_names = get_unassigned_channel_name_info(googleID)
@@ -449,17 +461,28 @@ def test():
 
 
 def main():
-    googleID = ""
-    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
+    # totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
 
-    with open("automaticVideoIdInfo.json", "w") as f:
-        f.write(json.dumps({"videoIds": totalVideoIdList}))
-    with open("automaticVideoTitleInfo.json", "w") as f:
-        f.write(json.dumps({"videoTitles": totalVideoTitleList}))
-    with open("automaticVideoThumbnailInfo.json", "w") as f:
-        f.write(json.dumps({"videoThumbnails": totalVideoThumbnailList}))
-    with open("automaticVideoUploadDateInfo.json", "w") as f:
-        f.write(json.dumps({"uploadDates": totalUploadDateList}))
+    # api_key = get_user_api(googleID)
+    # channel_id = get_user_channel_id(googleID)
+    # service = build('youtube', 'v3', developerKey=api_key)
+    # channels = subscribed_channels(service, channel_id, nextPageToken="", total_response=[])
+    # for i in range(len(channels)):
+    #     print(len(channels[i]["items"]))
+
+    # all_user_google_ids = get_all_user_google()
+    # print(all_user_google_ids)
+    # for googleID in all_user_google_ids:
+    #     complete_reload(googleID, doReturn=False)
+
+    # with open("automaticVideoIdInfo.json", "w") as f:
+    #     f.write(json.dumps({"videoIds": totalVideoIdList}))
+    # with open("automaticVideoTitleInfo.json", "w") as f:
+    #     f.write(json.dumps({"videoTitles": totalVideoTitleList}))
+    # with open("automaticVideoThumbnailInfo.json", "w") as f:
+    #     f.write(json.dumps({"videoThumbnails": totalVideoThumbnailList}))
+    # with open("automaticVideoUploadDateInfo.json", "w") as f:
+    #     f.write(json.dumps({"uploadDates": totalUploadDateList}))
 
     # Automatically get channelId info with pyautogui
     # with open("videoId.txt", "r") as f:
@@ -470,7 +493,7 @@ def main():
     #         total_url = "https://www.googleapis.com/youtube/v3/videos?key=AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w" \
     #                     "&part=snippet&id=" + videoID
     #         automate_scuff(total_url)
-
+    pass
 
 if __name__ == "__main__":
     main()

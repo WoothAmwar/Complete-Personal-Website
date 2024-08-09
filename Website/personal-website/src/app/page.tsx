@@ -26,21 +26,12 @@ export default function Home() {
           </div>
 
           <div className="grid grid-rows-2 grid-flow-col mr-20">
-            <h1 className="web-header grid grid-cols-2">Welcome to Random Projects</h1>
+            <h1 className="web-header grid grid-cols-2">Welcome to Pure Media Website</h1>
             <div className="mt-5">
-              <p className="text-xl"> About this Project </p>
+              <p className="text-xl"> YouTube Without Ads and Extra Info </p>
               <p>
-                I am trying to make a YouTube without ads and extra info (comments,
-                recommendations, etc.)
-              </p>
-              <p>
-                I also want a page that I can add different things that I want, and I
-                can upload files to set a graphic for it{" "}
-              </p>
-              <p>
-                For example, I could add something where you add a link and part of
-                the link that you edit to keep track of chapter in books,
-                or have a to-do list, etc.
+                If you want to just watch videos, never worry about checking YouTube for the latest videos, and take control of 
+                when and what you watch, you have come to the right place 
               </p>
             </div>
           </div>

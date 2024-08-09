@@ -8,15 +8,17 @@ from flask_apscheduler import APScheduler
 from flask_cors import CORS, cross_origin
 
 from WebText.link_saving import Novel
-from YoutubeData.youtube import complete_reload, test
-from YoutubeData.youtube_database import (get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos, \
+from YoutubeData.youtube import complete_reload, test, get_single_video_info
+from YoutubeData.youtube_database import (get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos,
                                           add_favorite_video, get_favorite_videos, remove_favorite_video,
-                                          get_update_user_channels, \
+                                          get_update_user_channels,
                                           get_unassigned_user_channels, set_update_schedule_channel, get_all_tag_names,
                                           add_tag_channel, remove_tag_channel,
                                           get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name,
                                           get_color_of_tag, add_color_of_tag, change_color_of_tag, get_all_user_google,
-                                          add_user_google, add_user_api, get_user_api)
+                                          add_user_google, add_user_api, get_user_api, get_user_channel_id,
+                                          add_user_channel_id, add_tracked_video,
+                                          remove_tracked_video, get_all_tracked_video)
 
 
 # from random import randint
@@ -98,7 +100,7 @@ info = ""
 
 # /api/home
 @application.route("/api/home", methods=['GET'])
-@cross_origin()
+# @cross_origin()
 def return_home():
     global t, info
     t = (datetime.datetime.now().hour, datetime.datetime.now().minute, datetime.datetime.now().second)
@@ -123,7 +125,7 @@ def return_home():
 
 
 @application.route("/api/tracker", methods=['GET'])
-@cross_origin()
+# @cross_origin()
 def return_lotm_info():
     rdm_chapter = lotm.get_chapter_number()
     if isUpdateTime(upd_hour=17, upd_min=1, upd_sec=1, useModulus=True):
@@ -134,6 +136,25 @@ def return_lotm_info():
         'web_title': lotm.get_title(),
         'web_chapter': rdm_chapter
     })
+
+
+@application.route("/api/tracker/<googleID>/trackedVideo", methods=['GET'])
+def get_all_tracked_videos(googleID):
+    if request.method == 'GET':
+        all_videos_info = get_all_tracked_video(googleID)
+        # print("Video Info NOW:", json_util.dumps(all_videos_info))  # Creates wall of text/information
+        return json_util.dumps(all_videos_info)
+
+
+@application.route("/api/tracker/<googleID>/trackedVideo/<videoID>", methods=['PUT', 'DELETE'])
+def manage_tracker_video(googleID, videoID):
+    if request.method == 'PUT':
+        video_title, video_thumbnail = get_single_video_info(googleID, videoID)
+        added_video_info = add_tracked_video(googleID, videoID, video_title, video_thumbnail)
+        return json_util.dumps(added_video_info)
+    elif request.method == 'DELETE':
+        removed_video_id = remove_tracked_video(googleID, videoID)
+        return jsonify({"data":removed_video_id})
 
 
 @application.route("/api/channels/<googleID>", methods=['GET'])
@@ -307,7 +328,7 @@ def manage_tag_colors(googleID, tagName):
 def return_channels_of_tag(googleID, tagName):
     # filter_tag_name = json.loads(request.data)["data"]
     if tagName == "None":
-        return jsonify({"data":json_util.dumps(["None"])})
+        return jsonify({"data": json_util.dumps(["None"])})
     channel_names = json_util.dumps(get_channels_of_tag(googleID, tagName))
     return jsonify({"data": channel_names})
 
@@ -323,7 +344,7 @@ def operate_on_tags_of_channel(googleID, channelName):
         # Adds the tag passed in as body to the channel
         tag_to_add = json.loads(request.data)["data"]["tagName"]
         added_tag_name, added_channel_name = add_tag_channel(googleID, channelName, tag_to_add)
-        return jsonify({"data":[added_tag_name, added_channel_name]})
+        return jsonify({"data": [added_tag_name, added_channel_name]})
 
     elif request.method == 'DELETE':
         # Removes the tag passed in as body to the channel
@@ -341,20 +362,35 @@ def manage_user_google_id():
         print("DTA:", json.loads(request.data))
         insert_id = json.loads(request.data)["data"]
         added_id = add_user_google(str(insert_id))
-        return jsonify({"data":added_id})
+        return jsonify({"data": added_id})
 
 
 @application.route("/api/users/apiKey/<googleID>", methods=['GET', 'PUT'])
 def manage_user_api(googleID):
     if request.method == 'GET':
         return get_user_api(googleID)
-    
+
     elif request.method == "PUT":
         print("DTA API:", json.loads(request.data))
         user_api_key = json.loads(request.data)["data"]
-        added_id, added_api = add_user_api(googleID, user_api_key)
+        added_id, added_api, newly_added = add_user_api(googleID, user_api_key)
+        if newly_added and get_user_channel_id(googleID) != "None":
+            complete_reload(googleID)
         return added_api, added_api
 
+
+@application.route("/api/users/channelID/<googleID>", methods=['GET', 'PUT'])
+def manage_user_channel_id(googleID):
+    if request.method == 'GET':
+        return get_user_channel_id(googleID)
+
+    elif request.method == "PUT":
+        print("DTA ChanID:", json.loads(request.data))
+        user_channel_id = json.loads(request.data)["data"]
+        added_id, added_channel_id, newly_added = add_user_channel_id(googleID, user_channel_id)
+        if newly_added and get_user_api(googleID) != "None":
+            complete_reload(googleID)
+        return added_id, added_channel_id
 
 # ----------------- TESTING -----------------
 # some bits of text for the page.
@@ -375,7 +411,7 @@ application.add_url_rule('/', 'index', (lambda: header_text + instructions + foo
 application.add_url_rule('/<username>', 'hello', (lambda username: header_text + username + home_link + footer_text))
 
 if __name__ == "__main__":
-    scheduler.start()
+    # scheduler.start()
     # debug=True for development, remove for production
     # application.debug = True
     application.run(debug=True, port=5000)

@@ -177,6 +177,7 @@ def get_unassigned_channel_name_info(googleID):
 
     return mongo_name_extraction(unassigned_channels)
 
+
 def mongo_name_extraction(mongo_list):
     name_list = []
     for itm in mongo_list:
@@ -286,7 +287,7 @@ def get_channel_of_video(videoID):
 def set_update_schedule_channel(googleID, channelNames, finalUpdateTime):
     curr_user = db_users[googleID]
     for channel in channelNames:
-        if curr_user.find_one(filter={"category": "updateSchedule", "channelName":channel}) is None:
+        if curr_user.find_one(filter={"category": "updateSchedule", "channelName": channel}) is None:
             curr_user.insert_one({
                 "category": "updateScheduler",
                 "updateTime": "daily",
@@ -355,7 +356,7 @@ def get_all_tag_names(googleID):
     :return: String Array of all tag names
     """
     curr_user = db_users[googleID]
-    return curr_user.find_one(filter={"category":"tagTypes"})["userTagTypes"]
+    return curr_user.find_one(filter={"category": "tagTypes"})["userTagTypes"]
 
 
 def remove_tag_name(googleID, tag_name):
@@ -374,7 +375,7 @@ def remove_tag_name(googleID, tag_name):
     curr_user.update_one(filter={"category": "tagTypes"},
                          update={"$set": {"userTagTypes": old_tag_types}})
 
-    curr_user.delete_many(filter={"category": "channelTag", "tagName":tag_name})
+    curr_user.delete_many(filter={"category": "channelTag", "tagName": tag_name})
     curr_user.delete_one(filter={
         "category": "tagColor",
         "tagName": tag_name
@@ -451,7 +452,7 @@ def get_tags_of_channel(googleID, channel_name):
     :return: String Array of the tags for a channel
     """
     curr_user = db_users[googleID]
-    full_channel_tag_info = list(curr_user.find(filter={"category":"channelTag", "channelName":channel_name}))
+    full_channel_tag_info = list(curr_user.find(filter={"category": "channelTag", "channelName": channel_name}))
     output = []
     for channel_tag in full_channel_tag_info:
         output.append(channel_tag["tagName"].replace('"', ''))
@@ -466,7 +467,7 @@ def get_channels_of_tag(googleID, tag_name):
     :return: String Array of channel names with the
     """
     curr_user = db_users[googleID]
-    all_channel_info = list(curr_user.find(filter={"category":"channelTag", "tagName":tag_name}))
+    all_channel_info = list(curr_user.find(filter={"category": "channelTag", "tagName": tag_name}))
     output = []
     for channel in all_channel_info:
         output.append(channel["channelName"])
@@ -537,7 +538,7 @@ def add_new_channel(googleID, channel_name):
     channel_info = curr_user.find_one(filter={"category": "updateSchedule", "channelName": channel_name})
     if channel_info is None:
         curr_user.insert_one({"category": "updateSchedule", "updateTime": "unassigned", "channelName": channel_name})
-        yt_update_schedule_collection.insert_one({"category":"unassigned", "channelName": channel_name})
+        yt_update_schedule_collection.insert_one({"category": "unassigned", "channelName": channel_name})
         return channel_name, "unassigned"
     return None
 
@@ -562,17 +563,89 @@ def add_user_google(googleID):
 
 
 def get_user_api(googleID):
-    return yt_user_collection.find(filter={"googleID": googleID})["apiKey"]
+    user = list(yt_user_collection.find(filter={"googleID": googleID}))[0]
+    if len(user) > 0:
+        return user["apiKey"]
+    return "None"
 
 
 def add_user_api(googleID, user_api_key):
     user_info = list(yt_user_collection.find(filter={"googleID": googleID}))
+    newly_added = False
     if len(user_info) == 0:
-        print("User with ID:", googleID, "not in the database, API key",user_api_key,"cannot be added")
+        print("User with ID:", googleID, "not in the database, API key", user_api_key, "cannot be added")
+    if "apiKey" not in user_info[0]:
+        newly_added = True
     yt_user_collection.update_one(filter={"googleID": googleID},
-                                 update={"$set": {"apiKey": user_api_key}})
+                                  update={"$set": {"apiKey": user_api_key}})
     print("Adding the api key", user_api_key, "for GoogleID:", googleID)
-    return googleID, user_api_key
+    return googleID, user_api_key, newly_added
+
+
+def get_user_channel_id(googleID):
+    user_info = list(yt_user_collection.find(filter={"googleID": googleID}))[0]
+    if len(user_info) == 0:
+        print("User with ID:", googleID, "not in the database")
+    print("UINF:", user_info)
+    if 'channelID' not in user_info:
+        print("User with googleID:", googleID, "does not have a channelID")
+        return "None"
+    return user_info["channelID"]
+
+
+def add_user_channel_id(googleID, channelID):
+    user_info = list(yt_user_collection.find(filter={"googleID": googleID}))
+    newly_added = False
+    if len(user_info) == 0:
+        print("User with ID:", googleID, "not in the database, ChannelID", channelID, "cannot be added")
+    if "channelID" not in user_info[0]:
+        newly_added = True
+    yt_user_collection.update_one(filter={"googleID": googleID},
+                                  update={"$set": {"channelID": channelID}})
+    print("Adding the channelID", channelID, "for GoogleID:", googleID)
+    return googleID, channelID, newly_added
+
+
+# def get_tracked_video(googleID, videoID):
+#     curr_user = db_users[googleID]
+#     tracked_video = curr_user.find_one(filter={"category": "trackedVideo", "videoID": videoID})
+#     if tracked_video is None:
+#         print("Tracked video with ID:", videoID, "not in system")
+#         return {}
+#     print("Getting video with ID:", videoID)
+#     return tracked_video
+
+
+def get_all_tracked_video(googleID):
+    curr_user = db_users[googleID]
+    return list(curr_user.find(filter={"category": "trackedVideo"}))
+
+
+def add_tracked_video(googleID, videoID, videoTitle, videoThumbnail):
+    curr_user = db_users[googleID]
+    tracked_video = curr_user.find_one(filter={"category": "trackedVideo", "videoID": videoID})
+    if tracked_video is not None:
+        print("Tracked video with ID:", videoID, "already tracked")
+        return "None"
+    print("Adding video with ID:", videoID)
+    full_video_info = {
+        "category": "trackedVideo",
+        "videoID": videoID,
+        "videoTitle": videoTitle,
+        "videoThumbnail": videoThumbnail
+    }
+    curr_user.insert_one(full_video_info)
+    return full_video_info
+
+
+def remove_tracked_video(googleID, videoID):
+    curr_user = db_users[googleID]
+    tracked_video = curr_user.find_one(filter={"category": "trackedVideo", "videoID": videoID})
+    if tracked_video is not None:
+        curr_user.delete_one(filter={"category": "trackedVideo", "videoID": videoID})
+        return videoID
+    return "None"
+
 
 # --------- TESTING FUNCTIONS BELOW
 def get_random_data():
@@ -590,7 +663,8 @@ def mongo_insert_test(calledAsIntended):
     minu = datetime.datetime.now().minute
     minmod = datetime.datetime.now().minute % 1
     yt_test_collection.insert(
-        {"After Update 8/3": "True", "name": name, "time": tm, "Minute": minu, "Minute Mod 1": minmod, "intendedCall": calledAsIntended})
+        {"After Update 8/3": "True", "name": name, "time": tm, "Minute": minu, "Minute Mod 1": minmod,
+         "intendedCall": calledAsIntended})
 
 
 def move_update_to_user(userID):
@@ -653,10 +727,17 @@ def main():
     # TODO - use the below function to do the update for each user
     # move_update_to_user("113385767862195154808")
     googleID = "113385767862195154808"
+    if "channelID" not in list(yt_user_collection.find(filter={"googleID": googleID}))[0]:
+        print("New")
+        output = yt_user_collection.find(filter={"googleID": googleID})
+        print(list(output)[0])
+        # print(list(output)[0])
+    else:
+        print("In There")
     # print(db_users.list_collection_names())
     # print("Added all of Test Data ")
     # print("All tag names:", get_all_tag_names("113385767862195154808"))
-    print("Added tag programming:", add_tag_name(googleID, "programming"))
+    # print("Added tag programming:", add_tag_name(googleID, "programming"))
 
 
 if __name__ == "__main__":

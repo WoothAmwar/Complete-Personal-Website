@@ -100,6 +100,7 @@ export default function Dashboard() {
     const currentUserGoogleID = CurrentUserId();
 
     const [newApiText, setNewApiText] = useState("");
+    const [newChannelIdText, setNewChannelIdText] = useState("");
 
     useEffect(() => {
         if (userProfile === null) {
@@ -117,8 +118,12 @@ export default function Dashboard() {
         setUserProfile(null);
     };
 
-    const handleChangeText = useCallback((event: any) => {
+    const handleChangeApiText = useCallback((event: any) => {
         setNewApiText(event.target.value);
+    }, []);
+
+    const handleChangeChannelIDText = useCallback((event: any) => {
+        setNewChannelIdText(event.target.value);
     }, []);
 
     const updateYoutubeAPi = () => {
@@ -137,9 +142,30 @@ export default function Dashboard() {
             })
             .then(response => response.json())
             .then(data => {
-                console.log("Added", data);
+                console.log("Added API Key:", data);
             })
-            .catch(err => console.error("Error adding google id of channel", err));
+            .catch(err => console.error("Error adding api key of channel", err));
+    }
+
+    const updateYoutubeChannelID = () => {
+        console.log("New ChannelID:", newChannelIdText);
+        // http://localhost:5000/
+        // https://anwarkader.com/
+        fetch(`https://anwarkader.com/api/users/channelID/${currentUserGoogleID.toString()}`,
+            {
+                method: 'PUT',
+                mode: 'cors',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: newChannelIdText }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Added ChannelID:", data);
+            })
+            .catch(err => console.error("Error adding channel id of channel", err));
     }
 
     return (
@@ -156,11 +182,23 @@ export default function Dashboard() {
                     <div>
                         {userProfile?.email}
                     </div>
-                    <div>
+                    <div className="my-2">
                         <TextField InputProps={{
                             style: { color: '#e7e5e4' }
-                        }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeText} color="primary" focused />
+                        }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeApiText} color="primary" focused />
                         <Button onClick={updateYoutubeAPi}>Update API Key</Button>
+                    </div>
+                    <div className="my-2">
+                        <TextField InputProps={{
+                            style: { color: '#e7e5e4' }
+                        }} size="small" id="outlined-basic" label="Channel ID" variant="outlined" value={newChannelIdText} onChange={handleChangeChannelIDText} color="primary" focused />
+                        <Button onClick={updateYoutubeChannelID}>Update Channel ID</Button>
+                    </div>
+
+                    <div>
+                        Don't Know what API Key or Channel ID Means? Check out the <span>
+                            <a key={9} href={"/about"} className="text-blue-400">About</a>
+                        </span> Page for more information!
                     </div>
                 </div>
 
