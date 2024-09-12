@@ -9,7 +9,7 @@ from googleapiclient.discovery import build  # referred to as google-api-python-
 from time import sleep
 
 # TODO - add a period before "youtube_database" before deployment
-from .youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
+from youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
                               add_new_channel, is_channel_in_db, get_unassigned_channel_name_info, get_user_api,
                               get_all_user_google, get_user_channel_id)
 
@@ -463,6 +463,21 @@ def test():
 def main():
     # totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
 
+    # Testing to realize that you have to make subscriptions public
+    # google_info = get_all_user_google()
+    # googleID = google_info[1]
+    # api_key = get_user_api(googleID)
+    # channel_id = get_user_channel_id(googleID)
+    # # print(api_key, channel_id)
+    #
+    # service = build('youtube', 'v3', developerKey=api_key)
+    #
+    # # Gets list of all channels, regardless of value of doMinimum
+    # channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(service, channel_id)
+    # print(channelNameInfo)
+
+
+    # UCVkgOCFu4mnS1VI9BUvk_QQ
     # api_key = get_user_api(googleID)
     # channel_id = get_user_channel_id(googleID)
     # service = build('youtube', 'v3', developerKey=api_key)

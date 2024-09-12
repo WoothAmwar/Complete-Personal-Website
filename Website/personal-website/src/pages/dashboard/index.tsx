@@ -3,6 +3,7 @@ import Link from "next/link";
 import "../../app/globals.css";
 import { CookiesProvider, useCookies } from "react-cookie";
 import { googleLogout, useGoogleLogin } from "@react-oauth/google";
+import Image from 'next/image';
 
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
@@ -65,30 +66,43 @@ function FavoriteVideosDisplay(props: { currentUserGoogleID: string }) {
         )
     }
 
+    // return (
+    //     <Carousel
+    //         swipeable={true}
+    //         draggable={false}
+    //         showDots={true}
+    //         responsive={responsive}
+    //         ssr={true} // means to render carousel on server-side.
+    //         infinite={true}
+    //         autoPlay={false}
+    //         keyBoardControl={true}
+    //         customTransition="all .5"
+    //         transitionDuration={500}
+    //         containerClass="carousel-container"
+    //         removeArrowOnDeviceType={["mobile"]}
+    //         dotListClass="custom-dot-list-style"
+    //         itemClass="carousel-item-padding-40-px"
+    //     >
+    //         {videoInfo.map((element: any, index: number) => (
+    //             <div key={index} className="mb-10 mx-2">
+    //                 <VideoBox includeDate={false} fullVideoDetails={element} />
+    //             </div>
+    //         ))}
+    //     </Carousel>
+    // );
+
     return (
-        <Carousel
-            swipeable={true}
-            draggable={false}
-            showDots={true}
-            responsive={responsive}
-            ssr={true} // means to render carousel on server-side.
-            infinite={true}
-            autoPlay={false}
-            keyBoardControl={true}
-            customTransition="all .5"
-            transitionDuration={500}
-            containerClass="carousel-container"
-            removeArrowOnDeviceType={["mobile"]}
-            dotListClass="custom-dot-list-style"
-            itemClass="carousel-item-padding-40-px"
-        >
-            {videoInfo.map((element: any, index: number) => (
-                <div key={index} className="mb-10 mx-2">
-                    <VideoBox includeDate={false} fullVideoDetails={element} />
-                </div>
-            ))}
-        </Carousel>
-    );
+        <div className="flex overflow-x-scroll">
+            <div className="flex flex-row">
+                {videoInfo.map((element: any, index: number) => (
+                    <div key={index} className="mx-2 flex-none w-96">
+                        <VideoBox includeDate={false} fullVideoDetails={element} />
+                        {/* <img src={"https://picsum.photos/550"} alt="random 1" width={550} height={550}/> */}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
 
 }
 
@@ -196,7 +210,7 @@ export default function Dashboard() {
                     </div>
 
                     <div>
-                        Do not Know what API Key or Channel ID Means? Check out the <span>
+                        Do no t Know what API Key or Channel ID Means? Check out the <span>
                             <a key={9} href={"/about"} className="text-blue-400">About</a>
                         </span> Page for more information!
                     </div>

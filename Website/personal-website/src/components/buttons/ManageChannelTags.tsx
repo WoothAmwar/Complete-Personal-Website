@@ -375,7 +375,7 @@ export function ManageShowTag(props: { channelName: any }) {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                 >
-                    <Menu.Items className="absolute right-0 z-10 my-2 w-28 h-48 origin-top-right rounded-md bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 
+                    <Menu.Items className="absolute start-0 z-10 my-2 w-28 h-48 rounded-md bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 
                     grid grid-flow-row grid-cols-3 auto-rows-min flex justify-center
                     focus:outline-none">
                         {
@@ -495,19 +495,25 @@ export function ManageShowTag(props: { channelName: any }) {
                         <p>Channel Tags: {currentChannelTags.join(" ")}</p>
                     </div> */}
 
-                    <div>
+                    <div className="h-4/6 overflow-y-auto scroll-smooth">
                         {allTagOptions.map((tagName, index) => (
                             <div key={index}>
                                 <ListItem tagName={tagName} />
                             </div>
                         ))}
-                        <div className="grid grid-cols-2 row-span-1 mt-2">
+                        {/* <div className="grid grid-cols-2 row-span-1 mt-2">
 
                             <TextField InputProps={{
                                 style: { color: '#e7e5e4' }
                             }} size="small" id="outlined-basic" label="New Tag Name" variant="outlined" value={newTagText} onChange={handleChangeText} color="primary" focused />
                             <Button onClick={createNewTag}>Make New Tag</Button>
-                        </div>
+                        </div> */}
+                    </div>
+                    <div className="grid grid-cols-2 row-span-1 mt-2">
+                        <TextField InputProps={{
+                            style: { color: '#e7e5e4' }
+                        }} size="small" id="outlined-basic" label="New Tag Name" variant="outlined" value={newTagText} onChange={handleChangeText} color="primary" focused />
+                        <Button onClick={createNewTag}>Make New Tag</Button>
                     </div>
 
                 </Box>

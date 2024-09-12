@@ -46,6 +46,14 @@ export default function About() {
               <li>There should be an option called <span className="text-gray-400">Advanced Settings</span> Click on this option</li>
               <li>Take this Channel ID and enter it into your Dashboard on this website</li>
             </ol>
+
+            <div className="text-2xl">*IMPORTANT* Make Your Channel Subscriptions Public</div>
+            <ol className="list-decimal">
+              <li>Go to <a className="text-blue-400" href={"https://youtube.com"}>https://youtube.com</a></li>
+              <li>Click on your Profile Picture to go to Settings, or use another method to get to your Account Settings</li>
+              <li>There should be an option called <span className="text-gray-400">Privacy</span> Click on this option</li>
+              <li>Turn off the option to <span className="text-gray-400">Keep all my subscriptions private</span> by clicking on the slider</li>
+            </ol>
           </div>
         </div>
       </div>

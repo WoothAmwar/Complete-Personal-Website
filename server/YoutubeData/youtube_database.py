@@ -586,7 +586,7 @@ def get_user_channel_id(googleID):
     user_info = list(yt_user_collection.find(filter={"googleID": googleID}))[0]
     if len(user_info) == 0:
         print("User with ID:", googleID, "not in the database")
-    print("UINF:", user_info)
+    # print("UINF:", user_info)
     if 'channelID' not in user_info:
         print("User with googleID:", googleID, "does not have a channelID")
         return "None"
