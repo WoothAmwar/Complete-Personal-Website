@@ -9,7 +9,7 @@ from googleapiclient.discovery import build  # referred to as google-api-python-
 from time import sleep
 
 # TODO - add a period before "youtube_database" before deployment
-from youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
+from .youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
                               add_new_channel, is_channel_in_db, get_unassigned_channel_name_info, get_user_api,
                               get_all_user_google, get_user_channel_id)
 

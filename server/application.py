@@ -1,6 +1,7 @@
 import datetime
 import json
 import time
+import requests
 
 from bson import json_util
 from flask import Flask, jsonify, request
@@ -93,6 +94,10 @@ def youtube_job():
     # with scheduler.app.app_context():
     # complete_reload(doReturn=False)
 
+@scheduler.task('cron', id='malw_put_job', hour=21, minute=45, second=0)
+def malw_job():
+    r = requests.post("https://malw-api.onrender.com/api", timeout=300)
+    print(r.json())
 
 t = ""
 info = ""
@@ -397,7 +402,9 @@ def manage_user_channel_id(googleID):
 header_text = '''
     <html>\n<head> <title>EB Flask Test</title> </head>\n<body>'''
 instructions = '''
-    <p><em>Hint</em>: This is a RESTful web service! Append a username
+    <p><em>Hint</em>: 
+    Last Update: 10/1/2024
+    This is a RESTful web service! Append a username
     to the URL (for example: <code>/Thelonious</code>) to say hello to
     someone specific. Or NOT</p>\n'''
 home_link = '<p><a href="/">Back</a></p>\n'
@@ -411,7 +418,11 @@ application.add_url_rule('/', 'index', (lambda: header_text + instructions + foo
 application.add_url_rule('/<username>', 'hello', (lambda username: header_text + username + home_link + footer_text))
 
 if __name__ == "__main__":
+    # print(scheduler.get_jobs())
+    
+
     # scheduler.start()
     # debug=True for development, remove for production
     # application.debug = True
     application.run(debug=True, port=5000)
+    # malw_job()
