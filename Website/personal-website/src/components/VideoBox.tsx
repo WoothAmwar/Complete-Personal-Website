@@ -109,10 +109,101 @@ const deleteFavorite = async (currentUserGoogleID: string, fullVideoDetails: any
 };
 
 
+export const getWatchlaterVideos = async (currentUserGoogleID: string, getIdInfo: boolean) => {
+    try {
+        // http://localhost:5000/
+        // https://anwarkader.com/
+        const response = await fetch(`https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}`, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const raw_data = await response.json();
+        var data = JSON.parse(raw_data["data"]);
+        if (!getIdInfo) {
+            return data;
+        }
+        var data_ids: string[] = [];
+        for (var i = 0; i < data.length; i++) {
+            data_ids.push(data[i]["videoId"])
+        }
+        return data_ids;
+    } catch (err) {
+        console.error("Error getting watch laters", err);
+        return null;
+    }
+}
+
+
+const addWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any) => {
+    try {
+        // http://localhost:5000/
+        // https://anwarkader.com/
+        const response = await fetch(`https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}`, {
+            method: 'PUT',
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ data: fullVideoDetails }),
+        });
+
+        // Check if response is ok (status in the range 200-299)
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("DTA", data);
+        return data;
+    } catch (err) {
+        console.error("Error adding watch later", err);
+        return null;
+    }
+};
+
+const deleteWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any) => {
+    try {
+        // http://localhost:5000/
+        // https://anwarkader.com/
+        const response = await fetch(`https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}`, {
+            method: 'DELETE',
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ data: fullVideoDetails }),
+        });
+
+        // Check if response is ok (status in the range 200-299)
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("DTA", data);
+        return data;
+    } catch (err) {
+        console.error("Error deleting watch later", err);
+        return null;
+    }
+};
+
 function VideoActionItems(videoID: string, fullVideoDetails: any) {
     const currentUserGoogleID = CurrentUserId();
     const [favoriteVideos, setFavoriteVideos] = useState<string[] | null>();
     const [favCounter, setFavCounter] = useState(0);
+    const [watchlaterVideos, setWatchlaterVideos] = useState<string[] | null>();
+    const [watchlaterCounter, setWatchlaterCounter] = useState(0);
 
     useEffect(() => {
         const fetchFavoriteVideos = async () => {
@@ -124,9 +215,19 @@ function VideoActionItems(videoID: string, fullVideoDetails: any) {
                 console.error("Failed to fetch favorite videos", error);
             }
         };
+        const fetchWatchlaterVideos = async () => {
+            try {
+                const receivedWatchVideos = await getWatchlaterVideos(currentUserGoogleID.toString(), true);
+                // console.log("Setting Fav");
+                setWatchlaterVideos(receivedWatchVideos);
+            } catch (error) {
+                console.error("Failed to fetch watch later videos", error);
+            }
+        };
 
         fetchFavoriteVideos();
-    }, [favCounter]);
+        fetchWatchlaterVideos();
+    }, [favCounter, watchlaterCounter, currentUserGoogleID]);
 
     const videoIsFavorite = (videoID: string) => {
         var foundFav = false;
@@ -136,6 +237,16 @@ function VideoActionItems(videoID: string, fullVideoDetails: any) {
             }
         });
         return foundFav;
+    }
+
+    const videoIsWatchlater = (videoID: string) => {
+        var foundWatchlater = false;
+        watchlaterVideos?.forEach((element: string) => {
+            if (element === videoID) {
+                foundWatchlater = true;
+            }
+        });
+        return foundWatchlater;
     }
 
     return (
@@ -173,6 +284,27 @@ function VideoActionItems(videoID: string, fullVideoDetails: any) {
                                             'block px-4 py-1 w-full'
                                         )}>
                                             <p>&#x2606; Favorite</p>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </Menu.Item>
+                        <Menu.Item>
+                            {({ active }) => (
+                                <div>
+                                    {videoIsWatchlater(videoID) ? (
+                                        <button onClick={() => { deleteWatchlater(currentUserGoogleID.toString(), fullVideoDetails); setWatchlaterCounter(watchlaterCounter + 1); }} className={classNames(
+                                            active ? 'bg-slate-700' : 'bg-slate-900',
+                                            'block px-4 py-1 w-full'
+                                        )}>
+                                            <p>&#x2605; Remove Watch Later</p>
+                                        </button>
+                                    ) : (
+                                        <button onClick={() => { addWatchlater(currentUserGoogleID.toString(), fullVideoDetails); setWatchlaterCounter(watchlaterCounter + 1); }} className={classNames(
+                                            active ? 'bg-slate-700' : 'bg-slate-900',
+                                            'block px-4 py-1 w-full'
+                                        )}>
+                                            <p>&#x2606; Add Watch Later</p>
                                         </button>
                                     )}
                                 </div>
