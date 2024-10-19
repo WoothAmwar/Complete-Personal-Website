@@ -183,8 +183,8 @@ export default function Dashboard() {
     }
 
     return (
-        <main className="grid grid-cols-5 grid-rows-1 divide-x-2 divide-slate-800 gap-x-2">
-            <div className="relative col-span-1 gap-4 flex flex-col py-4 h-screen">
+        <main className="grid lg:grid-cols-5 grid-cols-1 lg:grid-rows-1 grid-rows-2 divide-x-2 divide-slate-800 gap-x-2">
+            <div className="relative lg:col-span-1 row-span-1 gap-4 flex flex-col py-4 lg:h-screen">
                 <div className="items-center place-self-center">
                     <ProfilePicture imageLink={userProfile?.picture} imageSize={100} />
                 </div>
@@ -206,18 +206,18 @@ export default function Dashboard() {
                         <TextField InputProps={{
                             style: { color: '#e7e5e4' }
                         }} size="small" id="outlined-basic" label="Channel ID" variant="outlined" value={newChannelIdText} onChange={handleChangeChannelIDText} color="primary" focused />
-                        <Button onClick={updateYoutubeChannelID}>Update Channel ID</Button>
+                        <Button onClick={updateYoutubeChannelID}>Update YT ID</Button>
                     </div>
 
                     <div>
-                        Do no t Know what API Key or Channel ID Means? Check out the <span>
+                        Do not Know what API Key or Channel ID Means? Check out the <span>
                             <a key={9} href={"/about"} className="text-blue-400">About</a>
                         </span> Page for more information!
                     </div>
                 </div>
 
                 <div>
-                    <button onClick={logOut} className="absolute inset-x-0 bottom-0 w-full h-12 border-2 border-red-800 rounded-full">
+                    <button onClick={logOut} className="lg:absolute inset-x-0 bottom-0 w-full h-12 border-2 border-red-800 rounded-full">
                         <Link key={1} href="/">
                             <p className="font-['Garamond'] font-bold text-lg text-red-800 ">Log out</p>
                         </Link>

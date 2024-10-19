@@ -10,7 +10,7 @@ export default function About() {
     <CookiesProvider>
       <div className="mx-4">
         <div className="text-3xl text-center"> About this Project </div>
-        <div className="mx-32">
+        <div className="md:mx-32 mx-4">
           <div className="text-lg">
             <p>
               YouTube Without Ads <br /> Add Tags to Channels <br /> Updated Once a Day at 3:30 UTC

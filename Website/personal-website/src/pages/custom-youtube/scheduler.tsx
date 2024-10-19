@@ -257,7 +257,7 @@ export default function Scheduler() {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log(category,":",data);
+                // console.log(category,":",data);
                 return data;
             }
             catch (error) {
@@ -277,7 +277,7 @@ export default function Scheduler() {
             setUnassignedChannelData(tempLoadedUnassigned);
             setIsLoading(false);
         }
-        console.log("Fetched all info for user");
+        // console.log("Fetched all info for user");
         setInOperation(false);
         fetchAll();
     }, [doingOperation])

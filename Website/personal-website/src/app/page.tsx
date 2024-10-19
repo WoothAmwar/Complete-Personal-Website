@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <GoogleOAuthProvider clientId="224517591075-783fat3nia6np4el8jhuvi75it5bhgro.apps.googleusercontent.com">
       <CookiesProvider> 
-        <div className="ml-40 mt-8 font-mono justify-items-stretch">
+        <div className="lg:ml-40 ml-8 mt-8 font-mono justify-items-stretch">
           {/* Top of the screen */}
           <div className="grid grid-rows-1 grid-flow-col ">
             <div className="mr-40 grid grid-cols-1 justify-self-end">

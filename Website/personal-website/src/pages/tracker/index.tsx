@@ -157,7 +157,7 @@ export default function TrackerPage() {
         </div>
         <div className="mt-2 text-center">
           <Link key={props.video_info.videoThumbnail} href={"/custom-youtube/".concat(props.video_info.videoID)}>
-            <div className="h-1/2 font-['Garamond'] text-lg text-blue-400 border-2 border-blue-400 rounded-lg p-2 pt-0 tracking-tighter line-clamp-4">
+            <div className="h-1/2 font-['Garamond'] lg:text-lg md:text-md text-sm text-blue-400 border-2 border-blue-400 rounded-lg p-2 pt-0 tracking-tighter line-clamp-4">
               {props.video_info.videoTitle}
             </div>
           </Link>
@@ -184,18 +184,18 @@ export default function TrackerPage() {
         Get Started with Test Place for Web Tracker 1.0
       </h2>
 
-      <div className="my-2 mx-4 grid grid-cols-5 gap-x-4">
+      <div className="my-2 mx-4 grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-x-4">
         {allVideoInfo.map((video_info, index) => (
           <div key={index}>
             <SingleLink_YT video_info={video_info} />
           </div>
         ))}
       </div>
-      <div className="my-2 w-1/4 grid grid-cols-3 grid-rows-1">
+      <div className="my-2 lg:w-1/4 md:w-1/2 w-5/6 grid grid-cols-3 grid-rows-1">
         <TextField fullWidth InputProps={{
           style: { color: '#e7e5e4' }
         }} className="col-span-2" size="small" id="outlined-basic" label="Youtube Video URL" variant="outlined" value={newUrlText} onChange={handleChangeUrlText} color="primary" focused />
-        <Button onClick={addVideoByURL}>Add YouTube Video URL</Button>
+        <Button onClick={addVideoByURL}>Add YT Video URL</Button>
       </div>
 
     </main>
