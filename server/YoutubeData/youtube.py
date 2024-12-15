@@ -461,8 +461,8 @@ def test():
 
 
 def main():
-    googleID = "113385767862195154808"
-    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
+    # googleID = "113385767862195154808"
+    # totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
 
     # Testing to realize that you have to make subscriptions public
     # google_info = get_all_user_google()
@@ -509,7 +509,7 @@ def main():
     #         total_url = "https://www.googleapis.com/youtube/v3/videos?key=AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w" \
     #                     "&part=snippet&id=" + videoID
     #         automate_scuff(total_url)
-    # pass
+    pass
 
 if __name__ == "__main__":
     main()
