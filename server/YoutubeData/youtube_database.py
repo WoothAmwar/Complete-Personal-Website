@@ -70,7 +70,7 @@ def replace_videos_many_db(channelIdList, videoIdList, titleList, thumbnailList,
         tempChannelId = channelIdList[channelIdx]
         delV = yt_videos_collection.delete_many(filter={"channelId": tempChannelId})
         print(delV.deleted_count, "deleted accounts in videos database")
-        for vidIdx in range(3):
+        for vidIdx in range(min(3, len(videoIdList[channelIdx]))):
             total_item_list.append({
                 "channelId": tempChannelId,
                 "videoId": videoIdList[channelIdx][vidIdx],
@@ -349,6 +349,59 @@ def remove_favorite_video(googleID, fullVideoDetails):
     return "Done"
 
 
+
+def get_watchlater_videos(googleID):
+    curr_user = db_users[googleID]
+    favorites = curr_user.find(filter={"category": "watchLaterVideo"})
+    if favorites is None:
+        return []
+    output = []
+    for vid in favorites:
+        output.append(vid)
+    return output
+
+
+def check_video_in_watchlater(googleID, fullVideoDetails):
+    curr_user = db_users[googleID]
+    findGiven = curr_user.find_one(filter={"category": "watchLaterVideo", "videoId": fullVideoDetails["videoId"]})
+    if findGiven is None:
+        return False
+    return True
+
+
+def add_watchlater_video(googleID, fullVideoDetails):
+    curr_user = db_users[googleID]
+    # print(fullVideoDetails)
+    separated = fullVideoDetails["videoThumbnail"].split("/")[0:-1]
+    separated.append("hqdefault.jpg")
+    default_thumbnail = "/".join(separated)
+
+    add_tracked_video(googleID, fullVideoDetails["videoId"], fullVideoDetails["videoTitle"], default_thumbnail)
+
+    if check_video_in_watchlater(googleID, fullVideoDetails):
+        return "Already In"
+
+    video_channel_info = get_channel_of_video(fullVideoDetails["videoId"])
+    curr_user.insert_one({
+        "category": "watchLaterVideo",
+        "videoId": fullVideoDetails["videoId"],
+        "videoTitle": fullVideoDetails["videoTitle"],
+        "uploadDate": fullVideoDetails["uploadDate"],
+        "videoThumbnail": fullVideoDetails["videoThumbnail"],
+        "channelName": video_channel_info["channelNames"]
+    })
+    return "Done"
+
+
+def remove_watchlater_video(googleID, fullVideoDetails):
+    curr_user = db_users[googleID]
+    if not check_video_in_watchlater(googleID, fullVideoDetails):
+        return "Data entry not in database, cannot be deleted"
+
+    curr_user.delete_one(filter={"category": "watchLaterVideo", "videoId": fullVideoDetails["videoId"]})
+    return "Done"
+
+
 def get_all_tag_names(googleID):
     """
     Will find all current tag name options
@@ -583,6 +636,7 @@ def add_user_api(googleID, user_api_key):
 
 
 def get_user_channel_id(googleID):
+    # print("LDF:", yt_user_collection.find(filter={"googleID": googleID}))
     user_info = list(yt_user_collection.find(filter={"googleID": googleID}))[0]
     if len(user_info) == 0:
         print("User with ID:", googleID, "not in the database")
@@ -726,6 +780,7 @@ def main():
     # TODO - make sure to use the user's respective youtube API for this
     # TODO - use the below function to do the update for each user
     # move_update_to_user("113385767862195154808")
+
     googleID = "113385767862195154808"
     if "channelID" not in list(yt_user_collection.find(filter={"googleID": googleID}))[0]:
         print("New")
@@ -734,6 +789,7 @@ def main():
         # print(list(output)[0])
     else:
         print("In There")
+
     # print(db_users.list_collection_names())
     # print("Added all of Test Data ")
     # print("All tag names:", get_all_tag_names("113385767862195154808"))

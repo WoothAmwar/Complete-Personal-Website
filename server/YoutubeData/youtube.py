@@ -9,7 +9,7 @@ from googleapiclient.discovery import build  # referred to as google-api-python-
 from time import sleep
 
 # TODO - add a period before "youtube_database" before deployment
-from .youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
+from youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
                               add_new_channel, is_channel_in_db, get_unassigned_channel_name_info, get_user_api,
                               get_all_user_google, get_user_channel_id)
 
@@ -374,8 +374,8 @@ def complete_reload(googleID, doReturn=False):
     # Useless function below
     # single_reset_files(doEmbed=False)
 
-    # api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
-    api_key = get_user_api(googleID)
+    api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
+    # api_key = get_user_api(googleID)
     channel_id = get_user_channel_id(googleID)
     if api_key == "None" or channel_id == "None":
         return -1
@@ -461,7 +461,8 @@ def test():
 
 
 def main():
-    # totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
+    googleID = "113385767862195154808"
+    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
 
     # Testing to realize that you have to make subscriptions public
     # google_info = get_all_user_google()
@@ -508,7 +509,7 @@ def main():
     #         total_url = "https://www.googleapis.com/youtube/v3/videos?key=AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w" \
     #                     "&part=snippet&id=" + videoID
     #         automate_scuff(total_url)
-    pass
+    # pass
 
 if __name__ == "__main__":
     main()
