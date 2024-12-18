@@ -10,10 +10,10 @@ from flask_cors import CORS, cross_origin
 
 from WebText.link_saving import Novel
 from YoutubeData.youtube import complete_reload, test, get_single_video_info
-from YoutubeData.youtube_database import (get_random_data, mongo_insert_test, get_all_user_channels, get_all_videos,
+from YoutubeData.youtube_database import (add_watchlater_video, get_random_data, get_watchlater_videos, mongo_insert_test, get_all_user_channels, get_all_videos,
                                           add_favorite_video, get_favorite_videos, remove_favorite_video,
                                           get_update_user_channels,
-                                          get_unassigned_user_channels, set_update_schedule_channel, get_all_tag_names,
+                                          get_unassigned_user_channels, remove_watchlater_video, set_update_schedule_channel, get_all_tag_names,
                                           add_tag_channel, remove_tag_channel,
                                           get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name,
                                           get_color_of_tag, add_color_of_tag, change_color_of_tag, get_all_user_google,
@@ -94,7 +94,7 @@ def youtube_job():
     # with scheduler.app.app_context():
     # complete_reload(doReturn=False)
 
-@scheduler.task('cron', id='malw_put_job', hour=21, minute=45, second=0)
+@scheduler.task('cron', id='malw_put_job', hour=15, minute=45, second=0)
 def malw_job():
     r = requests.post("https://malw-api.onrender.com/api", timeout=300)
     print(r.json())
@@ -290,6 +290,26 @@ def manage_favorite_videos(googleID):
         return jsonify({'data': action})
 
 
+@application.route("/api/videos/watchlater/<googleID>", methods=['GET', 'PUT', 'DELETE'])
+def manage_watchlater_videos(googleID):
+    # response = jsonify(json_util.dumps(get_all_videos(googleID)))
+    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+    # return response
+    if request.method == 'GET':
+        favorites = json_util.dumps(get_watchlater_videos(googleID))
+        return jsonify({'data': favorites})
+
+    elif request.method == 'PUT':
+        videoInfo_to_favorite = json.loads(request.data)["data"]
+
+        action = add_watchlater_video(googleID, videoInfo_to_favorite)
+        return jsonify({'data': action})
+
+    elif request.method == 'DELETE':
+        videoInfo_to_favorite = json.loads(request.data)["data"]
+        action = remove_watchlater_video(googleID, videoInfo_to_favorite)
+        return jsonify({'data': action})
+
 @application.route("/api/channels/tags/<googleID>", methods=['GET', 'PUT', 'DELETE'])
 def manage_tag_names(googleID):
     if request.method == 'GET':
@@ -403,7 +423,7 @@ header_text = '''
     <html>\n<head> <title>EB Flask Test</title> </head>\n<body>'''
 instructions = '''
     <p><em>Hint</em>: 
-    Last Update: 10/1/2024
+    Last Update: 10/19/2024
     This is a RESTful web service! Append a username
     to the URL (for example: <code>/Thelonious</code>) to say hello to
     someone specific. Or NOT</p>\n'''
