@@ -1,81 +1,81 @@
-import datetime
-import json
-import time
-import requests
-
-from bson import json_util
-from flask import Flask, jsonify, request
-from flask_apscheduler import APScheduler
-from flask_cors import CORS, cross_origin
-
-from WebText.link_saving import Novel
-from YoutubeData.youtube import complete_reload, test, get_single_video_info
-from YoutubeData.youtube_database import (add_watchlater_video, get_random_data, get_watchlater_videos, mongo_insert_test, get_all_user_channels, get_all_videos,
-                                          add_favorite_video, get_favorite_videos, remove_favorite_video,
-                                          get_update_user_channels,
-                                          get_unassigned_user_channels, remove_watchlater_video, set_update_schedule_channel, get_all_tag_names,
-                                          add_tag_channel, remove_tag_channel,
-                                          get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name,
-                                          get_color_of_tag, add_color_of_tag, change_color_of_tag, get_all_user_google,
-                                          add_user_google, add_user_api, get_user_api, get_user_channel_id,
-                                          add_user_channel_id, add_tracked_video,
-                                          remove_tracked_video, get_all_tracked_video)
-
+# import datetime
+# import json
+# import time
+# import requests
+#
+# from bson import json_util
+# from flask import Flask, jsonify, request
+# from flask_apscheduler import APScheduler
+# from flask_cors import CORS, cross_origin
+#
+# from WebText.link_saving import Novel
+# from YoutubeData.youtube import complete_reload, test, get_single_video_info
+# from YoutubeData.youtube_database import (add_watchlater_video, get_random_data, get_watchlater_videos, mongo_insert_test, get_all_user_channels, get_all_videos,
+#                                           add_favorite_video, get_favorite_videos, remove_favorite_video,
+#                                           get_update_user_channels,
+#                                           get_unassigned_user_channels, remove_watchlater_video, set_update_schedule_channel, get_all_tag_names,
+#                                           add_tag_channel, remove_tag_channel,
+#                                           get_tags_of_channel, get_channels_of_tag, add_tag_name, remove_tag_name,
+#                                           get_color_of_tag, add_color_of_tag, change_color_of_tag, get_all_user_google,
+#                                           add_user_google, add_user_api, get_user_api, get_user_channel_id,
+#                                           add_user_channel_id, add_tracked_video,
+#                                           remove_tracked_video, get_all_tracked_video)
+#
 
 # from random import randint
 
 
 # set configuration values
-class Config:
-    SCHEDULER_API_ENABLED = True
-
-
-# app instance
-application = Flask(__name__)
-application.config.from_object(Config())
-CORS(application, supports_credentials=True,
-     origins=["http://localhost:3000", "https://complete-website-humanwooths-projects.vercel.app"])
-
-# scheduler = APScheduler()
-# scheduler.init_app(application)
-# scheduler.start()
-
-# ---------- WebText.link_saving
-# Information for LOTM class
-lotm = Novel(title="Lord of the Mysteries",
-             max_chapter=1432,
-             novel_base_link="https://www.lightnovelworld.com/novel/lord-of-the-mysteries-275")
+# class Config:
+#     SCHEDULER_API_ENABLED = True
+#
+#
+# # app instance
+# application = Flask(__name__)
+# application.config.from_object(Config())
+# CORS(application, supports_credentials=True,
+#      origins=["http://localhost:3000", "https://complete-website-humanwooths-projects.vercel.app"])
+#
+# # scheduler = APScheduler()
+# # scheduler.init_app(application)
+# # scheduler.start()
+#
+# # ---------- WebText.link_saving
+# # Information for LOTM class
+# lotm = Novel(title="Lord of the Mysteries",
+#              max_chapter=1432,
+#              novel_base_link="https://www.lightnovelworld.com/novel/lord-of-the-mysteries-275")
 
 
 # print("Generate a new LOTM")
 # ----------
 
-def isUpdateTime(upd_hour, upd_min, upd_sec, useModulus=False, isDevelopment=False):
-    """
-    Finds out if the time is equal to parameter values
-    :param isDevelopment: If true, adds hours to account that datetime.now() currently defaults to UTC timezone
-    :param upd_hour: Hour, in 24 hours time scale
-    :param upd_min: Minute to update
-    :param upd_sec: Second, usually 1 to update that minute
-    :param useModulus: If true, will update every minute that is a multiple of upd_min. If false, only that minute
-    :return: Boolean of if the current time is within the range of values acceptable from these parameters
-    """
-    real_hour = upd_hour
-    if isDevelopment:
-        # This means in UTC time, which is ~4 hours ahead, depending on daylight savings and that stuff
-        real_hour += 4
-        # Could also do
-        real_hour = real_hour % 24
-
-    # isMinute = False
-    current_time = datetime.datetime.now()
-    if useModulus:
-        isMinute = (current_time.minute % upd_min) == 0
-    else:
-        isMinute = current_time.minute == upd_min
-    if (current_time.hour == real_hour) and isMinute and (current_time.second <= upd_sec):
-        return True
-    return False
+# def isUpdateTime(upd_hour, upd_min, upd_sec, useModulus=False, isDevelopment=False):
+#     """
+#     Finds out if the time is equal to parameter values
+#     :param isDevelopment: If true, adds hours to account that datetime.now() currently defaults to UTC timezone
+#     :param upd_hour: Hour, in 24 hours time scale
+#     :param upd_min: Minute to update
+#     :param upd_sec: Second, usually 1 to update that minute
+#     :param useModulus: If true, will update every minute that is a multiple of upd_min. If false, only that minute
+#     :return: Boolean of if the current time is within the range of values acceptable from these parameters
+#     """
+#     real_hour = upd_hour
+#     if isDevelopment:
+#         # This means in UTC time, which is ~4 hours ahead, depending on daylight savings and that stuff
+#         real_hour += 4
+#         # Could also do
+#         real_hour = real_hour % 24
+#
+#     # isMinute = False
+#     current_time = datetime.datetime.now()
+#     if useModulus:
+#         isMinute = (current_time.minute % upd_min) == 0
+#     else:
+#         isMinute = current_time.minute == upd_min
+#     if (current_time.hour == real_hour) and isMinute and (current_time.second <= upd_sec):
+#         return True
+#     return False
 
 
 # ----------
@@ -419,30 +419,30 @@ def isUpdateTime(upd_hour, upd_min, upd_sec, useModulus=False, isDevelopment=Fal
 # ----------
 # ----------------- TESTING -----------------
 # some bits of text for the page.
-header_text = '''
-    <html>\n<head> <title>EB Flask Test</title> </head>\n<body>'''
-instructions = '''
-    <p><em>Hint</em>: 
-    Last Update: 12/18/2024
-    This is a RESTful web service! Append a username
-    to the URL (for example: <code>/Thelonious</code>) to say hello to
-    someone specific. Or NOT</p>\n'''
-home_link = '<p><a href="/">Back</a></p>\n'
-footer_text = '</body>\n</html>'
-
-# add a rule for the index page.
-application.add_url_rule('/', 'index', (lambda: header_text + instructions + footer_text))
-
-# add a rule when the page is accessed with a name appended to the site
-# URL.
-application.add_url_rule('/<username>', 'hello', (lambda username: header_text + username + home_link + footer_text))
+# header_text = '''
+#     <html>\n<head> <title>EB Flask Test</title> </head>\n<body>'''
+# instructions = '''
+#     <p><em>Hint</em>:
+#     Last Update: 12/18/2024
+#     This is a RESTful web service! Append a username
+#     to the URL (for example: <code>/Thelonious</code>) to say hello to
+#     someone specific. Or NOT</p>\n'''
+# home_link = '<p><a href="/">Back</a></p>\n'
+# footer_text = '</body>\n</html>'
+#
+# # add a rule for the index page.
+# application.add_url_rule('/', 'index', (lambda: header_text + instructions + footer_text))
+#
+# # add a rule when the page is accessed with a name appended to the site
+# # URL.
+# application.add_url_rule('/<username>', 'hello', (lambda username: header_text + username + home_link + footer_text))
 
 if __name__ == "__main__":
     # print(scheduler.get_jobs())
-    
+    print("THIS IS THE BESt")
 
     # scheduler.start()
     # debug=True for development, remove for production
     # application.debug = True
-    application.run(debug=True, port=5000)
+    # application.run(debug=True, port=5000)
     # malw_job()
