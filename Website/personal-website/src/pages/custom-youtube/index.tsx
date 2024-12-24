@@ -122,15 +122,22 @@ const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function T
   // console.log("Reload options");
   const currentUserGoogleId = CurrentUserId();
   const [totalTagOptions, setTotalTagOptions] = useState<string[]>(["None"]);
-
+  // https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}
   useEffect(() => {
-    fetch(`https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/tags`, {
       method: 'GET',
-      credentials: 'include'
+      mode: 'cors',
+      // credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-google-id': currentUserGoogleId.toString()
+      }
     })
       .then(response => response.json())
       .then(data => {
-        setTotalTagOptions(JSON.parse(data["data"]));
+        console.log("DATA 11.1:", data);
+        // setTotalTagOptions(JSON.parse(data["data"]));
+        setTotalTagOptions(data);
       })
   }, []);
 
@@ -206,13 +213,22 @@ export default function HomePage() {
   const findChannelsOfTag = useCallback((tagName: string) => {
     console.log("Channels of Tag:", tagName)
     console.log("Updating Channels of Tag:", tagName);
-    fetch(`https://anwarkader.com/api/channels/channelsOfTag/${currentUserGoogleId.toString()}/${tagName}`, { method: 'GET', credentials: 'include' })
+    // https://anwarkader.com/api/channels/channelsOfTag/${currentUserGoogleId.toString()}/${tagName}
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelsOfTag/${tagName}`, { 
+      method: 'GET', 
+      mode: 'cors',
+      // credentials: 'include'
+      headers: {
+        'Content-Type': 'application/json',
+        'x-google-id': currentUserGoogleId.toString()
+      }
+    })
       .then(response => response.json())
       .then(data => {
         // console.log("Setting Channels Before:", data["data"]);
-        const raw_data = JSON.parse(data["data"]);
-        // console.log("Setting Channels:", raw_data);
-        setChannelsFromFilter(raw_data);
+        // const raw_data = JSON.parse(data["data"]);
+        // const raw_data = data;
+        setChannelsFromFilter(data);
         // console.log("Setting Tags for", props.channelName.toString());
       })
       .catch(err => console.error("Error getting channels of tag", err));

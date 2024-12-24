@@ -28,7 +28,17 @@ export default function OrderByTime() {
     useEffect(() => {
         // http://localhost:5000/
         // https://anwarkader.com/
-        fetch(`https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}`, {method: 'GET', credentials: 'include'})
+        // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
+            {
+                method: 'GET', 
+                // credentials: 'include',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-google-id': currentUserGoogleId.toString()
+                  }
+            })
           .then(response => response.json())
           .then(data => {
             setResponseVideoData(data);

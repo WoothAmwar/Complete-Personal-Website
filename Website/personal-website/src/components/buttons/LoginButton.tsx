@@ -85,11 +85,12 @@ function GoogleSignIn() {
                     console.log("User ID:", res.data.id);
                     // http://localhost:5000/
                     // https://anwarkader.com/
-                    fetch(`https://anwarkader.com/api/users/googleID`,
+                    // https://anwarkader.com/api/users/googleID
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`,
                         {
                             method: 'PUT',
                             mode: 'cors',
-                            credentials: 'include',
+                            // credentials: 'include',
                             headers: {
                                 'Content-Type': 'application/json',
                             },

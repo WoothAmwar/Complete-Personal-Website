@@ -23,9 +23,20 @@ export default function OrderByChannel(props: { channelsToInclude: string[] }) {
   useEffect(() => {
     // http://localhost:5000/
     // https://anwarkader.com/
-    fetch(`https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}`, { method: 'GET', credentials: 'include' })
+    // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
+    { 
+      method: 'GET', 
+      // credentials: 'include' 
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-google-id': currentUserGoogleId.toString()
+      }
+    })
       .then(response => response.json())
       .then(data => {
+        console.log("DTA 13.1:", data);
         setResponseVideoData(data);
         setIsLoadingVideos(false);
       })
@@ -34,7 +45,17 @@ export default function OrderByChannel(props: { channelsToInclude: string[] }) {
   useEffect(() => {
     // http://localhost:5000/
     // https://anwarkader.com/
-    fetch(`https://anwarkader.com/api/channels/${currentUserGoogleId.toString()}`, { method: 'GET', credentials: 'include' })
+    // https://anwarkader.com/api/channels/${currentUserGoogleId.toString()}
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels`, 
+    { 
+      method: 'GET', 
+      // credentials: 'include',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-google-id': currentUserGoogleId.toString()
+      }
+    })
       .then(response => response.json())
       .then(data => {
         setResponseChannelData(data);
@@ -43,7 +64,7 @@ export default function OrderByChannel(props: { channelsToInclude: string[] }) {
   }, [])
 
 
-  if (isLoadingChannels || isLoadingVideos) {
+  if (isLoadingChannels || isLoadingVideos || responseVideoData.length==0 || responseChannelData.length==0) {
     return ["Loading..."]
   }
 
@@ -61,15 +82,20 @@ export default function OrderByChannel(props: { channelsToInclude: string[] }) {
     doFilter = true;
   }
 
-  for (let i = 0; i < responseVideoData.length; i++) {
+  // responseVideoData.length
+  console.log("RV:", responseVideoData.length);
+  const start_idx: number = 0;
+  const page_amt: number = responseVideoData.length - start_idx; // responseVideoData.length - start_idx
+  for (let i = start_idx; i < start_idx+page_amt; i++) {
     let currRow = [];
     if (!doFilter || (doFilter && (props.channelsToInclude.indexOf(responseChannelData[i]["channelNames"]) != -1))) {
       currRow.push(
-        <div key={i} className="text-left flex">
+        <div key={i+1} className="text-left flex">
           <ManageShowTag channelName={responseChannelData[i]["channelNames"]} />
           <div>
             <img src={responseChannelData[i]["channelImages"]} alt="Channel Image" width={wd / 2 - 30} height={ht / 2 - 30} />
             <p className="font-['Helvetica'] text-2xl font-semibold">{responseChannelData[i]["channelNames"]}</p>
+            <p>{responseVideoData.length}</p>
           </div>
         </div>
       )

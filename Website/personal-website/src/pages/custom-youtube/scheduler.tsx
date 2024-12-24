@@ -129,13 +129,15 @@ export default function Scheduler() {
             try {
                 // http://localhost:5000/
                 // https://anwarkader.com/
+                // https://anwarkader.com/api/channels/${dbBtnOptions[selectedIndex]}/${currentUserGoogleID}
 
-                const response = await fetch(`https://anwarkader.com/api/channels/${dbBtnOptions[selectedIndex]}/${currentUserGoogleID}`, {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/${dbBtnOptions[selectedIndex]}`, {
                     method: 'PUT',
                     mode: 'cors',
-                    credentials: 'include',
+                    // credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
+                        'x-google-id': currentUserGoogleId.toString()
                     },
                     body: JSON.stringify({ data: props.selectedChannels, location: dbBtnOptions[selectedIndex] }),
                 });
@@ -246,12 +248,14 @@ export default function Scheduler() {
             try {
                 // http://localhost:5000/
                 // https://anwarkader.com/
-                const response = await fetch(`https://anwarkader.com/api/channels/${category}/${currentUserGoogleId.toString()}`, { 
+                // https://anwarkader.com/api/channels/${category}/${currentUserGoogleId.toString()}
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/${category}`, { 
                     method: 'GET', 
                     mode: 'cors',
-                    credentials: 'include',
+                    // credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
+                        'x-google-id': currentUserGoogleId.toString()
                     } });
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);

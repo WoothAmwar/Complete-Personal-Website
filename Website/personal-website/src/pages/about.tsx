@@ -4,7 +4,40 @@ import "../app/globals.css";
 import { CookiesProvider, useCookies } from 'react-cookie'
 
 export default function About() {
+  const [channelTags, setChannelTags] = useState([]);
 
+  useEffect(() => {
+    const channelName = "Fundy";
+    const currentUserGoogleId = "113385767862195154808";
+    // http://localhost:5000/
+    // https://anwarkader.com/
+    // https://anwarkader.com/api/channels/channelWithTags/${currentUserGoogleId.toString()}/${props.channelName.toString()}
+    // console.log("LAST:", props.channelName.toString());
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelWithTags/${channelName.toString()}`, 
+        { 
+            method: 'GET', 
+            // credentials: 'include' 
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleId.toString()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // const raw_data = JSON.parse(data["data"]);
+            console.log("DTA C.1:", data["data"]);
+            // const raw_data = data;
+            // var tag_list = [];
+            // for (var i = 0; i < raw_data.length; i++) {
+            //     tag_list.push(raw_data[i]);
+            // }
+            // console.log("Setting Channel Tags:", tag_list);
+            setChannelTags(data["data"]);
+            // console.log("Setting Tags for", props.channelName.toString());
+        })
+
+}, [])
 
   return (
     <CookiesProvider>
@@ -14,6 +47,7 @@ export default function About() {
           <div className="text-lg">
             <p>
               YouTube Without Ads <br /> Add Tags to Channels <br /> Updated Once a Day at 3:30 UTC
+              <br />{channelTags}
             </p>
             <p>
               Save YouTube videos with the Tracker <br /> Find Favorite Videos in your personal dashboard.

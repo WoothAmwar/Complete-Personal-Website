@@ -23,30 +23,38 @@ export const getFavoriteVideos = async (currentUserGoogleID: string, getIdInfo: 
     try {
         // http://localhost:5000/
         // https://anwarkader.com/
-        const response = await fetch(`https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}`, {
+        // https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}
+        // console.log("DT 2.2:", currentUserGoogleID.toString(), " | ", getIdInfo);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
             method: 'GET',
             mode: 'cors',
-            credentials: 'include',
+            // credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleID.toString()
             }
         });
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const raw_data = await response.json();
-        var data = JSON.parse(raw_data["data"]);
+        const pure_data = await response.json();
+        const raw_data = pure_data["data"];
+        // console.log("RAW 1.2:", raw_data);
+        // var data = JSON.parse(raw_data["data"]);
+        // var data = raw_data;
         if (!getIdInfo) {
-            return data;
+            return raw_data;
         }
+        // console.log("RAW:", pure_data);
         var data_ids: string[] = [];
-        for (var i = 0; i < data.length; i++) {
-            data_ids.push(data[i]["videoId"])
+        for (var i = 0; i < raw_data.length; i++) {
+            data_ids.push(raw_data[i]["videoId"])
         }
+        // console.log("RAW 1.3:", data_ids);
         return data_ids;
     } catch (err) {
-        console.error("Error getting favorites", err);
+        console.error("Error getting favorites:",currentUserGoogleID, " | ", getIdInfo, " > ", err);
         return null;
     }
 }
@@ -56,12 +64,14 @@ const addFavorite = async (currentUserGoogleID: string, fullVideoDetails: any) =
     try {
         // http://localhost:5000/
         // https://anwarkader.com/
-        const response = await fetch(`https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}`, {
+        // https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
             method: 'PUT',
             mode: 'cors',
-            credentials: 'include',
+            // credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleID
             },
             body: JSON.stringify({ data: fullVideoDetails }),
         });
@@ -84,12 +94,15 @@ const deleteFavorite = async (currentUserGoogleID: string, fullVideoDetails: any
     try {
         // http://localhost:5000/
         // https://anwarkader.com/
-        const response = await fetch(`https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}`, {
+        // https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}
+        console.log("FULL:", fullVideoDetails);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
             method: 'DELETE',
             mode: 'cors',
-            credentials: 'include',
+            // credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleID
             },
             body: JSON.stringify({ data: fullVideoDetails }),
         });
@@ -113,27 +126,36 @@ export const getWatchlaterVideos = async (currentUserGoogleID: string, getIdInfo
     try {
         // http://localhost:5000/
         // https://anwarkader.com/
-        const response = await fetch(`https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}`, {
+        // https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}
+        // console.log("DT 2.2:", currentUserGoogleID.toString(), " | ", getIdInfo);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
             method: 'GET',
             mode: 'cors',
-            credentials: 'include',
+            // credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleID.toString()
             }
         });
         if (!response.ok) {
+            // console.log("ERR 2.1:");
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const raw_data = await response.json();
-        var data = JSON.parse(raw_data["data"]);
+        const pure_data = await response.json();
+        const raw_data = pure_data["data"];
+        // console.log("RAW 1.1:", raw_data);
+        // var data = JSON.parse(raw_data["data"]);
+        // var data = raw_data;
+
         if (!getIdInfo) {
-            return data;
+            return raw_data;
         }
         var data_ids: string[] = [];
-        for (var i = 0; i < data.length; i++) {
-            data_ids.push(data[i]["videoId"])
+        for (var i = 0; i < raw_data.length; i++) {
+            data_ids.push(raw_data[i]["videoId"])
         }
+        // console.log("RAW 1.2:", data_ids)
         return data_ids;
     } catch (err) {
         console.error("Error getting watch laters", err);
@@ -146,12 +168,14 @@ const addWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any)
     try {
         // http://localhost:5000/
         // https://anwarkader.com/
-        const response = await fetch(`https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}`, {
+        // https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
             method: 'PUT',
             mode: 'cors',
-            credentials: 'include',
+            // credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleID
             },
             body: JSON.stringify({ data: fullVideoDetails }),
         });
@@ -174,12 +198,14 @@ const deleteWatchlater = async (currentUserGoogleID: string, fullVideoDetails: a
     try {
         // http://localhost:5000/
         // https://anwarkader.com/
-        const response = await fetch(`https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}`, {
+        // https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
             method: 'DELETE',
             mode: 'cors',
-            credentials: 'include',
+            // credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleID
             },
             body: JSON.stringify({ data: fullVideoDetails }),
         });

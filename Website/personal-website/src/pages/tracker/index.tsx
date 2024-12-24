@@ -50,12 +50,14 @@ export default function TrackerPage() {
     try {
       // http://localhost:5000/
     // https://anwarkader.com/
-      const response = await fetch(`https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo/${extractedVideoId(newUrlText)}`, {
+    // https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo/${extractedVideoId(newUrlText)}
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${extractedVideoId(newUrlText)}`, {
         method: 'PUT',
         mode: 'cors',
-        credentials: 'include',
+        // credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'x-google-id': currentUserGoogleID
         },
         body: JSON.stringify({ data: "Filler" }),
       });
@@ -91,10 +93,15 @@ export default function TrackerPage() {
       var full_video_info:TrackedVideoInfo[] = [];
       // http://localhost:5000/
       // https://anwarkader.com/
-      const response = await fetch(`https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo`, {
+      // https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
         method: 'GET',
         mode: 'cors',
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-google-id': currentUserGoogleID
+        },
+        // credentials: 'include',
       });
       const data = await response.json();
       if (data) {
@@ -122,12 +129,14 @@ export default function TrackerPage() {
       try {
         // http://localhost:5000/
         // https://anwarkader.com/
-        const response = await fetch(`https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo/${videoID}`, {
+        // https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo/${videoID}
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoID}`, {
           method: 'DELETE',
           mode: 'cors',
-          credentials: 'include',
+          // credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'x-google-id': currentUserGoogleID
           },
           body: JSON.stringify({ data: "Filler" }),
         });
