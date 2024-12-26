@@ -76,17 +76,45 @@ function DropDown() {
 
 const UseTime = () => {
   return (
-    <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-8 font-mono">
+    <div className="grid xl: grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-8 font-mono">
       {<OrderByTime />}
     </div>
   );
 }
 
 function UseChannel(props: { showChannels: string[] }) {
+  const [currPageNumber, setPageNumber] = useState(1);
+  const channelsPerPage = 5;
   // console.log("Show Channels:", props.showChannels)
+  useEffect(() => {
+    setPageNumber(1);
+  }, [props.showChannels])
+
+  const ButtonPage = () => {
+    return (
+      <div className="text-lg flex flex-row flex-nowrap items-stretch">
+        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(Math.max(currPageNumber - 1, 1))}}>
+          {/* - ({Math.max(currPageNumber - 1, 1)}) */}
+          -
+        </button>
+        <div className="text-center flex-1">
+          {currPageNumber}
+        </div>
+        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(Math.min(currPageNumber + 1, Math.ceil((props.showChannels[0]!="None" ? props.showChannels.length : 10000) / channelsPerPage)))}}>
+          {/* + ({Math.min(currPageNumber + 1, Math.ceil((props.showChannels[0]!="None" ? props.showChannels.length : 10000) / channelsPerPage))}) */}
+          +
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 font-mono">
-      {<OrderByChannel channelsToInclude={props.showChannels} />}
+    <div>
+      <ButtonPage />
+      <div className="grid grid-cols-1 font-mono">
+        {<OrderByChannel channelsToInclude={props.showChannels} pageTabNumber={currPageNumber} channelsPerPage={channelsPerPage} />}
+      </div>
+      <ButtonPage />
     </div>
   );
 }
