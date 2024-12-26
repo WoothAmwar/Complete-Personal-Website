@@ -15,7 +15,7 @@ function time_difference(time1: string) {
     return (Date.now() - vidTime.getTime());
 }
 
-export default function OrderByTime() {
+export default function OrderByTime(props: { pageTabNumber: number, channelsPerPage: number }) {
     const [responseVideoData, setResponseVideoData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const currentUserGoogleId = CurrentUserId();
@@ -60,7 +60,8 @@ export default function OrderByTime() {
     var uploadKeys = Object.keys(uploadDict);
     uploadKeys.sort(compareVidDescending);
 
-    for (var i = 0; i < uploadKeys.length; i++) {
+    const startIndex = Math.min((props.pageTabNumber-1) * props.channelsPerPage, uploadKeys.length-props.channelsPerPage);
+    for (var i = startIndex; i < Math.min(startIndex+props.channelsPerPage, uploadKeys.length); i++) {
         finalData.push(
             <VideoBox key={guidGenerator()} includeDate={true} fullVideoDetails={uploadDict[parseInt(uploadKeys[i])]}/>
         );

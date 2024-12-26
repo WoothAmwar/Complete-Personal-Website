@@ -75,9 +75,36 @@ function DropDown() {
 }
 
 const UseTime = () => {
+  const [currPageNumber, setPageNumber] = useState(1);
+  const channelsPerPage = 5;
+  // console.log("Show Channels:", props.showChannels)
+  useEffect(() => {
+    setPageNumber(1);
+  }, [])
+
+  const ButtonPage = () => {
+    return (
+      <div className="text-lg flex flex-row flex-nowrap items-stretch">
+        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(Math.max(currPageNumber - 1, 1))}}>
+          -
+        </button>
+        <div className="text-center flex-1">
+          {currPageNumber}
+        </div>
+        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(currPageNumber + 1)}}>
+          +
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid xl: grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-8 font-mono">
-      {<OrderByTime />}
+    <div>
+      <ButtonPage />
+      <div className="grid xl: grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-8 font-mono">
+        {<OrderByTime pageTabNumber={currPageNumber} channelsPerPage={12}/>}
+      </div>
+      <ButtonPage />
     </div>
   );
 }
