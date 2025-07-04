@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import "../../app/globals.css";
 
-import { useEffect, useRef, useState } from "react";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 
 import videojs from "video.js";
 import "videojs-youtube";
@@ -15,6 +15,11 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { styled } from "@mui/system";
 
 import { red } from "@mui/material/colors";
+
+import Head from "next/head";
+
+import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { channel } from "diagnostics_channel";
 
 const initialOptions = {
   controls: true,
@@ -89,6 +94,7 @@ const CustomPlayerBtn = styled(Button)((props: { selected: boolean }) => ({
 export default function VideoScreen() {
   const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState(1);
+  const [webVidTitle, setWebVidTitle] = useState("Video");
   var embedLink = "https://www.youtube.com/embed/";
   var videoId = router.query.videoId?.toString();
 
@@ -104,6 +110,56 @@ export default function VideoScreen() {
     ht = screen.availHeight * multiplier;
     wd = (ht / 9) * 16;
   }
+
+  const currentUserGoogleId = CurrentUserId();
+  useEffect(() => {
+    var foundTitle = false;
+    // http://localhost:5000/
+    // https://anwarkader.com/
+    // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
+        {
+            method: 'GET', 
+            // credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleId.toString()
+              }
+        })
+      .then(response => response.json())
+      .then(data => {
+        data.forEach((channelinfo: any[]) => {
+          channelinfo.forEach(videoinfo => {
+            if (videoinfo.videoId == videoId) {
+              setWebVidTitle(videoinfo?.videoTitle);
+              foundTitle = true;
+            }
+          })
+        });
+      })
+    if (!foundTitle) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, 
+        {
+            method: 'GET', 
+            // credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleId.toString()
+              }
+        })
+      .then(response => response.json())
+      .then(data => {
+        data.forEach((videoinfo: { videoID: string | undefined; videoTitle: SetStateAction<string>; }) => {
+          if (videoinfo?.videoID == videoId) {
+            setWebVidTitle(videoinfo?.videoTitle);
+            foundTitle = true;
+          }
+        });
+      })
+    }
+  }, [currentUserGoogleId, videoId])
 
   if (typeof videoId === "undefined") {
     return (
@@ -142,9 +198,12 @@ export default function VideoScreen() {
       </main>
     );
   };
-
+  
   return (
     <>
+      <Head>
+        <title>{webVidTitle}</title>
+      </Head>
       <div className="m-3">
         <SelectPlayerOptionsBtns />
       </div>
