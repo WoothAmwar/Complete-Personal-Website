@@ -15,10 +15,47 @@ import { useSearchParams } from 'next/navigation';
 import { Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
+import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
+
+const fetchTags = async (currentUserGoogleId: string) => {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/tags`, {
+    method: 'GET',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-google-id': currentUserGoogleId.toString()
+    }
+  });
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
+};
+
+const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) => {
+  if (tagName === "None") {
+    return [];
+  }
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelsOfTag/${tagName}`, {
+    method: 'GET',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-google-id': currentUserGoogleId.toString()
+    }
+  });
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
+};
+
 
 function DropDown() {
   return (
@@ -174,27 +211,14 @@ interface TagSelectionDropDownProps {
 }
 
 const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function TagDropDown({onTagSelect}) {
-  // console.log("Reload options");
   const currentUserGoogleId = CurrentUserId();
-  const [totalTagOptions, setTotalTagOptions] = useState<string[]>(["None"]);
-  // https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/tags`, {
-      method: 'GET',
-      mode: 'cors',
-      // credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-google-id': currentUserGoogleId.toString()
-      }
-    })
-      .then(response => response.json())
-      .then(data => {
-        console.log("DATA 11.1:", data);
-        // setTotalTagOptions(JSON.parse(data["data"]));
-        setTotalTagOptions(data);
-      })
-  }, []);
+  const { data: totalTagOptions, isLoading, isError } = useQuery({
+    queryKey: ['tags', currentUserGoogleId],
+    queryFn: () => fetchTags(currentUserGoogleId.toString()),
+  });
+
+  if (isLoading) return <div>Loading tags...</div>;
+  if (isError) return <div>Error fetching tags</div>;
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -216,7 +240,7 @@ const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function T
       >
         <Menu.Items className="absolute right-0 z-10 mt-2 w-25 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div className="py-1">
-            {totalTagOptions.map((tagName, index) => (
+            {totalTagOptions.map((tagName:string, index:number) => (
               <Menu.Item key={index}>
                 {({ active }) => (
                   <button
@@ -253,11 +277,17 @@ const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function T
 
 // TODO: Create a function that accepts orderMethod and return the function depending on the value
 //   then use that insetad of the multiple if statements and return values
-export default function HomePage() {
+function HomePage() {
   const currentUserGoogleId = CurrentUserId();
 
   const [orderMethod, setOrderMethod] = useState("byChannel");
-  const [channelsFromFilter, setChannelsFromFilter] = useState<string[]>(["None"]);
+  const [selectedTag, setSelectedTag] = useState<string>("None");
+
+  const { data: channelsFromFilter, isLoading, isError } = useQuery({
+    queryKey: ['channels', currentUserGoogleId, selectedTag],
+    queryFn: () => fetchChannelsOfTag(currentUserGoogleId.toString(), selectedTag),
+    enabled: selectedTag !== "None", // Only fetch if a tag is selected
+  });
 
   var getQueryOrder = QueryOrder();
 
@@ -265,41 +295,23 @@ export default function HomePage() {
     setOrderMethod(getQueryOrder);
   }, [getQueryOrder])
 
-  const findChannelsOfTag = useCallback((tagName: string) => {
-    console.log("Channels of Tag:", tagName)
-    console.log("Updating Channels of Tag:", tagName);
-    // https://anwarkader.com/api/channels/channelsOfTag/${currentUserGoogleId.toString()}/${tagName}
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelsOfTag/${tagName}`, { 
-      method: 'GET', 
-      mode: 'cors',
-      // credentials: 'include'
-      headers: {
-        'Content-Type': 'application/json',
-        'x-google-id': currentUserGoogleId.toString()
-      }
-    })
-      .then(response => response.json())
-      .then(data => {
-        // console.log("Setting Channels Before:", data["data"]);
-        // const raw_data = JSON.parse(data["data"]);
-        // const raw_data = data;
-        setChannelsFromFilter(data);
-        // console.log("Setting Tags for", props.channelName.toString());
-      })
-      .catch(err => console.error("Error getting channels of tag", err));
-  }, []);
+  const handleTagSelect = (tagName: string) => {
+    setSelectedTag(tagName);
+  };
 
   if (orderMethod == "byChannel") {
     return (
       <main className="flex flex-col justify-items-center mx-5">
         <div className="grid items-center font-mono">
           <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
-            <div className="justify-self-start ml-5"><TagSelectionDropDown onTagSelect={findChannelsOfTag}/></div>
+            <div className="justify-self-start ml-5"><TagSelectionDropDown onTagSelect={handleTagSelect}/></div>
             <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0</p>
             <div className="justify-self-end mr-5">{DropDown()}</div>
           </h2>
         </div>
-        <UseChannel showChannels={channelsFromFilter} />
+        {isLoading && <div>Loading channels...</div>}
+        {isError && <div>Error fetching channels</div>}
+        <UseChannel showChannels={channelsFromFilter || ["None"]} />
       </main>
     )
   }
@@ -325,5 +337,13 @@ export default function HomePage() {
       </div>
       {orderMethod}
     </main>
+  )
+}
+
+export default function HomePageWrapper() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HomePage />
+    </QueryClientProvider>
   )
 }

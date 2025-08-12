@@ -4,116 +4,92 @@ import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 import { guidGenerator, VideoBox } from "./VideoBox";
 import { ManageShowTag } from "./buttons/ManageChannelTags";
+import { useQuery } from "@tanstack/react-query";
+
+const fetchVideos = async (currentUserGoogleId: string) => {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
+    method: "GET",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json",
+      "x-google-id": currentUserGoogleId,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return response.json();
+};
+
+const fetchChannels = async (currentUserGoogleId: string) => {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels`, {
+    method: "GET",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json",
+      "x-google-id": currentUserGoogleId,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return response.json();
+};
 
 export default function OrderByChannel(props: { channelsToInclude: string[], pageTabNumber: number, channelsPerPage: number }) {
-  const [responseVideoData, setResponseVideoData] = useState<any[]>([]);
-  const [responseChannelData, setResponseChannelData] = useState([]);
-  const [filteredVideoData, setFilteredVideoData] = useState<any[]>([]);
-  const [filteredChannelData, setFilteredChannelData] = useState([]);
-
-  const [filteredChannelIndexes, setFilteredChannelIndexes] = useState<
-    number[]
-  >([]);
-  const [isLoadingVideos, setIsLoadingVideos] = useState(true);
-  const [isLoadingChannels, setIsLoadingChannels] = useState(true);
-
   const currentUserGoogleId = CurrentUserId();
+
+  const { data: responseVideoData, isLoading: isLoadingVideos } = useQuery({
+    queryKey: ['videos', currentUserGoogleId],
+    queryFn: () => fetchVideos(currentUserGoogleId.toString()),
+  });
+
+  const { data: responseChannelData, isLoading: isLoadingChannels } = useQuery({
+    queryKey: ['channels', currentUserGoogleId],
+    queryFn: () => fetchChannels(currentUserGoogleId.toString()),
+  });
+
+  const [filteredVideoData, setFilteredVideoData] = useState<any[]>([]);
+  const [filteredChannelData, setFilteredChannelData] = useState<any[]>([]);
 
   var wd = 360; // 480
   var ht = (wd / 480) * 270; // 270
-  var embedLink = "/custom-youtube/";
-
-  var finalRow = [];
-  var doFilter = false;
 
   useEffect(() => {
-    // http://localhost:5000/
-    // https://anwarkader.com/
-    // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
-      method: "GET",
-      // credentials: 'include'
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-        "x-google-id": currentUserGoogleId.toString(),
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("DTA 13.1:", data);
-        setResponseVideoData(data);
-        setFilteredVideoData(data);
-        setIsLoadingVideos(false);
-      });
-    // }, [])
+    if (responseVideoData) {
+      setFilteredVideoData(responseVideoData);
+    }
+  }, [responseVideoData]);
 
-    // useEffect(() => {
-    //   console.log("INCL:", props.channelsToInclude);
-    // http://localhost:5000/
-    // https://anwarkader.com/
-    // https://anwarkader.com/api/channels/${currentUserGoogleId.toString()}
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels`, {
-      method: "GET",
-      // credentials: 'include',
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-        "x-google-id": currentUserGoogleId.toString(),
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setResponseChannelData(data);
-        setFilteredChannelData(data);
-        setIsLoadingChannels(false);
-      });
-  }, []);
+  useEffect(() => {
+    if (responseChannelData) {
+      setFilteredChannelData(responseChannelData);
+    }
+  }, [responseChannelData]);
 
   useEffect(() => {
     if (props.channelsToInclude[0] === "None") {
-      // console.log("No Channels to Filter with", props.channelsToInclude);
-      console.log("DOING THE NONE FILTER");
-      console.log(responseChannelData);
-      if (filteredChannelData.length != responseChannelData.length) {
-        setFilteredChannelData(responseChannelData);
-        setFilteredVideoData(responseVideoData);
-      }
-      doFilter = false;
+      if (responseChannelData) setFilteredChannelData(responseChannelData);
+      if (responseVideoData) setFilteredVideoData(responseVideoData);
     } else if (props.channelsToInclude.length > 0) {
-      doFilter = true;
-      console.log("DOING THE FILTER", responseChannelData);
-
-      var filteredDataIndexes: number[] = [];
       var tempFilteredVideoData: any[] = [];
-      var tempFilteredChannelData: [] = [];
+      var tempFilteredChannelData: any[] = [];
 
-      if (props.channelsToInclude.length > 0) {
-        // var filteredDataIndexes: number[] = [];
-        // var filteredVideoData: any[] = [];
-        // var filteredChannelData: [] = [];
-
-        console.log("LEN:", props.channelsToInclude.length);
+      if (responseVideoData && responseChannelData) {
         for (let i = 0; i < responseVideoData.length; i++) {
           if (props.channelsToInclude.indexOf(responseChannelData[i]["channelNames"]) != -1) {
-            filteredDataIndexes.push(i);
-
             tempFilteredChannelData.push(responseChannelData[i]);
             tempFilteredVideoData.push(responseVideoData[i]);
-            // setFilteredChannelData(prevChannelData => [...prevChannelData, responseChannelData[i]]);
-            // setFilteredVideoData(prevVideoData => [...prevVideoData, responseChannelData[i]]);
           }
         }
-
-        setFilteredChannelIndexes(filteredDataIndexes);
-        setFilteredChannelData(tempFilteredChannelData);
-        setFilteredVideoData(tempFilteredVideoData);
       }
+
+      setFilteredChannelData(tempFilteredChannelData);
+      setFilteredVideoData(tempFilteredVideoData);
     }
-  }, [props.channelsToInclude]);
+  }, [props.channelsToInclude, responseChannelData, responseVideoData]);
 
   if (props.channelsToInclude.length === 0) {
-    console.log("No Channels to Filter with", props.channelsToInclude);
     return (
       <div className="font-bold text-2xl text-center">
         No Channels With The Selected Tag
@@ -121,26 +97,20 @@ export default function OrderByChannel(props: { channelsToInclude: string[], pag
     );
   }
 
-  if (
-    isLoadingChannels ||
-    isLoadingVideos ||
-    responseVideoData.length == 0 ||
-    responseChannelData.length == 0 ||
-    filteredVideoData.length == 0 || 
-    filteredChannelData.length == 0
-  ) {
+  if (isLoadingChannels || isLoadingVideos) {
     return ["Loading..."];
   }
 
-  // responseVideoData.length
-  console.log("RV:", responseVideoData.length);
-  // const channels_per_page = 5;
+  if (!responseVideoData || !responseChannelData || filteredVideoData.length === 0 || filteredChannelData.length === 0) {
+    return ["No data available"];
+  }
+
   const start_idx: number = Math.min(Math.max(props.channelsPerPage * (props.pageTabNumber-1), 0), Math.max(filteredVideoData.length-props.channelsPerPage, 0));
-  const page_amt: number = Math.min(filteredVideoData.length, props.channelsPerPage); // responseVideoData.length - start_idx
-  console.log("RESPON C:", filteredChannelData, "\n |", start_idx, "::", page_amt);
+  const page_amt: number = Math.min(filteredVideoData.length, props.channelsPerPage);
+
+  let finalRow = [];
   for (let i = start_idx; i < start_idx + page_amt; i++) {
     let currRow = [];
-    // if (!doFilter || (doFilter && (props.channelsToInclude.indexOf(responseChannelData[i]["channelNames"]) != -1))) {
     currRow.push(
       <div key={i + 1} className="text-left flex">
         <ManageShowTag channelName={filteredChannelData[i]["channelNames"]} />
@@ -176,6 +146,5 @@ export default function OrderByChannel(props: { channelsToInclude: string[], pag
       </div>
     );
   }
-  // }
   return finalRow;
 }

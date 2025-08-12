@@ -3,6 +3,7 @@ import Link from "next/link";
 import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 import { guidGenerator, VideoBox } from "./VideoBox";
+import { useQuery } from "@tanstack/react-query";
 
 
 /**
@@ -15,9 +16,30 @@ function time_difference(time1: string) {
     return (Date.now() - vidTime.getTime());
 }
 
+const fetchVideos = async(currentUserGoogleId: string) => {
+    // http://localhost:5000/
+    // https://anwarkader.com/
+    // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
+        {
+            method: 'GET', 
+            // credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-google-id': currentUserGoogleId.toString()
+            }
+        }
+    );
+    if (!response.ok) {
+        throw new Error("Network response was not ok for fetch videos in UploadOrder");
+    }
+    return response.json();
+}
+
 export default function OrderByTime(props: { pageTabNumber: number, channelsPerPage: number }) {
-    const [responseVideoData, setResponseVideoData] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // const [responseVideoData, setResponseVideoData] = useState<any[]>([]);
+    // const [isLoading, setIsLoading] = useState(true);
     const currentUserGoogleId = CurrentUserId();
 
     var finalData = [];
@@ -25,26 +47,10 @@ export default function OrderByTime(props: { pageTabNumber: number, channelsPerP
 
     var wd = 420  // 480
 
-    useEffect(() => {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
-            {
-                method: 'GET', 
-                // credentials: 'include',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-google-id': currentUserGoogleId.toString()
-                  }
-            })
-          .then(response => response.json())
-          .then(data => {
-            setResponseVideoData(data);
-            setIsLoading(false);
-          })
-      }, [])
+    const { data: responseVideoData, isLoading: isLoading } = useQuery({
+        queryKey: ['videos', currentUserGoogleId],
+        queryFn: () => fetchVideos(currentUserGoogleId.toString()),
+      });
 
     if (isLoading) {
         return (
