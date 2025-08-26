@@ -4,6 +4,7 @@
 # import datetime
 import json
 
+import requests.api
 from googleapiclient.discovery import build  # referred to as google-api-python-client
 # import pyautogui
 # from time import sleep
@@ -22,7 +23,19 @@ def main():
     # good work: UC_-hYjoNe4PJNFa9iZ4lraA
     # animeMen videos BEFORE (bad):
     # docm77: UC4O9HKe9Jt5yAhKuNv3LXpQ
-    channel_id = "UC4O9HKe9Jt5yAhKuNv3LXpQ"
+    # kodekai: UCuaGQ8RZR9JMu_AmzIRSyUw
+    # Spilled Ink: UC4Q4RQ2m4L7qVdVt4qoOmjA
+
+    # Topic Categories (topicDetails.topicCategories) and Description (brandingSettings.channel.description)
+    #  are the best for information about the channel besides video title
+
+    # Plan:
+    # In Untouched.json, in this order
+    #  Docm77, Kodekai, Spilled Ink
+    # Get video titles, channel description, and channel name. Could also get topic categories, not too useful though
+    #  as seen by SpilledInk which only said Hobby and Lifestyle for the channel
+
+    channel_id = "UC4Q4RQ2m4L7qVdVt4qoOmjA"
 
     request = service.channels().list(
         part="snippet, topicDetails, contentDetails, brandingSettings, statistics",
@@ -31,8 +44,9 @@ def main():
 
     response = request.execute()
     print("RESP:", response)
-    with open("response.txt", "w") as f:
+    with open("response.json", "w") as f:
         f.write(json.dumps(response))
+
 
 
 if __name__ == "__main__":
