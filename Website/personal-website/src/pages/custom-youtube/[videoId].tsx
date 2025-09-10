@@ -38,7 +38,7 @@ function YT_Video(props: { embedID: string }) {
       if (!videoNode.current || initialized.current) return;
       initialized.current = true; // prevent duplicate initialization
       const videojs = (await import("video.js")).default;
-      await import("videojs-youtube");
+      // await import("videojs-youtube");
       if (disposed) return;
       player.current = videojs(videoNode.current, {
         ...initialOptions,
