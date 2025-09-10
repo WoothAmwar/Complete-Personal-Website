@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
+import Image from 'next/image';
 import "../../app/globals.css"
 
 import Button from "@mui/material/Button";
@@ -161,7 +162,9 @@ export default function TrackerPage() {
       <div className="grid grid-cols-1 grid-rows-2 grid-flow-col">
         <div>
           <Link key={props.video_info.videoThumbnail} href={"/custom-youtube/".concat(props.video_info.videoID)}>
-            <img src={props.video_info.videoThumbnail} alt="Video Thumbnail" width="100%" height="100%" />
+            <div className="relative rounded-xl overflow-hidden aspect-video">
+              <Image src={props.video_info.videoThumbnail} alt="Video Thumbnail" fill className="object-cover" />
+            </div>
           </Link>
         </div>
         <div className="mt-2 text-center">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from "next/link";
 import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
@@ -37,43 +37,64 @@ const fetchVideos = async(currentUserGoogleId: string) => {
     return response.json();
 }
 
-export default function OrderByTime(props: { pageTabNumber: number, channelsPerPage: number }) {
-    // const [responseVideoData, setResponseVideoData] = useState<any[]>([]);
-    // const [isLoading, setIsLoading] = useState(true);
+export default function OrderByTime(props: { pageSize?: number }) {
     const currentUserGoogleId = CurrentUserId();
+    const pageSize = props.pageSize ?? 12;
 
-    var finalData = [];
-    var uploadDict: { [key: number]: {videoId: string, videoTitle: string, videoThumbnail: string, uploadDate: string} } = {};
-
-    var wd = 420  // 480
-
-    const { data: responseVideoData, isLoading: isLoading } = useQuery({
+    const { data: responseVideoData, isLoading } = useQuery({
         queryKey: ['videos', currentUserGoogleId],
         queryFn: () => fetchVideos(currentUserGoogleId.toString()),
-      });
+    });
 
-    if (isLoading) {
-        return (
-            <div>Loading...</div>
-        )
-    }
-
-    for (let i = 0; i < responseVideoData.length; i++) {
-        for (let j = 0; j < responseVideoData[i].length; j++) {
-            uploadDict[time_difference(responseVideoData[i][j]["uploadDate"])] = responseVideoData[i][j];
+    const sortedVideos = useMemo(() => {
+        if (!responseVideoData) return [] as any[];
+        const flat: any[] = [];
+        for (let i = 0; i < responseVideoData.length; i++) {
+            for (let j = 0; j < responseVideoData[i].length; j++) {
+                flat.push(responseVideoData[i][j]);
+            }
         }
-    }
-    var uploadKeys = Object.keys(uploadDict);
-    uploadKeys.sort(compareVidDescending);
+        flat.sort((a, b) => new Date(b["uploadDate"]).getTime() - new Date(a["uploadDate"]).getTime());
+        return flat;
+    }, [responseVideoData]);
 
-    const startIndex = Math.min((props.pageTabNumber-1) * props.channelsPerPage, uploadKeys.length-props.channelsPerPage);
-    for (var i = startIndex; i < Math.min(startIndex+props.channelsPerPage, uploadKeys.length); i++) {
-        finalData.push(
-            <VideoBox key={guidGenerator()} includeDate={true} fullVideoDetails={uploadDict[parseInt(uploadKeys[i])]}/>
-        );
-    }
+    const [visibleCount, setVisibleCount] = useState(pageSize);
+    useEffect(() => { setVisibleCount(pageSize); }, [pageSize, sortedVideos.length]);
 
-    return finalData;
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!sentinelRef.current) return;
+        if (typeof IntersectionObserver === 'undefined') return;
+        const observer = new IntersectionObserver((entries) => {
+            const [entry] = entries;
+            if (entry.isIntersecting) {
+                setVisibleCount((prev) => Math.min(prev + pageSize, sortedVideos.length));
+            }
+        }, { rootMargin: '400px' });
+        observer.observe(sentinelRef.current);
+        return () => observer.disconnect();
+    }, [sortedVideos.length, pageSize]);
+
+    if (isLoading) return <div>Loading...</div>;
+    if (!sortedVideos || sortedVideos.length === 0) return <div>No videos available</div>;
+
+    const items = sortedVideos.slice(0, visibleCount).map((details: any) => (
+        <VideoBox key={details["videoId"]} includeDate={true} fullVideoDetails={details} />
+    ));
+
+    const hasMore = visibleCount < sortedVideos.length;
+
+    return (
+        <>
+            {items}
+            {hasMore && (
+                <div className="my-6 flex justify-center">
+                    <button className="px-4 py-2 rounded-md bg-neutral-800" onClick={() => setVisibleCount(v => Math.min(v + pageSize, sortedVideos.length))}>Load more</button>
+                </div>
+            )}
+            {hasMore && <div ref={sentinelRef} className="h-1" />}
+        </>
+    );
 }
 
 

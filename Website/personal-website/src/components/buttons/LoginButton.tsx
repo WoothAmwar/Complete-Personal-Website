@@ -1,6 +1,7 @@
 import Link from "next/link";
 import "@/app/globals.css";
 import NavigationBar from "@/components/NavigationBar";
+import Image from 'next/image';
 
 import { useState, useEffect } from "react";
 
@@ -124,7 +125,9 @@ function GoogleSignIn() {
                 {userProfile ? (
                     <div className="grid grid-cols-3 place-content-end">
                         <div className="justify-self-center col-span-1 place-content-center">
-                            <img src={userProfile?.picture} alt="user image" width="40em" />
+                            {userProfile?.picture && (
+                              <Image src={userProfile.picture} alt="user image" width={40} height={40} />
+                            )}
                         </div>
                         <div className="col-span-2">
                             <button onClick={logOut} className="w-full h-12 border-2 border-black rounded-full">

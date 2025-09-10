@@ -80,28 +80,28 @@ function DropDown() {
           <div className="py-1">
             <Menu.Item>
               {({ active }) => (
-                <a
-                  href="./custom-youtube?order=byChannel"
+                <Link
+                  href="/custom-youtube?order=byChannel"
                   className={classNames(
                     active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                     'block px-4 py-2 text-sm'
                   )}
                 >
                   YT By Channel
-                </a>
+                </Link>
               )}
             </Menu.Item>
             <Menu.Item>
               {({ active }) => (
-                <a
-                  href="./custom-youtube?order=byTime"
+                <Link
+                  href="/custom-youtube?order=byTime"
                   className={classNames(
                     active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                     'block px-4 py-2 text-sm'
                   )}
                 >
                   YT By Time
-                </a>
+                </Link>
               )}
             </Menu.Item>
           </div>
@@ -112,73 +112,21 @@ function DropDown() {
 }
 
 const UseTime = () => {
-  const [currPageNumber, setPageNumber] = useState(1);
-  const channelsPerPage = 5;
-  // console.log("Show Channels:", props.showChannels)
-  useEffect(() => {
-    setPageNumber(1);
-  }, [])
-
-  const ButtonPage = () => {
-    return (
-      <div className="text-lg flex flex-row flex-nowrap items-stretch">
-        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(Math.max(currPageNumber - 1, 1))}}>
-          -
-        </button>
-        <div className="text-center flex-1">
-          {currPageNumber}
-        </div>
-        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(currPageNumber + 1)}}>
-          +
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div>
-      <ButtonPage />
       <div className="grid xl: grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-8 font-mono">
-        {<OrderByTime pageTabNumber={currPageNumber} channelsPerPage={12}/>}
+        <OrderByTime pageSize={12} />
       </div>
-      <ButtonPage />
     </div>
   );
 }
 
 function UseChannel(props: { showChannels: string[] }) {
-  const [currPageNumber, setPageNumber] = useState(1);
-  const channelsPerPage = 5;
-  // console.log("Show Channels:", props.showChannels)
-  useEffect(() => {
-    setPageNumber(1);
-  }, [props.showChannels])
-
-  const ButtonPage = () => {
-    return (
-      <div className="text-lg flex flex-row flex-nowrap items-stretch">
-        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(Math.max(currPageNumber - 1, 1))}}>
-          {/* - ({Math.max(currPageNumber - 1, 1)}) */}
-          -
-        </button>
-        <div className="text-center flex-1">
-          {currPageNumber}
-        </div>
-        <button className="flex-1 border-red-900 border-2 bg-neutral-800" onClick={() => {setPageNumber(Math.min(currPageNumber + 1, Math.ceil((props.showChannels[0]!="None" ? props.showChannels.length : 10000) / channelsPerPage)))}}>
-          {/* + ({Math.min(currPageNumber + 1, Math.ceil((props.showChannels[0]!="None" ? props.showChannels.length : 10000) / channelsPerPage))}) */}
-          +
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div>
-      <ButtonPage />
       <div className="grid grid-cols-1 font-mono">
-        {<OrderByChannel channelsToInclude={props.showChannels} pageTabNumber={currPageNumber} channelsPerPage={channelsPerPage} />}
+        <OrderByChannel channelsToInclude={props.showChannels} pageSize={5} />
       </div>
-      <ButtonPage />
     </div>
   );
 }
@@ -305,7 +253,7 @@ function HomePage() {
         <div className="grid items-center font-mono">
           <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
             <div className="justify-self-start ml-5"><TagSelectionDropDown onTagSelect={handleTagSelect}/></div>
-            <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0</p>
+            <p className="lg:col-start-2 lg:col-span-2 ">Tagged</p>
             <div className="justify-self-end mr-5">{DropDown()}</div>
           </h2>
         </div>
@@ -320,7 +268,7 @@ function HomePage() {
       <main className="flex flex-col justify-items-center mx-5">
         <div className="grid items-center font-mono">
           <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
-            <p className="lg:col-start-2 lg:col-span-2 ">Get Started with Youtube 2.0 #1</p>
+            <p className="lg:col-start-2 lg:col-span-2 ">Latest</p>
             <div className="justify-self-end mr-5">{DropDown()}</div>
           </h2>
         </div>
@@ -332,7 +280,7 @@ function HomePage() {
     <main className="flex flex-col items-center">
       <div className="grid items-center font-mono">
         <h2 className="text-center font-semibold text-lg py-4">
-          Get Started with Youtube 2.0 Default
+          Video Default
         </h2>
       </div>
       {orderMethod}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import Link from "next/link";
 import "../../app/globals.css";
+import Image from 'next/image';
 
 import {
     CurrentUserCookieInfo, CurrentUserId
@@ -271,10 +272,12 @@ export default function Scheduler() {
         };
 
         const fetchAll = async () => {
-            const tempLoadedDaily = await fetchUpdateChannels("daily");
-            const tempLoadedWeekly = await fetchUpdateChannels("weekly");
-            const tempLoadedMonthly = await fetchUpdateChannels("monthly");
-            const tempLoadedUnassigned = await fetchUpdateChannels("unassigned");
+            const [tempLoadedDaily, tempLoadedWeekly, tempLoadedMonthly, tempLoadedUnassigned] = await Promise.all([
+                fetchUpdateChannels("daily"),
+                fetchUpdateChannels("weekly"),
+                fetchUpdateChannels("monthly"),
+                fetchUpdateChannels("unassigned"),
+            ]);
             setDailyChannelData(tempLoadedDaily);
             setWeeklyChannelData(tempLoadedWeekly);
             setMonthlyChannelData(tempLoadedMonthly);
@@ -335,7 +338,7 @@ export default function Scheduler() {
                                 <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
                                     label={
                                         <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
-                                            <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
+                                            <Image src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
                                             <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
                                                 {element["channelNames"]}
                                             </div>
@@ -351,7 +354,7 @@ export default function Scheduler() {
                                 <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
                                     label={
                                         <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
-                                            <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
+                                            <Image src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
                                             <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
                                                 {element["channelNames"]}
                                             </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
+import Image from 'next/image';
 import "../app/globals.css";
 
 import { Fragment } from 'react'
@@ -224,7 +225,7 @@ const deleteWatchlater = async (currentUserGoogleID: string, fullVideoDetails: a
     }
 };
 
-function VideoActionItems(videoID: string, fullVideoDetails: any) {
+function VideoActionItems({ videoID, fullVideoDetails }: { videoID: string, fullVideoDetails: any }) {
     const currentUserGoogleID = CurrentUserId();
     const [favoriteVideos, setFavoriteVideos] = useState<string[] | null>();
     const [favCounter, setFavCounter] = useState(0);
@@ -344,28 +345,37 @@ function VideoActionItems(videoID: string, fullVideoDetails: any) {
 }
 
 export function VideoBox(props: { includeDate: boolean, fullVideoDetails: any }) {
-    var embedLink = "/custom-youtube/";
+    const embedLink = "/custom-youtube/";
+    const videoId: string = props.fullVideoDetails["videoId"];
+    const thumb: string = props.fullVideoDetails["videoThumbnail"];
+    const title: string = props.fullVideoDetails["videoTitle"];
     return (
-        <div key={guidGenerator()} className="rounded-xl mb-2">
-            <Link href={embedLink.concat(props.fullVideoDetails["videoId"])}>
-                <img src={props.fullVideoDetails["videoThumbnail"]} alt="Thumbnail" className="mb-1 rounded-xl" width="100%" height="100%" />
+        <div className="rounded-xl mb-2">
+            <Link href={embedLink.concat(videoId)}>
+                <div className="relative mb-1 rounded-xl overflow-hidden aspect-video">
+                    <Image
+                        src={thumb}
+                        alt="Thumbnail"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover"
+                        priority={false}
+                    />
+                </div>
             </Link>
-            {/* <p className="font-semibold text-2x1">{props.fullVideoDetails["videoTitle"]}</p> */}
             <div className="grid grid-flow-col grid-cols-5 row-span-1">
                 <div className="mr-5 col-span-4">
-                    <Link href={embedLink.concat(props.fullVideoDetails["videoId"])}>
-                        <p className="font-semibold text-md tracking-tighter line-clamp-2">{props.fullVideoDetails["videoTitle"]}</p>
+                    <Link href={embedLink.concat(videoId)}>
+                        <p className="font-semibold text-md tracking-tighter line-clamp-2">{title}</p>
                         {props.includeDate ? (
                             <p className="font-['Garamond'] text-slate-300 text-sm">Uploaded: {props.fullVideoDetails["uploadDate"].substr(0, 10)}</p>
                         ) : (<p></p>)}
                     </Link>
                 </div>
                 <div className="mr-2 col-start-5 flex justify-end">
-                    {VideoActionItems(props.fullVideoDetails["videoId"], props.fullVideoDetails)}
+                    <VideoActionItems videoID={videoId} fullVideoDetails={props.fullVideoDetails} />
                 </div>
             </div>
-            {/* </Link> */}
-
         </div>
     );
 }

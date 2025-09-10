@@ -26,7 +26,7 @@ export default function NavigationBar() {
                 <div className="grid grid-flow-col float:left col-span-1">
                     {/* <NavigateLink id={1} text="Logo" link="/" /> */}
                     <Link key={1} href={"/"}>
-                        <img className="object-fill w-5/6 h-12" src="/logo-name-only.png"  alt="Logo Image" />
+                        <Image className="object-fill w-5/6 h-12" src="/logo-name-only.png" alt="Logo Image" width={240} height={48} priority />
                     </Link>
                 </div>
                 <div className="grid grid-flow-col col-start-2 col-span-3">

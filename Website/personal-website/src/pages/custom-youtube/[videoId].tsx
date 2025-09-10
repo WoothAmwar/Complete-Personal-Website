@@ -2,11 +2,7 @@ import { useRouter } from "next/router";
 import "../../app/globals.css";
 
 import { SetStateAction, useEffect, useRef, useState } from "react";
-
-import videojs from "video.js";
-import "videojs-youtube";
 import "video.js/dist/video-js.css";
-import Component from "video.js/dist/types/component";
 
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -32,27 +28,30 @@ const initialOptions = {
 };
 
 function YT_Video(props: { embedID: string }) {
-  const videoNode = useRef(null);
-  const player = useRef<Component | null>(null);
+  const videoNode = useRef<HTMLVideoElement | null>(null);
+  const player = useRef<any>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (videoNode.current && !initialized.current) {
-      initialized.current = true; //prevent duplicate initialization
+    let disposed = false;
+    (async () => {
+      if (!videoNode.current || initialized.current) return;
+      initialized.current = true; // prevent duplicate initialization
+      const videojs = (await import("video.js")).default;
+      await import("videojs-youtube");
+      if (disposed) return;
       player.current = videojs(videoNode.current, {
         ...initialOptions,
         sources: [
-          {
-            type: "video/youtube",
-            src: "https://www.youtube.com/watch?v=" + props.embedID,
-          },
+          { type: "video/youtube", src: "https://www.youtube.com/watch?v=" + props.embedID },
         ],
       }).ready(function () {
-        console.log("Player Ready");
+        // Player Ready
       });
-    }
-    //clear up player on dismount
+    })();
+
     return () => {
+      disposed = true;
       if (player.current) {
         player.current.dispose();
       }
@@ -101,15 +100,23 @@ export default function VideoScreen() {
   // var wd = 1230  // 480
   // var wd = screen.availWidth * 0.98
   // var ht = wd / 480 * 270  // 270
-
-  var multiplier = 0.84;
-  var ht = screen.availHeight * multiplier;
-  var wd = (ht / 9) * 16;
-  while (wd > screen.availWidth * 0.99) {
-    multiplier -= 0.01;
-    ht = screen.availHeight * multiplier;
-    wd = (ht / 9) * 16;
-  }
+  const [dims, setDims] = useState<{ wd: number, ht: number }>({ wd: 0, ht: 0 });
+  useEffect(() => {
+    const updateDims = () => {
+      let multiplier = 0.84;
+      let ht = window.screen.availHeight * multiplier;
+      let wd = (ht / 9) * 16;
+      while (wd > window.screen.availWidth * 0.99) {
+        multiplier -= 0.01;
+        ht = window.screen.availHeight * multiplier;
+        wd = (ht / 9) * 16;
+      }
+      setDims({ wd: Math.floor(wd), ht: Math.floor(ht) });
+    };
+    updateDims();
+    window.addEventListener('resize', updateDims);
+    return () => window.removeEventListener('resize', updateDims);
+  }, []);
 
   const currentUserGoogleId = CurrentUserId();
   useEffect(() => {
@@ -210,8 +217,8 @@ export default function VideoScreen() {
       {selectedIndex == 1 ? (
         <div className="grid justify-center text-center mb-4">
           <iframe
-            width = {wd}
-            height={ht}
+            width = {dims.wd || 800}
+            height={dims.ht || 450}
             src={embedLink.concat(videoId)}
             title="YouTube video player"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"

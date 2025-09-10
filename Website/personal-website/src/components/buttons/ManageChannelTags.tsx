@@ -208,9 +208,10 @@ export function ManageShowTag(props: { channelName: any }) {
             }
             const data = await response.json();
 
-            // console.log("DEL DATA:", data);
+            // Update local state instead of reloading the page
             setNumTotalTags(numTotalTags - 1);
-            window.location.reload();
+            setTotalTagOptions(prev => prev.filter(t => t !== tagName));
+            setChannelTags(prev => prev.filter(t => t !== tagName));
             return data;
         } catch (err) {
             console.error("Error deleting tag", err);

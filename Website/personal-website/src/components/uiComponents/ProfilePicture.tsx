@@ -1,3 +1,4 @@
+import Image from "next/image";
 
 type ProfilePictureProps = {
     imageLink: string | undefined,
@@ -11,13 +12,17 @@ export default function ProfilePicture({imageLink, imageSize}: ProfilePicturePro
         )
     }
     return (
-        <img style={{
+        <Image 
+          style={{
             borderRadius: "50%",
             borderColor: "azure",
             borderWidth: "2px",
-            width: imageSize,
-            height: imageSize,
             display: "block"
-          }} src={imageLink} alt="user image" width="40em"/>
+          }}
+          src={imageLink}
+          alt="user image"
+          width={imageSize}
+          height={imageSize}
+        />
     )
 }
