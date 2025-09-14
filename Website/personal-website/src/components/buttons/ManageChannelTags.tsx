@@ -61,9 +61,6 @@ function ChannelTagUI(tagNames: string[], updateVal: number, onButtonClick: () =
         setUIBackgrouds([]); // Reset the backgrounds
 
         const fetchColorPromises = tagNames.map(tagname =>
-            // http://localhost:5000/
-            // https://anwarkader.com/
-            // https://anwarkader.com/api/channels/colorsOfTag/${currentUserGoogleId.toString()}/${tagname}
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/colorsOfTag/${tagname}`, {
                 method: 'GET',
                 mode: 'cors',
@@ -156,9 +153,6 @@ export function ManageShowTag(props: { channelName: any }) {
         }
         const db_text = newTagText.charAt(0).toUpperCase() + newTagText.slice(1);
         try {
-            // http://localhost:5000/
-            // https://anwarkader.com/
-            // https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/tags`, {
                 method: 'PUT',
                 mode: 'cors',
@@ -190,9 +184,6 @@ export function ManageShowTag(props: { channelName: any }) {
 
     const delete_tag = async (tagName: string) => {
         try {
-            // http://localhost:5000/
-            // https://anwarkader.com/
-            // https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/tags`, {
                 method: 'DELETE',
                 mode: 'cors',
@@ -221,11 +212,6 @@ export function ManageShowTag(props: { channelName: any }) {
 
     // Getting Current Channel Tags
     useEffect(() => {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/channels/channelWithTags/${currentUserGoogleId.toString()}/${props.channelName.toString()}
-        // console.log("LAST:", props.channelName.toString());
-
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelWithTags/${props.channelName.toString()}`, 
             {
                 method: 'GET', 
@@ -255,10 +241,6 @@ export function ManageShowTag(props: { channelName: any }) {
 
     // Getting All Tag Options
     useEffect(() => {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/channels/tags/${currentUserGoogleId.toString()}
-        // console.log("Got all tag options for channel")
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/tags`, 
             { 
                 method: 'GET', 
@@ -284,9 +266,6 @@ export function ManageShowTag(props: { channelName: any }) {
     const add_to_favorite = async (tagName: string) => {
         // console.log("Add this:", tagName);
         try {
-            // http://localhost:5000/
-            // https://anwarkader.com/
-            // https://anwarkader.com/api/channels/channelWithTags/${currentUserGoogleId}/${props.channelName}
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelWithTags/${props.channelName}`, {
                 method: 'PUT',
                 mode: 'cors',
@@ -318,9 +297,6 @@ export function ManageShowTag(props: { channelName: any }) {
     const delete_from_favorite = async (tagName: string) => {
         // console.log("Delete this:", tagName);
         try {
-            // http://localhost:5000/
-            // https://anwarkader.com/
-            // https://anwarkader.com/api/channels/channelWithTags/${currentUserGoogleId}/${props.channelName}
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelWithTags/${props.channelName}`, {
                 method: 'DELETE',
                 mode: 'cors',
@@ -364,9 +340,6 @@ export function ManageShowTag(props: { channelName: any }) {
             // TODO - X - get the color for the corresponding tag, saved as "gray", "red", etc. not "bg-gray-400"
             // const tagColor = "blue";
             // setCurrentTagBG(getTailwindBgColor(tagColor, 400));
-            // http://localhost:5000/
-            // https://anwarkader.com/
-            // https://anwarkader.com/api/channels/colorsOfTag/${currentUserGoogleId.toString()}/${props.tagName}
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/colorsOfTag/${props.tagName}`, {
                 method: 'GET', 
                 // credentials: 'include',
@@ -389,9 +362,6 @@ export function ManageShowTag(props: { channelName: any }) {
             // console.log(`Change ${props.tagName.toString()} to ${getTailwindBgColor(color, 00)}-400`);
             // setCurrentTagBG(getTailwindBgColor(color, 400));
 
-            // http://localhost:5000/
-            // https://anwarkader.com/
-            // https://anwarkader.com/api/channels/colorsOfTag/${currentUserGoogleId.toString()}/${props.tagName}
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/colorsOfTag/${props.tagName}`, {
                 method: 'PUT',
                 mode: 'cors',

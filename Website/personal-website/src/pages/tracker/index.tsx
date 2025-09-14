@@ -49,9 +49,6 @@ export default function TrackerPage() {
     }
 
     try {
-      // http://localhost:5000/
-    // https://anwarkader.com/
-    // https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo/${extractedVideoId(newUrlText)}
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${extractedVideoId(newUrlText)}`, {
         method: 'PUT',
         mode: 'cors',
@@ -77,24 +74,10 @@ export default function TrackerPage() {
     }
   }
 
-  // Fetch the information every second
-  // useEffect(() => {
-  //   setInterval(() => {
-  //     fetch("https://anwarkader.com/api/tracker")
-  //       .then(response => response.json())
-  //       .then(data => {
-  //         // console.log(data);
-  //         setMessage(data.web_chapter);
-  //       })
-  //   }, 1000)
-  // }, [])
 
   const fetchVideoInfo = useCallback(async () => {
     try {
       var full_video_info:TrackedVideoInfo[] = [];
-      // http://localhost:5000/
-      // https://anwarkader.com/
-      // https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
         method: 'GET',
         mode: 'cors',
@@ -128,9 +111,6 @@ export default function TrackerPage() {
     
     const removeTrackedVideo = async (videoID: string) => {
       try {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/tracker/${currentUserGoogleID}/trackedVideo/${videoID}
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoID}`, {
           method: 'DELETE',
           mode: 'cors',

@@ -2,15 +2,22 @@ import datetime
 import json
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import os
+from dotenv import load_dotenv
 
 from random import randint
 
 import certifi
 
+# Construct the path to the .env.local file.
+# This goes up three directories from the current file's location
+# (YoutubeData -> server -> personalWebsite) and then looks for .env.local.
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env.local')
+load_dotenv(dotenv_path=dotenv_path)
+
 ca = certifi.where()
 
-uri = "mongodb+srv://anwar09102005:w8kRzw681NZM6VHI@prod-yt.10vdjom.mongodb.net/?retryWrites=true&w=majority&appName" \
-      "=prod-yt "
+uri = os.getenv("MONGODB_URI")
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=ca)
@@ -23,7 +30,6 @@ yt_test_collection = db["testing"]  # prod-yt/youtube/testing
 yt_user_collection = db["users"]  # prod-yt/youtube/users
 
 db_users = client["users"]  # prod-yt/users
-user_me = db_users["113385767862195154808"]  # prod-yt/users/113385767862195154808
 
 
 def clear_videos_database():
@@ -757,11 +763,6 @@ def main():
     # connect_channels_many_db()
     # print(db.list_collection_names({}))
 
-    # Not in it
-    # UClCUtBCBJw1UB3PDwW_Jemg
-    # In it
-    # UCMiJRAwDNSNzuYeN2uWa0pA
-    # videos_del_db(chId="UCMiJRAwDNSNzuYeN2uWa0pA")
 
     # set_update_schedules()
     # Daily - 18
@@ -779,9 +780,8 @@ def main():
     # user_me.delete_many(filter={"category":"daily"})
     # TODO - make sure to use the user's respective youtube API for this
     # TODO - use the below function to do the update for each user
-    # move_update_to_user("113385767862195154808")
 
-    googleID = "113385767862195154808"
+    googleID = ""
     if "channelID" not in list(yt_user_collection.find(filter={"googleID": googleID}))[0]:
         print("New")
         output = yt_user_collection.find(filter={"googleID": googleID})
@@ -792,8 +792,6 @@ def main():
 
     # print(db_users.list_collection_names())
     # print("Added all of Test Data ")
-    # print("All tag names:", get_all_tag_names("113385767862195154808"))
-    # print("Added tag programming:", add_tag_name(googleID, "programming"))
 
 
 if __name__ == "__main__":

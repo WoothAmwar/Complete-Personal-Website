@@ -313,8 +313,7 @@ def complete_reload(googleID, doReturn=False):
     # Useless function below
     # single_reset_files(doEmbed=False)
 
-    api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
-    # api_key = get_user_api(googleID)
+    api_key = get_user_api(googleID)
     channel_id = get_user_channel_id(googleID)
     if api_key == "None" or channel_id == "None":
         return -1
@@ -444,18 +443,11 @@ def channel_info(service, channelID, numVideos):
     # return videoIdList[0:3]
 
 def main():
-    googleID = "113385767862195154808"
-    api_key = "AIzaSyCRJ-4UyadnEdYmZPbgfGKkHdEcq5y9eJw"
-    # api_key = get_user_api(googleID)
+    googleID = ""
+    api_key = get_user_api(googleID)
 
     service = build('youtube', 'v3', developerKey=api_key)
-    # chrisMD: UCQ-YJstgVdAiCT52TiBWDbg
-    # chrisMD videos BEFORE (good): ['2qsXg3oZ0cw', 'etWiEgoQ-es', 'xCyYjtnfN4E']
-    # good work: UC_-hYjoNe4PJNFa9iZ4lraA
-    # animeMen videos BEFORE (bad):
-    # docm77: UC4O9HKe9Jt5yAhKuNv3LXpQ
     channel_vids = channel_info(service, "UC_-hYjoNe4PJNFa9iZ4lraA", 3)
-    print("CVID:", channel_vids)
 
 if __name__ == "__main__":
     main()

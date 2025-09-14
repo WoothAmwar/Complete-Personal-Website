@@ -329,7 +329,6 @@ def filter_by_update(googleID, channelIdInfo, channelNameInfo, channelImageInfo,
 
 
 def filter_by_length(videoId):
-    # https://www.googleapis.com/youtube/v3/videos?key=AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w&part=contentDetails&id=WDfAC4WI_GA
     # Find when video less than 1 Min 10 Sec, including under 1 minute
     # If so, skip this video, so return False
     # Else, return true
@@ -374,8 +373,7 @@ def complete_reload(googleID, doReturn=False):
     # Useless function below
     # single_reset_files(doEmbed=False)
 
-    api_key = "AIzaSyAy05SkDd2lZTeAEIxtCwUmzXDHOx_jl-E"
-    # api_key = get_user_api(googleID)
+    api_key = get_user_api(googleID)
     channel_id = get_user_channel_id(googleID)
     if api_key == "None" or channel_id == "None":
         return -1
@@ -461,54 +459,8 @@ def test():
 
 
 def main():
-    googleID = "113385767862195154808"
+    googleID = ""
     totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
-
-    # Testing to realize that you have to make subscriptions public
-    # google_info = get_all_user_google()
-    # googleID = google_info[1]
-    # api_key = get_user_api(googleID)
-    # channel_id = get_user_channel_id(googleID)
-    # # print(api_key, channel_id)
-    #
-    # service = build('youtube', 'v3', developerKey=api_key)
-    #
-    # # Gets list of all channels, regardless of value of doMinimum
-    # channelIdInfo, channelNameInfo, channelImageInfo = full_subscribed_channels(service, channel_id)
-    # print(channelNameInfo)
-
-
-    # UCVkgOCFu4mnS1VI9BUvk_QQ
-    # api_key = get_user_api(googleID)
-    # channel_id = get_user_channel_id(googleID)
-    # service = build('youtube', 'v3', developerKey=api_key)
-    # channels = subscribed_channels(service, channel_id, nextPageToken="", total_response=[])
-    # for i in range(len(channels)):
-    #     print(len(channels[i]["items"]))
-
-    # all_user_google_ids = get_all_user_google()
-    # print(all_user_google_ids)
-    # for googleID in all_user_google_ids:
-    #     complete_reload(googleID, doReturn=False)
-
-    # with open("automaticVideoIdInfo.json", "w") as f:
-    #     f.write(json.dumps({"videoIds": totalVideoIdList}))
-    # with open("automaticVideoTitleInfo.json", "w") as f:
-    #     f.write(json.dumps({"videoTitles": totalVideoTitleList}))
-    # with open("automaticVideoThumbnailInfo.json", "w") as f:
-    #     f.write(json.dumps({"videoThumbnails": totalVideoThumbnailList}))
-    # with open("automaticVideoUploadDateInfo.json", "w") as f:
-    #     f.write(json.dumps({"uploadDates": totalUploadDateList}))
-
-    # Automatically get channelId info with pyautogui
-    # with open("videoId.txt", "r") as f:
-    #     lines = f.readlines()
-    #     for idx in range(0, len(lines)):
-    #         lines[idx] = lines[idx].rstrip('\n')
-    #     for videoID in lines:
-    #         total_url = "https://www.googleapis.com/youtube/v3/videos?key=AIzaSyC3SJjz3kmksCgOdtJiMLgf2t6MgfMfL3w" \
-    #                     "&part=snippet&id=" + videoID
-    #         automate_scuff(total_url)
     pass
 
 if __name__ == "__main__":

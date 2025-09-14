@@ -22,10 +22,6 @@ function classNames(...classes: string[]) {
 
 export const getFavoriteVideos = async (currentUserGoogleID: string, getIdInfo: boolean) => {
     try {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}
-        // console.log("DT 2.2:", currentUserGoogleID.toString(), " | ", getIdInfo);
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
             method: 'GET',
             mode: 'cors',
@@ -63,9 +59,6 @@ export const getFavoriteVideos = async (currentUserGoogleID: string, getIdInfo: 
 
 const addFavorite = async (currentUserGoogleID: string, fullVideoDetails: any) => {
     try {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
             method: 'PUT',
             mode: 'cors',
@@ -93,9 +86,6 @@ const addFavorite = async (currentUserGoogleID: string, fullVideoDetails: any) =
 
 const deleteFavorite = async (currentUserGoogleID: string, fullVideoDetails: any) => {
     try {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/videos/favorites/${currentUserGoogleID}
         console.log("FULL:", fullVideoDetails);
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
             method: 'DELETE',
@@ -125,10 +115,6 @@ const deleteFavorite = async (currentUserGoogleID: string, fullVideoDetails: any
 
 export const getWatchlaterVideos = async (currentUserGoogleID: string, getIdInfo: boolean) => {
     try {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}
-        // console.log("DT 2.2:", currentUserGoogleID.toString(), " | ", getIdInfo);
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
             method: 'GET',
             mode: 'cors',
@@ -167,9 +153,6 @@ export const getWatchlaterVideos = async (currentUserGoogleID: string, getIdInfo
 
 const addWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any) => {
     try {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
             method: 'PUT',
             mode: 'cors',
@@ -197,9 +180,6 @@ const addWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any)
 
 const deleteWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any) => {
     try {
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/videos/watchlater/${currentUserGoogleID}
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
             method: 'DELETE',
             mode: 'cors',
