@@ -15,27 +15,15 @@ from server.YoutubeData.youtube_database import (get_channel_name_info, replace_
 
 
 def main():
-    api_key = "AIzaSyCRJ-4UyadnEdYmZPbgfGKkHdEcq5y9eJw"
+    api_key = ""
 
     service = build('youtube', 'v3', developerKey=api_key)
-    # chrisMD: UCQ-YJstgVdAiCT52TiBWDbg
-    # chrisMD videos BEFORE (good): ['2qsXg3oZ0cw', 'etWiEgoQ-es', 'xCyYjtnfN4E']
-    # good work: UC_-hYjoNe4PJNFa9iZ4lraA
-    # animeMen videos BEFORE (bad):
-    # docm77: UC4O9HKe9Jt5yAhKuNv3LXpQ
-    # kodekai: UCuaGQ8RZR9JMu_AmzIRSyUw
-    # Spilled Ink: UC4Q4RQ2m4L7qVdVt4qoOmjA
 
     # Topic Categories (topicDetails.topicCategories) and Description (brandingSettings.channel.description)
     #  are the best for information about the channel besides video title
 
     # Plan:
-    # In Untouched.json, in this order
-    #  Docm77, Kodekai, Spilled Ink
-    # Get video titles, channel description, and channel name. Could also get topic categories, not too useful though
-    #  as seen by SpilledInk which only said Hobby and Lifestyle for the channel
-
-    channel_id = "UC4Q4RQ2m4L7qVdVt4qoOmjA"
+    channel_id = ""
 
     request = service.channels().list(
         part="snippet, topicDetails, contentDetails, brandingSettings, statistics",

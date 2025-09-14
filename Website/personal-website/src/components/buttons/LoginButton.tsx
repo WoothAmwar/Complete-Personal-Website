@@ -84,9 +84,6 @@ function GoogleSignIn() {
 
                     );
                     console.log("User ID:", res.data.id);
-                    // http://localhost:5000/
-                    // https://anwarkader.com/
-                    // https://anwarkader.com/api/users/googleID
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`,
                         {
                             method: 'PUT',

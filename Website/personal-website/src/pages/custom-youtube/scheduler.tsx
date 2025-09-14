@@ -128,10 +128,7 @@ export default function Scheduler() {
             console.log(props.selectedChannels);
 
             try {
-                // http://localhost:5000/
-                // https://anwarkader.com/
-                // https://anwarkader.com/api/channels/${dbBtnOptions[selectedIndex]}/${currentUserGoogleID}
-
+                
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/${dbBtnOptions[selectedIndex]}`, {
                     method: 'PUT',
                     mode: 'cors',
@@ -247,9 +244,6 @@ export default function Scheduler() {
     useEffect(() => {
         const fetchUpdateChannels = async (category: string) => {
             try {
-                // http://localhost:5000/
-                // https://anwarkader.com/
-                // https://anwarkader.com/api/channels/${category}/${currentUserGoogleId.toString()}
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/${category}`, { 
                     method: 'GET', 
                     mode: 'cors',

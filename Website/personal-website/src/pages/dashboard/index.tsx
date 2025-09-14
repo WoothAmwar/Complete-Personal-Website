@@ -142,9 +142,6 @@ export default function Dashboard() {
 
     const updateYoutubeAPi = () => {
         console.log("New API:", newApiText);
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/users/apiKey/${currentUserGoogleID.toString()}
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/apiKey`,
             {
                 method: 'PUT',
@@ -165,9 +162,6 @@ export default function Dashboard() {
 
     const updateYoutubeChannelID = () => {
         console.log("New ChannelID:", newChannelIdText);
-        // http://localhost:5000/
-        // https://anwarkader.com/
-        // https://anwarkader.com/api/users/channelID/${currentUserGoogleID.toString()}
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/channelID`,
             {
                 method: 'PUT',

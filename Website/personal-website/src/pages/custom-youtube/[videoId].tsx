@@ -121,9 +121,6 @@ export default function VideoScreen() {
   const currentUserGoogleId = CurrentUserId();
   useEffect(() => {
     var foundTitle = false;
-    // http://localhost:5000/
-    // https://anwarkader.com/
-    // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
         {
             method: 'GET', 

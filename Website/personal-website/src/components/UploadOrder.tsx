@@ -17,9 +17,6 @@ function time_difference(time1: string) {
 }
 
 const fetchVideos = async(currentUserGoogleId: string) => {
-    // http://localhost:5000/
-    // https://anwarkader.com/
-    // https://anwarkader.com/api/videos/${currentUserGoogleId.toString()}
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
         {
             method: 'GET', 
