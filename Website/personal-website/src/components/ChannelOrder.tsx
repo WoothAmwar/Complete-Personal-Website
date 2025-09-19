@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image";
 import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 import { guidGenerator, VideoBox } from "./VideoBox";
@@ -134,7 +134,8 @@ export default function OrderByChannel(props: { channelsToInclude: string[], pag
       <div key={filteredChannelData[i]["channelNames"]} className="text-left flex">
         <ManageShowTag channelName={filteredChannelData[i]["channelNames"]} />
         <div>
-          <Image
+          {/* <Image */}
+          <img
             src={filteredChannelData[i]["channelImages"]}
             alt="Channel Image"
             width={wd / 2 - 30}

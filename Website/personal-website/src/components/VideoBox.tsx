@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import Image from 'next/image';
+// import Image from 'next/image';
 import "../app/globals.css";
 
 import { Fragment } from 'react'
@@ -333,13 +333,12 @@ export function VideoBox(props: { includeDate: boolean, fullVideoDetails: any })
         <div className="rounded-xl mb-2">
             <Link href={embedLink.concat(videoId)}>
                 <div className="relative mb-1 rounded-xl overflow-hidden aspect-video">
-                    <Image
+                    {/* <Image */}
+                    <img
                         src={thumb}
                         alt="Thumbnail"
-                        fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="object-cover"
-                        priority={false}
                     />
                 </div>
             </Link>

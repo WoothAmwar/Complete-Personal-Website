@@ -4,6 +4,7 @@ import "../../app/globals.css";
 import { CookiesProvider, useCookies } from "react-cookie";
 import { googleLogout, useGoogleLogin } from "@react-oauth/google";
 import Image from 'next/image';
+import Head from "next/head";
 
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
@@ -181,62 +182,67 @@ export default function Dashboard() {
     }
 
     return (
-        <main className="grid lg:grid-cols-5 grid-cols-1 lg:grid-rows-1 grid-rows-2 divide-x-2 divide-slate-800 gap-x-2">
-            <div className="relative lg:col-span-1 row-span-1 gap-4 flex flex-col py-4 lg:h-screen">
-                <div className="items-center place-self-center">
-                    <ProfilePicture imageLink={userProfile?.picture} imageSize={100} />
+        <>
+            <Head>
+                <title>Dashboard</title>
+            </Head>
+            <main className="grid lg:grid-cols-5 grid-cols-1 lg:grid-rows-1 grid-rows-2 divide-x-2 divide-slate-800 gap-x-2">
+                <div className="relative lg:col-span-1 row-span-1 gap-4 flex flex-col py-4 lg:h-screen">
+                    <div className="items-center place-self-center">
+                        <ProfilePicture imageLink={userProfile?.picture} imageSize={100} />
+                    </div>
+
+                    <div className="text-lg font-semibold text-center">
+                        <div>
+                            Welcome, {userProfile?.name}
+                        </div>
+                        <div>
+                            {userProfile?.email}
+                        </div>
+                        <div className="my-2">
+                            <TextField InputProps={{
+                                style: { color: '#e7e5e4' }
+                            }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeApiText} color="primary" focused />
+                            <Button onClick={updateYoutubeAPi}>Update API Key</Button>
+                        </div>
+                        <div className="my-2">
+                            <TextField InputProps={{
+                                style: { color: '#e7e5e4' }
+                            }} size="small" id="outlined-basic" label="Channel ID" variant="outlined" value={newChannelIdText} onChange={handleChangeChannelIDText} color="primary" focused />
+                            <Button onClick={updateYoutubeChannelID}>Update YT ID</Button>
+                        </div>
+
+                        <div>
+                            Do not Know what API Key or Channel ID Means? Check out the <span>
+                                <a key={9} href={"/about"} className="text-blue-400">About</a>
+                            </span> Page for more information!
+                        </div>
+                    </div>
+
+                    <div>
+                        <button onClick={logOut} className="lg:absolute inset-x-0 bottom-0 w-full h-12 border-2 border-red-800 rounded-full">
+                            <Link key={1} href="/">
+                                <p className="font-['Garamond'] font-bold text-lg text-red-800 ">Log out</p>
+                            </Link>
+                        </button>
+                    </div>
                 </div>
-
-                <div className="text-lg font-semibold text-center">
-                    <div>
-                        Welcome, {userProfile?.name}
+                <div className="col-span-4 pl-2">
+                    <div className="font-bold text-4xl mb-3">
+                        Favorite Videos
                     </div>
-                    <div>
-                        {userProfile?.email}
-                    </div>
-                    <div className="my-2">
-                        <TextField InputProps={{
-                            style: { color: '#e7e5e4' }
-                        }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeApiText} color="primary" focused />
-                        <Button onClick={updateYoutubeAPi}>Update API Key</Button>
-                    </div>
-                    <div className="my-2">
-                        <TextField InputProps={{
-                            style: { color: '#e7e5e4' }
-                        }} size="small" id="outlined-basic" label="Channel ID" variant="outlined" value={newChannelIdText} onChange={handleChangeChannelIDText} color="primary" focused />
-                        <Button onClick={updateYoutubeChannelID}>Update YT ID</Button>
+                    <div className="col-span-full">
+                        <FavoriteVideosDisplay currentUserGoogleID={currentUserGoogleID} />
                     </div>
 
-                    <div>
-                        Do not Know what API Key or Channel ID Means? Check out the <span>
-                            <a key={9} href={"/about"} className="text-blue-400">About</a>
-                        </span> Page for more information!
-                    </div>
-                </div>
-
-                <div>
-                    <button onClick={logOut} className="lg:absolute inset-x-0 bottom-0 w-full h-12 border-2 border-red-800 rounded-full">
-                        <Link key={1} href="/">
-                            <p className="font-['Garamond'] font-bold text-lg text-red-800 ">Log out</p>
+                    <div className="w-48 h-12 border-2 border-slate-800 rounded-full text-center place-content-center">
+                        <Link key={1} href="/custom-youtube/scheduler">
+                            <p className="font-['Garamond'] font-bold text-lg">YT Scheduler</p>
                         </Link>
-                    </button>
+                    </div>
                 </div>
-            </div>
-            <div className="col-span-4 pl-2">
-                <div className="font-bold text-4xl mb-3">
-                    Favorite Videos
-                </div>
-                <div className="col-span-full">
-                    <FavoriteVideosDisplay currentUserGoogleID={currentUserGoogleID} />
-                </div>
-
-                <div className="w-48 h-12 border-2 border-slate-800 rounded-full text-center place-content-center">
-                    <Link key={1} href="/custom-youtube/scheduler">
-                        <p className="font-['Garamond'] font-bold text-lg">YT Scheduler</p>
-                    </Link>
-                </div>
-            </div>
-        </main>
+            </main>
+        </>
     );
 }
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Link from "next/link";
 import "../app/globals.css";
 import LoginButton from "@/components/buttons/LoginButton";
-import Image from 'next/image';
+// import Image from 'next/image';
 
 
 interface SingleLink {
@@ -26,7 +26,8 @@ export default function NavigationBar() {
                 <div className="grid grid-flow-col float:left col-span-1">
                     {/* <NavigateLink id={1} text="Logo" link="/" /> */}
                     <Link key={1} href={"/"}>
-                        <Image className="object-fill w-5/6 h-12" src="/logo-name-only.png" alt="Logo Image" width={240} height={48} priority />
+                    {/* <Image */}
+                        <img className="object-fill w-5/6 h-12" src="/logo-name-only.png" alt="Logo Image" width={240} height={48} />
                     </Link>
                 </div>
                 <div className="grid grid-flow-col col-start-2 col-span-3">

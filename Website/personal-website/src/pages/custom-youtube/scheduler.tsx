@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import Link from "next/link";
 import "../../app/globals.css";
-import Image from 'next/image';
+// import Image from 'next/image';
+import Head from "next/head";
 
 import {
     CurrentUserCookieInfo, CurrentUserId
@@ -292,6 +293,10 @@ export default function Scheduler() {
     }
 
     return (
+        <>
+        <Head>
+            <title>Schedule Channel Updates</title>
+        </Head>
         <main className="">
             <div className="grid justify-items-end mx-5 mt-4">
                 <ThemeProvider theme={updateBtnTheme}>
@@ -332,7 +337,8 @@ export default function Scheduler() {
                                 <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
                                     label={
                                         <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
-                                            <Image src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
+                                            {/* <Image */}
+                                            <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
                                             <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
                                                 {element["channelNames"]}
                                             </div>
@@ -348,7 +354,8 @@ export default function Scheduler() {
                                 <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
                                     label={
                                         <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
-                                            <Image src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
+                                            {/* <Image */}
+                                            <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
                                             <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
                                                 {element["channelNames"]}
                                             </div>
@@ -364,5 +371,6 @@ export default function Scheduler() {
                 <SubmitSplitButton schedulePageIndex={selectedButton - 1} selectedChannels={selectedChannels} />
             </div>
         </main>
+        </>
     );
 }

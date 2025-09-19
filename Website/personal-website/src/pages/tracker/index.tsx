@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
-import Image from 'next/image';
+// import Image from 'next/image';
 import "../../app/globals.css"
 
 import Button from "@mui/material/Button";
 import TextField from '@mui/material/TextField';
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import Head from "next/head";
 
 const extractedVideoId = (full_url: string): string => {
   // https://www.youtube.com/watch?v=szgs2_VxUow
@@ -143,7 +144,8 @@ export default function TrackerPage() {
         <div>
           <Link key={props.video_info.videoThumbnail} href={"/custom-youtube/".concat(props.video_info.videoID)}>
             <div className="relative rounded-xl overflow-hidden aspect-video">
-              <Image src={props.video_info.videoThumbnail} alt="Video Thumbnail" fill className="object-cover" />
+              {/* <Image */}
+              <img src={props.video_info.videoThumbnail} alt="Video Thumbnail" className="object-cover" />
             </div>
           </Link>
         </div>
@@ -171,25 +173,30 @@ export default function TrackerPage() {
     )
   }
   return (
-    <main className="flex flex-col items-center">
-      <h2 className="text-center font-semibold text-lg py-4">
-        Get Started with Test Place for Web Tracker 1.0
-      </h2>
+    <>
+      <Head>
+          <title>Saved Videos</title>
+      </Head>
+      <main className="flex flex-col items-center">
+        <h2 className="text-center font-semibold text-lg py-4">
+          Watch Later Video List
+        </h2>
 
-      <div className="my-2 mx-4 grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-x-4">
-        {allVideoInfo.map((video_info, index) => (
-          <div key={index}>
-            <SingleLink_YT video_info={video_info} />
-          </div>
-        ))}
-      </div>
-      <div className="my-2 lg:w-1/4 md:w-1/2 w-5/6 grid grid-cols-3 grid-rows-1">
-        <TextField fullWidth InputProps={{
-          style: { color: '#e7e5e4' }
-        }} className="col-span-2" size="small" id="outlined-basic" label="Youtube Video URL" variant="outlined" value={newUrlText} onChange={handleChangeUrlText} color="primary" focused />
-        <Button onClick={addVideoByURL}>Add YT Video URL</Button>
-      </div>
+        <div className="my-2 mx-4 grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-x-4">
+          {allVideoInfo.map((video_info, index) => (
+            <div key={index}>
+              <SingleLink_YT video_info={video_info} />
+            </div>
+          ))}
+        </div>
+        <div className="my-2 lg:w-1/4 md:w-1/2 w-5/6 grid grid-cols-3 grid-rows-1">
+          <TextField fullWidth InputProps={{
+            style: { color: '#e7e5e4' }
+          }} className="col-span-2" size="small" id="outlined-basic" label="Youtube Video URL" variant="outlined" value={newUrlText} onChange={handleChangeUrlText} color="primary" focused />
+          <Button onClick={addVideoByURL}>Add YT Video URL</Button>
+        </div>
 
-    </main>
+      </main>
+    </>
   );
 }

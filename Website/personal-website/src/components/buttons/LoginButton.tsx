@@ -1,7 +1,7 @@
 import Link from "next/link";
 import "@/app/globals.css";
 import NavigationBar from "@/components/NavigationBar";
-import Image from 'next/image';
+// import Image from 'next/image';
 
 import { useState, useEffect } from "react";
 
@@ -123,7 +123,8 @@ function GoogleSignIn() {
                     <div className="grid grid-cols-3 place-content-end">
                         <div className="justify-self-center col-span-1 place-content-center">
                             {userProfile?.picture && (
-                              <Image src={userProfile.picture} alt="user image" width={40} height={40} />
+                                // <Image
+                              <img src={userProfile.picture} alt="user image" width={40} height={40} />
                             )}
                         </div>
                         <div className="col-span-2">

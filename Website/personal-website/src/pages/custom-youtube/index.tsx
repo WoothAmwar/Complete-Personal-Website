@@ -16,6 +16,7 @@ import { Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Head from "next/head";
 
 const queryClient = new QueryClient();
 
@@ -291,6 +292,9 @@ function HomePage() {
 export default function HomePageWrapper() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Head>
+        <title>Subscription Videos</title>
+      </Head>
       <HomePage />
     </QueryClientProvider>
   )
