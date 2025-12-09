@@ -80,7 +80,10 @@ function GoogleSignIn() {
                             res.data.picture,
                             res.data.verified_email,
                         ],
-                        { path: "/" }
+                        {
+                            path: "/",
+                            maxAge: 60 * 60 * 48  // 48 hours in seconds
+                        }
 
                     );
                     console.log("User ID:", res.data.id);
