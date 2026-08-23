@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 // import Image from "next/image";
-import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 import { guidGenerator, VideoBox } from "./VideoBox";
 import { ManageShowTag } from "./buttons/ManageChannelTags";

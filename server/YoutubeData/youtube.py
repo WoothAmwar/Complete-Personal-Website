@@ -1,4 +1,4 @@
-# import os
+import os
 
 # import google_auth_oauthlib.flow
 import datetime
@@ -12,6 +12,57 @@ from time import sleep
 from .youtube_database import (get_channel_name_info, replace_videos_many_db, replace_channels_many_db,
                               add_new_channel, is_channel_in_db, get_unassigned_channel_name_info, get_user_api,
                               get_all_user_google, get_user_channel_id)
+
+# When set, complete_reload()/get_single_video_info() return data from the automatic*.json fixture
+# files below instead of calling the live YouTube Data API. Useful offline or without an API key.
+USE_MOCK_YOUTUBE = os.getenv("USE_MOCK_YOUTUBE", "0") == "1"
+
+
+def _load_fixture(filename):
+    path = os.path.join(os.path.dirname(__file__), filename)
+    with open(path, "r") as f:
+        return json.load(f)
+
+
+def _mock_complete_reload(googleID, doReturn=False):
+    channel_ids = _load_fixture("automaticChannelIdInfo.json")["channelIds"]
+    channel_names = _load_fixture("automaticChannelNameInfo.json")["names"]
+    channel_images = _load_fixture("automaticChannelImageInfo.json")["channelImages"]
+    video_ids = _load_fixture("automaticVideoIdInfo.json")["videoIds"]
+    video_titles = _load_fixture("automaticVideoTitleInfo.json")["videoTitles"]
+    video_thumbnails = _load_fixture("automaticVideoThumbnailInfo.json")["videoThumbnails"]
+    upload_dates = _load_fixture("automaticVideoUploadDateInfo.json")["uploadDates"]
+
+    for name in channel_names:
+        try_add_new_channel(googleID, name)
+
+    replace_channels_many_db(
+        channelIdList=channel_ids,
+        channelImageList=channel_images,
+        channelNameList=channel_names)
+
+    replace_videos_many_db(
+        channelIdList=channel_ids,
+        videoIdList=video_ids,
+        titleList=video_titles,
+        thumbnailList=video_thumbnails,
+        uploadDateList=upload_dates)
+
+    if doReturn:
+        return video_ids, video_titles, video_thumbnails, upload_dates
+
+
+def _mock_single_video_info(videoID):
+    video_ids = _load_fixture("automaticVideoIdInfo.json")["videoIds"]
+    video_titles = _load_fixture("automaticVideoTitleInfo.json")["videoTitles"]
+    video_thumbnails = _load_fixture("automaticVideoThumbnailInfo.json")["videoThumbnails"]
+
+    for channelIdx, ids in enumerate(video_ids):
+        if videoID in ids:
+            vidIdx = ids.index(videoID)
+            return video_titles[channelIdx][vidIdx], video_thumbnails[channelIdx][vidIdx]
+
+    return f"Mock Video {videoID}", f"https://picsum.photos/seed/{videoID}/320/180"
 
 # pyautogui.PAUSE = 0.2
 # pyautogui.FAILSAFE = True
@@ -336,6 +387,9 @@ def filter_by_length(videoId):
 
 
 def get_single_video_info(googleID, videoID):
+    if USE_MOCK_YOUTUBE:
+        return _mock_single_video_info(videoID)
+
     api_key = get_user_api(googleID)
     # channel_id = get_user_channel_id(googleID)
     service = build('youtube', 'v3', developerKey=api_key)
@@ -365,6 +419,9 @@ def try_add_new_channel(googleID, singleChannelName):
 
 
 def complete_reload(googleID, doReturn=False):
+    if USE_MOCK_YOUTUBE:
+        return _mock_complete_reload(googleID, doReturn)
+
     # TODO - add Kurzgesagt channel, couldn't because illegal character
     # embedLink = "embedFiles/embedHTML-" + str(datetime.datetime.now().strftime("-%m-%d-%H-%M-%S")) + ".txt"
     # print(embedLink)

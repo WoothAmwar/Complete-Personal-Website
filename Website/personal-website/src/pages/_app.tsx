@@ -9,6 +9,8 @@ import { CookiesProvider, useCookies } from "react-cookie";
 import Link from "next/link";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import "@/app/globals.css"
+
 const queryClient = new QueryClient();
 
 const App: React.FC<AppProps> = ({ Component, pageProps }) => {
@@ -23,9 +25,9 @@ const App: React.FC<AppProps> = ({ Component, pageProps }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <GoogleOAuthProvider clientId="224517591075-783fat3nia6np4el8jhuvi75it5bhgro.apps.googleusercontent.com">
+        <NavigationBar {...pageProps}/>
         {signedIn ? (
-          <div>  
-            <NavigationBar {...pageProps}/>
+          <div className="p-4">  
             <main>
               <Component {...pageProps} />
             </main>
@@ -34,7 +36,7 @@ const App: React.FC<AppProps> = ({ Component, pageProps }) => {
             </footer>
           </div>
           ) : (
-            <div className="text-center web-header mt-8">
+            <div className="text-center text-[4rem] mt-8">
               <p> Please Sign In to View This Page</p>
               <Link key={1} href="/">
                 <p className="font-['Garamond'] text-xl text-sky-500">Return to Homepage</p>

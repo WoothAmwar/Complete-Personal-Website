@@ -19,8 +19,12 @@ ca = certifi.where()
 
 uri = os.getenv("MONGODB_URI")
 
-# Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=ca)
+# Atlas (mongodb+srv://) requires TLS; a local dev Mongo (e.g. mongodb://localhost, see
+# server/docker-compose.yml) does not speak TLS, so only pass tlsCAFile for Atlas connections.
+if uri and uri.startswith("mongodb+srv://"):
+    client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=ca)
+else:
+    client = MongoClient(uri, server_api=ServerApi('1'))
 
 db = client["youtube"]  # prod-yt/youtube
 yt_videos_collection = db["videos"]  # prod-yt/youtube/videos

@@ -39,6 +39,7 @@ Key highlights:
 
 ### Backend
 - **AWS Lambda Functions** – Serverless backend logic
+- **Flask** – Python REST API (`server/application.py`) for local development
 - **MongoDB** – Cloud database for storing user data, tags, and video metadata
 - **YouTube Python API** – Integration for fetching channel & video data
 
@@ -51,42 +52,69 @@ Key highlights:
 ## Project Structure
 ├── Website/ # Frontend (React + Next.js + MUI + Tailwind)
 │ └── personal-website
-│ ├── components/ # Reusable React components
-│ ├── pages/ # Next.js pages & routing
-│ ├── styles/ # Tailwind CSS styles
-│ └── utils/ # Frontend helpers
+│ ├── src/components/ # Reusable React components
+│ ├── src/pages/ # Next.js pages & routing
+│ └── mocks/ # Frontend-only mock backend (offline dev, see below)
 │
-├── server/ # Backend (AWS Lambda + Python)
-│ ├── handlers/ # Lambda functions
-│ ├── api_gateway_config/ # API Gateway integration
-│ └── youtube/ # YouTube API integration
+├── server/ # Backend (Flask, deployed to AWS Elastic Beanstalk)
+│ ├── application.py # Flask app entrypoint (routes, cron jobs)
+│ ├── YoutubeData/ # YouTube Data API integration + MongoDB access
+│ ├── WebText/ # Novel chapter tracker feature
+│ └── docker-compose.yml # Local MongoDB for offline dev
 │
+├── .env.example # Backend env vars (copy to .env.local)
 ├── .gitignore
-├── LICENSE.md
+├── LICENSE
 └── README.md
-
 
 ---
 
 ## Getting Started
 
 ### 1. Clone the repo
-```bash```
+```bash
 git clone https://github.com/WoothAmwar/Complete-Personal-Website.git
 cd Complete-Personal-Website
-### 2. Download Dependencies and Run the Frontend
+```
+
+### 2. Frontend
+```bash
 cd Website/personal-website
 npm install
+cp .env.example .env.local   # see that file for offline/mock-backend options
 npm run dev
-### 3. Download Dependencies for the Backend
-cd ../../server
+```
+
+### 3. Backend
+```bash
+cd server
 pip install -r requirements.txt
-### 4. Configure your environment variables for:
-- MongoDB connection URI
-- YouTube API key (or modify in frontend)
-- AWS credentials (for Lambda deployment)
-### 5. Run backend locally (if testing outside Lambda):
-python main.py
+cp ../.env.example ../.env.local   # repo-root .env.local, see that file for local Mongo / mock YouTube options
+python application.py
+```
+
+## Local & Offline Development
+
+This app normally depends on MongoDB Atlas, the YouTube Data API, and Google OAuth. For local and offline development, three lighter-weight paths exist:
+
+- **Frontend-only, fully offline**: `npm run dev:mock` in `Website/personal-website` starts Next.js
+  alongside a small mock backend (`mocks/server.js`) that returns fixture data for every endpoint the
+  frontend calls. No Python, MongoDB, or API keys needed. Set `NEXT_PUBLIC_USE_MOCK_AUTH=1` in
+  `.env.local` to also skip the Google OAuth popup.
+- **Full backend, local MongoDB**: `docker compose up -d` in `server/` runs a local MongoDB container;
+  point `MONGODB_URI` in the repo-root `.env.local` at it (see `.env.example`), then
+  `python server/seed_dev_data.py` to seed it with a fixture user/channels/videos.
+- **Real video playback testing**: `seed_dev_data.py`/`seed_dev_data_large.py` use made-up channel/video
+  IDs (e.g. `mockVideoA1`), so clicking through to a video won't actually play anything. Run
+  `python server/seed_dev_data_real.py` instead to seed the same dev user with 2 real YouTube channels
+  (Google for Developers, Veritasium) and 3 real, currently-live videos each, so `/custom-youtube/<videoId>`
+  actually plays a real video end-to-end.
+- **No YouTube API key**: set `USE_MOCK_YOUTUBE=1` in the repo-root `.env.local` to make
+  `server/YoutubeData/youtube.py` return data from the `automatic*.json` fixture files already checked
+  into `server/YoutubeData/` instead of calling the live YouTube Data API.
+
+What still needs real internet/credentials even in local dev: actual YouTube video playback/embeds,
+real Google sign-in, and the MongoDB Atlas / production backend if you don't use the options above.
 
 ---
 

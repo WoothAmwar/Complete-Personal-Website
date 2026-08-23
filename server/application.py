@@ -145,16 +145,21 @@ def return_lotm_info():
     })
 
 
-@application.route("/api/tracker/<googleID>/trackedVideo", methods=['GET'])
-def get_all_tracked_videos(googleID):
-    if request.method == 'GET':
-        all_videos_info = get_all_tracked_video(googleID)
-        # print("Video Info NOW:", json_util.dumps(all_videos_info))  # Creates wall of text/information
-        return json_util.dumps(all_videos_info)
+# The frontend (Website/personal-website/src) sends the signed-in user's Google ID via the
+# x-google-id header on every request, not as a URL path segment — these routes read it from
+# there. /api/home and /api/tracker (LOTM novel tracker, above) keep their /api prefix since the
+# frontend never calls them; everything below is unprefixed to match what the frontend expects.
+
+@application.route("/tracker", methods=['GET'])
+def get_all_tracked_videos():
+    googleID = request.headers.get('x-google-id')
+    all_videos_info = get_all_tracked_video(googleID)
+    return json_util.dumps(all_videos_info)
 
 
-@application.route("/api/tracker/<googleID>/trackedVideo/<videoID>", methods=['PUT', 'DELETE'])
-def manage_tracker_video(googleID, videoID):
+@application.route("/tracker/<videoID>", methods=['PUT', 'DELETE'])
+def manage_tracker_video(videoID):
+    googleID = request.headers.get('x-google-id')
     if request.method == 'PUT':
         video_title, video_thumbnail = get_single_video_info(googleID, videoID)
         added_video_info = add_tracked_video(googleID, videoID, video_title, video_thumbnail)
@@ -164,31 +169,25 @@ def manage_tracker_video(googleID, videoID):
         return jsonify({"data":removed_video_id})
 
 
-@application.route("/api/channels/<googleID>", methods=['GET'])
-def return_all_channels(googleID):
-    # response = jsonify(json_util.dumps(get_all_channels(googleID)))
-    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
-    # return response
-    # print("That thing is here", googleID)
+@application.route("/channels", methods=['GET'])
+def return_all_channels():
+    googleID = request.headers.get('x-google-id')
     return json_util.dumps(get_all_user_channels(googleID))
 
 
-@application.route("/api/videos/<googleID>", methods=['GET'])
-def return_all_videos(googleID):
-    # response = jsonify(json_util.dumps(get_all_videos(googleID)))
-    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
-    # return response
-    # print("That thing is here", googleID)
+@application.route("/videos", methods=['GET'])
+def return_all_videos():
+    googleID = request.headers.get('x-google-id')
     return json_util.dumps(get_all_videos(googleID))
 
 
-@application.route("/api/channels/daily/<googleID>", methods=['GET', 'PUT'])
-def return_daily_schedule_channels(googleID):
+@application.route("/channels/daily", methods=['GET', 'PUT'])
+def return_daily_schedule_channels():
     """
     Finds the information for all of the channels that the user has specified as updateDaily
-    :param googleID: User ID used to store and retrieve information
     :return: JSON of full information for updateDaily channels, descending order by channel name
     """
+    googleID = request.headers.get('x-google-id')
     if request.method == "GET":
         return json_util.dumps(get_update_user_channels(googleID, updateSchedule="daily"))
 
@@ -196,20 +195,18 @@ def return_daily_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        # print("VINFO:", channels_to_move)
-        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
 
 
-@application.route("/api/channels/weekly/<googleID>", methods=['GET', 'PUT'])
-def return_weekly_schedule_channels(googleID):
+@application.route("/channels/weekly", methods=['GET', 'PUT'])
+def return_weekly_schedule_channels():
     """
     Finds the information for all of the channels that the user has specified as updateWeekly
-    :param googleID: User ID used to store and retrieve information
     :return: JSON of full information for updateWeekly channels, descending order by channel name
     """
+    googleID = request.headers.get('x-google-id')
     if request.method == "GET":
         return json_util.dumps(get_update_user_channels(googleID, updateSchedule="weekly"))
 
@@ -217,20 +214,18 @@ def return_weekly_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        # print("VINFO:", channels_to_move)
-        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
 
 
-@application.route("/api/channels/monthly/<googleID>", methods=['GET', 'PUT'])
-def return_monthly_schedule_channels(googleID):
+@application.route("/channels/monthly", methods=['GET', 'PUT'])
+def return_monthly_schedule_channels():
     """
     Finds the information for all of the channels that the user has specified as updateMonthly
-    :param googleID: User ID used to store and retrieve information
     :return: JSON of full information for updateMonthly channels, descending order by channel name
     """
+    googleID = request.headers.get('x-google-id')
     if request.method == "GET":
         return json_util.dumps(get_update_user_channels(googleID, updateSchedule="monthly"))
 
@@ -238,20 +233,18 @@ def return_monthly_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        # print("VINFO:", channels_to_move)
-        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
 
 
-@application.route("/api/channels/unassigned/<googleID>", methods=['GET', 'PUT'])
-def return_unassigned_schedule_channels(googleID):
+@application.route("/channels/unassigned", methods=['GET', 'PUT'])
+def return_unassigned_schedule_channels():
     """
     Finds the information for all the channels that the user has not specified
-    :param googleID: User ID used to store and retrieve information
     :return: JSON of full information for unassigned channels, descending order by channel name
     """
+    googleID = request.headers.get('x-google-id')
     if request.method == "GET":
         unassigned_channels = get_update_user_channels(googleID, updateSchedule="unassigned")
         return json_util.dumps(unassigned_channels)
@@ -264,21 +257,16 @@ def return_unassigned_schedule_channels(googleID):
         request_data = json.loads(request.data)
         channels_to_move = request_data["data"]
         move_location = request_data["location"]
-        # print("VINFO:", channels_to_move)
-        # print("LOC:", move_location)
         set_update_schedule_channel(googleID, channels_to_move, move_location)
 
         return jsonify({"data": channels_to_move, "loc": move_location})
 
 
-@application.route("/api/videos/favorites/<googleID>", methods=['GET', 'PUT', 'DELETE'])
-def manage_favorite_videos(googleID):
-    # response = jsonify(json_util.dumps(get_all_videos(googleID)))
-    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
-    # return response
+@application.route("/videos/favorites", methods=['GET', 'PUT', 'DELETE'])
+def manage_favorite_videos():
+    googleID = request.headers.get('x-google-id')
     if request.method == 'GET':
-        favorites = json_util.dumps(get_favorite_videos(googleID))
-        return jsonify({'data': favorites})
+        return json_util.dumps({'data': get_favorite_videos(googleID)})
 
     elif request.method == 'PUT':
         videoInfo_to_favorite = json.loads(request.data)["data"]
@@ -292,14 +280,11 @@ def manage_favorite_videos(googleID):
         return jsonify({'data': action})
 
 
-@application.route("/api/videos/watchlater/<googleID>", methods=['GET', 'PUT', 'DELETE'])
-def manage_watchlater_videos(googleID):
-    # response = jsonify(json_util.dumps(get_all_videos(googleID)))
-    # response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
-    # return response
+@application.route("/videos/watchlater", methods=['GET', 'PUT', 'DELETE'])
+def manage_watchlater_videos():
+    googleID = request.headers.get('x-google-id')
     if request.method == 'GET':
-        favorites = json_util.dumps(get_watchlater_videos(googleID))
-        return jsonify({'data': favorites})
+        return json_util.dumps({'data': get_watchlater_videos(googleID)})
 
     elif request.method == 'PUT':
         videoInfo_to_favorite = json.loads(request.data)["data"]
@@ -312,66 +297,57 @@ def manage_watchlater_videos(googleID):
         action = remove_watchlater_video(googleID, videoInfo_to_favorite)
         return jsonify({'data': action})
 
-@application.route("/api/channels/tags/<googleID>", methods=['GET', 'PUT', 'DELETE'])
-def manage_tag_names(googleID):
+@application.route("/channels/tags", methods=['GET', 'PUT', 'DELETE'])
+def manage_tag_names():
+    googleID = request.headers.get('x-google-id')
     if request.method == 'GET':
-        tags = json_util.dumps(get_all_tag_names(googleID))
-        return jsonify({'data': tags})
+        return jsonify(get_all_tag_names(googleID))
 
     elif request.method == 'PUT':
-        # print("RAW PUT TAG:", json.loads(request.data)["data"])
         new_tag = json.loads(request.data)["data"]["db_text"]
         added_tag = add_tag_name(googleID, new_tag)
-        # print(f"Adding the tag {added_tag} with default color gray")
         add_color_of_tag(googleID, added_tag, tag_color="gray")
-        added_tag = json_util.dumps(added_tag)
         return jsonify({"data": added_tag})
 
     elif request.method == 'DELETE':
-        # print("RAW DELETE DATA:", json.loads(request.data)["data"]["tagName"])
         delete_tag = json.loads(request.data)["data"]["tagName"]
-        removed_tag = json_util.dumps(remove_tag_name(googleID, delete_tag))
-        # print("Delete DTA RETURN:", removed_tag, "of type", type(removed_tag))
+        removed_tag = remove_tag_name(googleID, delete_tag)
         return jsonify({"data": removed_tag})
 
 
-@application.route("/api/channels/colorsOfTag/<googleID>/<tagName>", methods=['GET', 'PUT'])
-def manage_tag_colors(googleID, tagName):
+@application.route("/channels/colorsOfTag/<tagName>", methods=['GET', 'PUT'])
+def manage_tag_colors(tagName):
+    googleID = request.headers.get('x-google-id')
     if request.method == "GET":
-        tag_color = json_util.dumps(get_color_of_tag(googleID, tagName))
-        # print(f"Got the tag color of {tagName} as {tag_color}, which is type of {type(tag_color)}")
-        return jsonify({"data": tag_color})
+        return jsonify(get_color_of_tag(googleID, tagName))
 
     elif request.method == "PUT":
-        # Error - tagColor not there
-        # print(json.loads(request.data))
         new_color = json.loads(request.data)["data"]["tagColor"]
-        new_tag_color = json_util.dumps(change_color_of_tag(googleID, tagName, new_color))
-        # print(f"Changed the tag color of {tagName} to {new_tag_color}")
-        return jsonify({"data": new_tag_color})
+        new_tag_color = change_color_of_tag(googleID, tagName, new_color)
+        return jsonify(new_tag_color)
 
 
-@application.route("/api/channels/channelsOfTag/<googleID>/<tagName>", methods=['GET'])
-def return_channels_of_tag(googleID, tagName):
-    # filter_tag_name = json.loads(request.data)["data"]
+@application.route("/channels/channelsOfTag/<tagName>", methods=['GET'])
+def return_channels_of_tag(tagName):
+    googleID = request.headers.get('x-google-id')
     if tagName == "None":
-        return jsonify({"data": json_util.dumps(["None"])})
-    channel_names = json_util.dumps(get_channels_of_tag(googleID, tagName))
-    return jsonify({"data": channel_names})
+        return jsonify(["None"])
+    return jsonify(get_channels_of_tag(googleID, tagName))
 
 
-@application.route("/api/channels/channelWithTags/<googleID>/<channelName>", methods=['GET', 'PUT', 'DELETE'])
-def operate_on_tags_of_channel(googleID, channelName):
+@application.route("/channels/channelWithTags/<channelName>", methods=['GET', 'PUT', 'DELETE'])
+def operate_on_tags_of_channel(channelName):
+    googleID = request.headers.get('x-google-id')
     if request.method == 'GET':
         # Returns all the tags for a specific channel
-        tags_of_channel = json_util.dumps(get_tags_of_channel(googleID, channelName))
+        tags_of_channel = get_tags_of_channel(googleID, channelName)
         return jsonify({"data": tags_of_channel})
 
     elif request.method == 'PUT':
         # Adds the tag passed in as body to the channel
         tag_to_add = json.loads(request.data)["data"]["tagName"]
         added_tag_name, added_channel_name = add_tag_channel(googleID, channelName, tag_to_add)
-        return jsonify({"data": [added_tag_name, added_channel_name]})
+        return jsonify([added_tag_name, added_channel_name])
 
     elif request.method == 'DELETE':
         # Removes the tag passed in as body to the channel
@@ -380,44 +356,43 @@ def operate_on_tags_of_channel(googleID, channelName):
         return jsonify({"data": [removed_tag_name, removed_channel_name]})
 
 
-@application.route("/api/users/googleID", methods=['GET', 'PUT'])
+@application.route("/users", methods=['GET', 'PUT'])
 def manage_user_google_id():
     if request.method == "GET":
-        return get_all_user_google()
+        return jsonify(get_all_user_google())
 
     elif request.method == "PUT":
-        print("DTA:", json.loads(request.data))
         insert_id = json.loads(request.data)["data"]
         added_id = add_user_google(str(insert_id))
         return jsonify({"data": added_id})
 
 
-@application.route("/api/users/apiKey/<googleID>", methods=['GET', 'PUT'])
-def manage_user_api(googleID):
+@application.route("/users/apiKey", methods=['GET', 'PUT'])
+def manage_user_api():
+    googleID = request.headers.get('x-google-id')
     if request.method == 'GET':
-        return get_user_api(googleID)
+        return jsonify(get_user_api(googleID))
 
     elif request.method == "PUT":
-        print("DTA API:", json.loads(request.data))
         user_api_key = json.loads(request.data)["data"]
         added_id, added_api, newly_added = add_user_api(googleID, user_api_key)
         if newly_added and get_user_channel_id(googleID) != "None":
             complete_reload(googleID)
-        return added_api, added_api
+        return jsonify({"data": added_api})
 
 
-@application.route("/api/users/channelID/<googleID>", methods=['GET', 'PUT'])
-def manage_user_channel_id(googleID):
+@application.route("/users/channelID", methods=['GET', 'PUT'])
+def manage_user_channel_id():
+    googleID = request.headers.get('x-google-id')
     if request.method == 'GET':
-        return get_user_channel_id(googleID)
+        return jsonify(get_user_channel_id(googleID))
 
     elif request.method == "PUT":
-        print("DTA ChanID:", json.loads(request.data))
         user_channel_id = json.loads(request.data)["data"]
         added_id, added_channel_id, newly_added = add_user_channel_id(googleID, user_channel_id)
         if newly_added and get_user_api(googleID) != "None":
             complete_reload(googleID)
-        return added_id, added_channel_id
+        return jsonify({"data": added_channel_id})
 
 # ----------------- TESTING -----------------
 # some bits of text for the page.

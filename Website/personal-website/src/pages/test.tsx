@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import "../app/globals.css";
 
 import OrderByTime from "../components/UploadOrder";
 

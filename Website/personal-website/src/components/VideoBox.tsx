@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
 // import Image from 'next/image';
-import "../app/globals.css";
 
 import { Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'

@@ -1,8 +1,8 @@
 import { useRouter } from "next/router";
-import "../../app/globals.css";
+// import "../../app/globals.css";
 
 import { SetStateAction, useEffect, useRef, useState } from "react";
-import "video.js/dist/video-js.css";
+// import "video.js/dist/video-js.css";
 
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -94,26 +94,26 @@ export default function VideoScreen() {
   const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [webVidTitle, setWebVidTitle] = useState("Video");
+
+  const ytPlayerRef = useRef<any>(null);
+  const [duration, setDuration] = useState<number | null>(null);
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
+  const [videoDone, setVideoDone] = useState<boolean>(false);
+  
   var embedLink = "https://www.youtube.com/embed/";
   var videoId = router.query.videoId?.toString();
 
-  // var wd = 1230  // 480
-  // var wd = screen.availWidth * 0.98
-  // var ht = wd / 480 * 270  // 270
+  const RESIZE_MULTIPLIER = 0.94;
   const [dims, setDims] = useState<{ wd: number, ht: number }>({ wd: 0, ht: 0 });
   useEffect(() => {
     const updateDims = () => {
-      let multiplier = 0.84;
-      let ht = window.screen.availHeight * multiplier;
-      let wd = (ht / 9) * 16;
-      while (wd > window.screen.availWidth * 0.99) {
-        multiplier -= 0.01;
-        ht = window.screen.availHeight * multiplier;
-        wd = (ht / 9) * 16;
-      }
-      setDims({ wd: Math.floor(wd), ht: Math.floor(ht) });
+      setDims({
+        wd: Math.floor(window.innerWidth * RESIZE_MULTIPLIER),
+        ht: Math.floor(window.innerHeight * RESIZE_MULTIPLIER),
+      });
     };
     updateDims();
+    // Makes the dims responsive 
     window.addEventListener('resize', updateDims);
     return () => window.removeEventListener('resize', updateDims);
   }, []);
@@ -165,14 +165,6 @@ export default function VideoScreen() {
     }
   }, [currentUserGoogleId, videoId])
 
-  if (typeof videoId === "undefined") {
-    return (
-      <div>
-        <p>Is Not Working</p>
-      </div>
-    );
-  }
-
   const SelectPlayerOptionsBtns = () => {
     const handleClick = (buttonNumber: number) => {
       console.info(`You clicked index${buttonNumber}`);
@@ -190,37 +182,121 @@ export default function VideoScreen() {
               >
                 Youtube
               </CustomPlayerBtn>
-              <CustomPlayerBtn
+              {/* <CustomPlayerBtn
                 selected={selectedIndex === 2}
                 onClick={() => handleClick(2)}
               >
                 Custom
-              </CustomPlayerBtn>
+              </CustomPlayerBtn> */}
             </ButtonGroup>
           </ThemeProvider>
         </div>
       </main>
     );
   };
-  
+
+  useEffect(() => {
+    if (selectedIndex !== 1 || !videoId) return;
+
+    let cancelled = false;
+    let pollId: ReturnType<typeof setInterval> | null = null;
+
+    const createPlayer = () => {
+      if (cancelled) return;
+      if (ytPlayerRef.current) {
+        ytPlayerRef.current.destroy();
+        ytPlayerRef.current = null;
+      }
+      let done = false;
+      ytPlayerRef.current = new (window as any).YT.Player('player', {
+        height: dims.ht || 450,
+        width: dims.wd || 800,
+        videoId: videoId,
+        playerVars: {
+          playsinline: 1,
+        },
+        events: {
+          onReady: (event: any) => {
+            event.target.playVideo();
+            setDuration(event.target.getDuration());
+            pollId = setInterval(() => {
+              if (ytPlayerRef.current) {
+                setCurrentTime(ytPlayerRef.current.getCurrentTime());
+              }
+            }, 1000);
+          },
+          onStateChange: (event: any) => {
+            if (event.data == (window as any).YT.PlayerState.PLAYING && !done) {
+              done = true;
+            }
+            else if (event.data == (window as any).YT.PlayerState.ENDED) {
+              setVideoDone(true);
+            }
+          },
+        },
+      });
+    };
+
+    if ((window as any).YT && (window as any).YT.Player) {
+      createPlayer();
+    } else {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+      const previousCallback = (window as any).onYouTubeIframeAPIReady;
+      (window as any).onYouTubeIframeAPIReady = () => {
+        previousCallback?.();
+        createPlayer();
+      };
+    }
+
+    return () => {
+      cancelled = true;
+      if (pollId) clearInterval(pollId);
+      if (ytPlayerRef.current) {
+        ytPlayerRef.current.destroy();
+        ytPlayerRef.current = null;
+      }
+    };
+    // dims is deliberately excluded: resizing the window should resize the existing
+    // player rather than destroy/recreate it and restart playback.
+  }, [selectedIndex, videoId]);
+
+  useEffect(() => {
+    if (!dims.wd || !dims.ht) return;
+    ytPlayerRef.current?.setSize(dims.wd, dims.ht);
+  }, [dims.wd, dims.ht]);
+
+  if (typeof videoId === "undefined") {
+    return (
+      <div>
+        <p>Is Not Working</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
         <title>{webVidTitle}</title>
       </Head>
-      <div className="m-3">
+      {/* <div className="m-3">
         <SelectPlayerOptionsBtns />
-      </div>
+      </div> */}
       {selectedIndex == 1 ? (
         <div className="grid justify-center text-center mb-4">
-          <iframe
+          {/* <iframe
             width = {dims.wd || 800}
             height={dims.ht || 450}
             src={embedLink.concat(videoId)}
             title="YouTube video player"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             referrerPolicy="strict-origin-when-cross-origin"
-          ></iframe>
+          ></iframe> */}
+          <div id="player"></div>
+          <div className="mt-3">{videoDone ? "Video has Finished" : null} </div>
         </div>
       ) : (
         <div className="m-auto mt-20 w-8/12">

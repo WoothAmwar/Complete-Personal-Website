@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../app/globals.css";
-
+// 
 import { CookiesProvider, useCookies } from 'react-cookie'
 import Head from "next/head";
 export default function About() {
@@ -16,11 +15,13 @@ export default function About() {
           <div className="md:mx-32 mx-4">
             <div className="text-lg">
               <p>
-                Filter Subscriptions by Tags <br /> Updated Once a Day at 3:30 UTC
+                Filter Subscriptions by Tag
               </p>
+              <p>Updated Once a Day</p>
               <p>
-                Save YouTube videos with the Tracker <br /> Find Favorite Videos in your personal dashboard.
+                Save YouTube videos with the Tracker
               </p>
+              <p>Find Favorite Videos in your personal dashboard.</p>
             </div>
 
             <br />

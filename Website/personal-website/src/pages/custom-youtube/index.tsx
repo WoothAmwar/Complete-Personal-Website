@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactNode, memo, useCallback } from 'react';
 import Link from "next/link";
-import "../../app/globals.css"
+// import "../../app/globals.css"
 
 import OrderByChannel from "../../components/ChannelOrder";
 import OrderByTime from "../../components/UploadOrder";

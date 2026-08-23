@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from "next/link";
-import "../app/globals.css";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 import { guidGenerator, VideoBox } from "./VideoBox";
 import { useQuery } from "@tanstack/react-query";

@@ -144,10 +144,67 @@ function GoogleSignIn() {
     );
 }
 
+// Dev-only sign-in that skips the Google OAuth popup and the googleapis.com/oauth2 call, so the
+// app can be signed into fully offline. Gated behind NEXT_PUBLIC_USE_MOCK_AUTH; see .env.example.
+const DEV_USER: UserInfo = {
+    id: "dev-user-1",
+    email: "dev@example.com",
+    name: "Dev User",
+    picture: "https://picsum.photos/seed/dev-user/100",
+    verified: true,
+};
+
+function DevSignIn() {
+    const [, setCookie] = useCookies(["profile"]);
+    const userInfo = CurrentUserCookieInfo();
+    const [userProfile, setUserProfile] = useState<UserInfo | null>(userInfo);
+
+    const devSignIn = () => {
+        setCookie(
+            "profile",
+            [DEV_USER.id, DEV_USER.email, DEV_USER.name, DEV_USER.picture, DEV_USER.verified],
+            { path: "/", maxAge: 60 * 60 * 48 }
+        );
+        setUserProfile(DEV_USER);
+
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+            method: 'PUT',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: DEV_USER.id }),
+        }).catch(err => console.error("Error adding dev user id", err));
+    };
+
+    const logOut = () => {
+        setCookie("profile", null, { path: "/" });
+        setUserProfile(null);
+    };
+
+    return (
+        <div>
+            {userProfile ? (
+                <div className="grid grid-cols-3 place-content-end">
+                    <div className="justify-self-center col-span-1 place-content-center">
+                        <img src={userProfile.picture} alt="user image" width={40} height={40} />
+                    </div>
+                    <div className="col-span-2">
+                        <button onClick={logOut} className="w-full h-12 border-2 border-black rounded-full">
+                            Log out
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <button onClick={devSignIn} className="w-full h-12 border-2 border-black rounded-full">🧪 Dev Sign In</button>
+            )}
+        </div>
+    );
+}
+
 function LoginModalButton() {
     const [open, setOpen] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+    const useMockAuth = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === "1";
 
     return (
         <div>
@@ -167,7 +224,7 @@ function LoginModalButton() {
                         Log In
                     </Typography>
 
-                    <GoogleSignIn />
+                    {useMockAuth ? <DevSignIn /> : <GoogleSignIn />}
                 </Box>
             </Modal>
         </div>
@@ -201,8 +258,8 @@ export default function LoginButton() {
     return (
         <div>
             {signedIn ? (
-                <div>
-                    <NavigateLink id={1} text="Dashboard" link="/dashboard" />
+                <div className="border border-4 rounded-md p-2 ">
+                    <NavigateLink id={1} text="Go to Dashboard" link="/dashboard" />
                 </div>
             ) : (
                 <LoginModalButton />

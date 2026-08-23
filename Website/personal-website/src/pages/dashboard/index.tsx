@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
-import "../../app/globals.css";
 import { CookiesProvider, useCookies } from "react-cookie";
 import { googleLogout, useGoogleLogin } from "@react-oauth/google";
 import Image from 'next/image';
 import Head from "next/head";
 
-import Carousel from "react-multi-carousel";
-import "react-multi-carousel/lib/styles.css";
+// import Carousel from "react-multi-carousel";
+// import "react-multi-carousel/lib/styles.css";
 
 import Button from "@mui/material/Button";
 import TextField from '@mui/material/TextField';
@@ -61,40 +60,16 @@ function FavoriteVideosDisplay(props: { currentUserGoogleID: string }) {
         getVideoInfo();
     }, []);
 
-    if (videoInfo == null) {
+    if (videoInfo == null || videoInfo.length == 0) {
         return (
             <div>Loading...</div>
         )
     }
 
-    // return (
-    //     <Carousel
-    //         swipeable={true}
-    //         draggable={false}
-    //         showDots={true}
-    //         responsive={responsive}
-    //         ssr={true} // means to render carousel on server-side.
-    //         infinite={true}
-    //         autoPlay={false}
-    //         keyBoardControl={true}
-    //         customTransition="all .5"
-    //         transitionDuration={500}
-    //         containerClass="carousel-container"
-    //         removeArrowOnDeviceType={["mobile"]}
-    //         dotListClass="custom-dot-list-style"
-    //         itemClass="carousel-item-padding-40-px"
-    //     >
-    //         {videoInfo.map((element: any, index: number) => (
-    //             <div key={index} className="mb-10 mx-2">
-    //                 <VideoBox includeDate={false} fullVideoDetails={element} />
-    //             </div>
-    //         ))}
-    //     </Carousel>
-    // );
-
     return (
         <div className="flex overflow-x-scroll">
             <div className="flex flex-row">
+                {/* {videoInfo.length} */}
                 {videoInfo.map((element: any, index: number) => (
                     <div key={index} className="mx-2 flex-none w-96">
                         <VideoBox includeDate={false} fullVideoDetails={element} />
@@ -192,30 +167,36 @@ export default function Dashboard() {
                         <ProfilePicture imageLink={userProfile?.picture} imageSize={100} />
                     </div>
 
-                    <div className="text-lg font-semibold text-center">
-                        <div>
-                            Welcome, {userProfile?.name}
-                        </div>
-                        <div>
-                            {userProfile?.email}
-                        </div>
-                        <div className="my-2">
-                            <TextField InputProps={{
-                                style: { color: '#e7e5e4' }
-                            }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeApiText} color="primary" focused />
-                            <Button onClick={updateYoutubeAPi}>Update API Key</Button>
-                        </div>
-                        <div className="my-2">
-                            <TextField InputProps={{
-                                style: { color: '#e7e5e4' }
-                            }} size="small" id="outlined-basic" label="Channel ID" variant="outlined" value={newChannelIdText} onChange={handleChangeChannelIDText} color="primary" focused />
-                            <Button onClick={updateYoutubeChannelID}>Update YT ID</Button>
-                        </div>
+                    <div className="text-lg font-semibold">
+                        <div className="flex flex-col gap-3">
+                            <div className="text-center">
+                                Welcome, {userProfile?.name}
+                            </div>
+                            <div className="text-center">
+                                {userProfile?.email}
+                            </div>
+                        
+                            <div className="flex flex-col gap-4 stretch-0 px-4 justify-items-start">
+                                <div>
+                                    <TextField InputProps={{
+                                        style: { color: '#e7e5e4' }
+                                    }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeApiText} color="primary" focused />
+                                    <Button onClick={updateYoutubeAPi}>Update API Key</Button>
+                                </div>
+                                <div>
+                                    <TextField InputProps={{
+                                        style: { color: '#e7e5e4' }
+                                    }} size="small" id="outlined-basic" label="Channel ID" variant="outlined" value={newChannelIdText} onChange={handleChangeChannelIDText} color="primary" focused />
+                                    <Button onClick={updateYoutubeChannelID}>Update YT ID</Button>
+                                </div>
+                            </div> 
 
-                        <div>
-                            Do not Know what API Key or Channel ID Means? Check out the <span>
-                                <a key={9} href={"/about"} className="text-blue-400">About</a>
-                            </span> Page for more information!
+
+                            <div>
+                                Do not Know what API Key or Channel ID Means? Check out the <span>
+                                    <a key={9} href={"/about"} className="text-blue-400">About</a>
+                                </span> Page for more information!
+                            </div>
                         </div>
                     </div>
 
@@ -227,7 +208,7 @@ export default function Dashboard() {
                         </button>
                     </div>
                 </div>
-                <div className="col-span-4 pl-2">
+                <div className="lg:col-span-4 pl-2">
                     <div className="font-bold text-4xl mb-3">
                         Favorite Videos
                     </div>
