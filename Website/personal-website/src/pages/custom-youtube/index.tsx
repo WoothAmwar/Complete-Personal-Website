@@ -1,11 +1,9 @@
-'use client'
-
-import { useState, useEffect, ReactNode, memo, useCallback } from 'react';
+import { useState, useEffect, ReactNode, memo, useCallback, FormEventHandler } from 'react';
 import Link from "next/link";
-// import "../../app/globals.css"
 
 import OrderByChannel from "../../components/ChannelOrder";
 import OrderByTime from "../../components/UploadOrder";
+import VideoQueue from "../../components/VideoQueue";
 import {
   CurrentUserId
 } from "@/helperFunctions/cookieManagement";
@@ -112,21 +110,26 @@ function DropDown() {
   )
 }
 
-const UseTime = () => {
+const UseTime = (props: { responseVideoData: Array<any>, isLoadingVideos: boolean }) => {
   return (
     <div>
       <div className="grid xl: grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-8 font-mono">
-        <OrderByTime pageSize={12} />
+        <OrderByTime pageSize={12}
+          responseVideoData={props.responseVideoData} isLoading={props.isLoadingVideos} />
       </div>
     </div>
   );
 }
 
-function UseChannel(props: { showChannels: string[] }) {
+function UseChannel(props: { showChannels: string[], responseVideoData: Array<any>, isLoadingVideos: boolean }) {
   return (
     <div>
       <div className="grid grid-cols-1 font-mono">
-        <OrderByChannel channelsToInclude={props.showChannels} pageSize={5} />
+        <OrderByChannel
+          channelsToInclude={props.showChannels}
+          responseVideoData={props.responseVideoData}
+          isLoadingVideos={props.isLoadingVideos}
+          pageSize={5} />
       </div>
     </div>
   );
@@ -154,12 +157,13 @@ function QueryOrder() {
 
 }
 
+
 // Define the props interface for TagSelectionDropDown
 interface TagSelectionDropDownProps {
   onTagSelect: (tagName: string) => void;
 }
 
-const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function TagDropDown({onTagSelect}) {
+const TagSelectionDropDown: React.FC<TagSelectionDropDownProps> = memo(function TagDropDown({ onTagSelect }) {
   const currentUserGoogleId = CurrentUserId();
   const { data: totalTagOptions, isLoading, isError } = useQuery({
     queryKey: ['tags', currentUserGoogleId],
@@ -189,7 +193,7 @@ const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function T
       >
         <Menu.Items className="absolute right-0 z-10 mt-2 w-25 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div className="py-1">
-            {totalTagOptions.map((tagName:string, index:number) => (
+            {totalTagOptions.map((tagName: string, index: number) => (
               <Menu.Item key={index}>
                 {({ active }) => (
                   <button
@@ -224,13 +228,56 @@ const TagSelectionDropDown:React.FC<TagSelectionDropDownProps> = memo(function T
   )
 });
 
-// TODO: Create a function that accepts orderMethod and return the function depending on the value
-//   then use that insetad of the multiple if statements and return values
+const fetchVideos = async (currentUserGoogleId: string) => {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
+    method: "GET",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json",
+      "x-google-id": currentUserGoogleId,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return response.json();
+};
+
+const agentMessageAboutQueue = async (props: {currentuserGoogleID: string, userPrompt: string}) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue`, {
+        method: 'PUT',
+        mode: 'cors',
+        // credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-google-id': props.currentuserGoogleID
+        },
+        body: JSON.stringify({ data: props.userPrompt }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      return true;
+    } catch (err) {
+      console.error("Error sending message to agent", err);
+      return null;
+    }
+  }
+
+
 function HomePage() {
   const currentUserGoogleId = CurrentUserId();
 
   const [orderMethod, setOrderMethod] = useState("byChannel");
   const [selectedTag, setSelectedTag] = useState<string>("None");
+  const [agentPrompt, setAgentPrompt] = useState('');
+
+  const { data: responseVideoData, isLoading: isLoadingVideos } = useQuery({
+    queryKey: ['videos', currentUserGoogleId],
+    queryFn: () => fetchVideos(currentUserGoogleId.toString()),
+  });
 
   const { data: channelsFromFilter, isLoading, isError } = useQuery({
     queryKey: ['channels', currentUserGoogleId, selectedTag],
@@ -248,43 +295,50 @@ function HomePage() {
     setSelectedTag(tagName);
   };
 
-  if (orderMethod == "byChannel") {
-    return (
-      <main className="flex flex-col justify-items-center mx-5">
-        <div className="grid items-center font-mono">
-          <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
-            <div className="justify-self-start ml-5"><TagSelectionDropDown onTagSelect={handleTagSelect}/></div>
-            <p className="lg:col-start-2 lg:col-span-2 ">Tagged</p>
-            <div className="justify-self-end mr-5">{DropDown()}</div>
-          </h2>
-        </div>
-        {isLoading && <div>Loading channels...</div>}
-        {isError && <div>Error fetching channels</div>}
-        <UseChannel showChannels={channelsFromFilter || ["None"]} />
-      </main>
-    )
-  }
-  else if (orderMethod == "byTime") {
-    return (
-      <main className="flex flex-col justify-items-center mx-5">
-        <div className="grid items-center font-mono">
-          <h2 className="text-center font-semibold text-lg py-4 grid lg:grid-cols-4 md:grid-cols-2">
-            <p className="lg:col-start-2 lg:col-span-2 ">Latest</p>
-            <div className="justify-self-end mr-5">{DropDown()}</div>
-          </h2>
-        </div>
-        <UseTime />
-      </main>
-    )
-  }
+  
+
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+    console.log("Current textarea content:", agentPrompt);
+  };
+
   return (
-    <main className="flex flex-col items-center">
-      <div className="grid items-center font-mono">
-        <h2 className="text-center font-semibold text-lg py-4">
-          Video Default
+    <main className="flex flex-col justify-items-center mx-5">
+      <div className="grid grid-colsitems-center font-mono">
+        <h2 className="flex flex-row text-center font-semibold text-lg py-4">
+          {orderMethod == "byChannel" ? <div className="ml-5"><TagSelectionDropDown onTagSelect={handleTagSelect} /></div> : <></>}
+          {/* <p className="lg:col-start-2 lg:col-span-2 ">Tagged</p> */}
+          <div className="grow"></div>
+          <div className="justify-self-end mr-5">{DropDown()}</div>
         </h2>
+      {isLoading && <div>Loading channels...</div>}
+      {isError && <div>Error fetching channels</div>}
       </div>
-      {orderMethod}
+      <div className="flex gap-3">
+        <div className="min-h-0 scroll-smooth sticky top-0 h-screen overflow-y-auto">
+          {orderMethod == "byChannel"
+            ?
+            <UseChannel showChannels={channelsFromFilter || ["None"]} responseVideoData={responseVideoData} isLoadingVideos={isLoadingVideos} />
+            :
+            <UseTime responseVideoData={responseVideoData} isLoadingVideos={isLoadingVideos} />
+          }
+        </div>
+        <div className="static flex flex-col gap-2">
+          <VideoQueue fullVideoDetails={responseVideoData} isLoading={isLoadingVideos} />
+
+          <form onSubmit={handleSubmit} className="cursor-move m-2">
+            {/* <label htmlFor="message">Generate Video Queue</label> */}
+            <textarea
+            className="resize-y text-sm bg-slate-800 rounded-lg p-2"
+              id="message"
+              value={agentPrompt}
+              onChange={(e) => setAgentPrompt(e.target.value)}
+              placeholder="Ex: Add gaming videos about Minecraft to queue..."
+            />
+            <button type="submit" className="underline">Enter</button>
+          </form> 
+        </div>
+      </div>
     </main>
   )
 }

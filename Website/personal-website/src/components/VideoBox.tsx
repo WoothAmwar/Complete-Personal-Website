@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import Link from "next/link";
 // import Image from 'next/image';
 
@@ -323,24 +323,32 @@ function VideoActionItems({ videoID, fullVideoDetails }: { videoID: string, full
     )
 }
 
-export function VideoBox(props: { includeDate: boolean, fullVideoDetails: any }) {
+export function VideoBox(props: { includeDate: boolean, fullVideoDetails: any, width?: number, height?: number, includeInfo?: boolean}) {
     const embedLink = "/custom-youtube/";
     const videoId: string = props.fullVideoDetails["videoId"];
     const thumb: string = props.fullVideoDetails["videoThumbnail"];
     const title: string = props.fullVideoDetails["videoTitle"];
+
+    const cardStyle: CSSProperties | undefined =
+        props.width !== undefined ? { width: props.width } : undefined;
+    const thumbClassName = props.height !== undefined
+        ? "relative mb-1 rounded-xl overflow-hidden"
+        : "relative mb-1 rounded-xl overflow-hidden aspect-video";
+    // const thumbStyle: CSSProperties | undefined =
+    //     props.height !== undefined ? { height: props.height } : undefined;
+
     return (
-        <div className="rounded-xl mb-2">
+        <div className="rounded-xl mb-2" style={cardStyle}>
             <Link href={embedLink.concat(videoId)}>
-                <div className="relative mb-1 rounded-xl overflow-hidden aspect-video">
-                    {/* <Image */}
+                <div className={thumbClassName}>
                     <img
                         src={thumb}
                         alt="Thumbnail"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                     />
                 </div>
             </Link>
+            {props.includeInfo==undefined || props.includeInfo==true ? 
             <div className="grid grid-flow-col grid-cols-5 row-span-1">
                 <div className="mr-5 col-span-4">
                     <Link href={embedLink.concat(videoId)}>
@@ -354,6 +362,9 @@ export function VideoBox(props: { includeDate: boolean, fullVideoDetails: any })
                     <VideoActionItems videoID={videoId} fullVideoDetails={props.fullVideoDetails} />
                 </div>
             </div>
+            : 
+            <></>
+            }
         </div>
     );
 }

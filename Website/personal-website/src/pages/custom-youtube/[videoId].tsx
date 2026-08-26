@@ -1,5 +1,4 @@
 import { useRouter } from "next/router";
-// import "../../app/globals.css";
 
 import { SetStateAction, useEffect, useRef, useState } from "react";
 // import "video.js/dist/video-js.css";
@@ -103,7 +102,7 @@ export default function VideoScreen() {
   var embedLink = "https://www.youtube.com/embed/";
   var videoId = router.query.videoId?.toString();
 
-  const RESIZE_MULTIPLIER = 0.94;
+  const RESIZE_MULTIPLIER = 0.96;
   const [dims, setDims] = useState<{ wd: number, ht: number }>({ wd: 0, ht: 0 });
   useEffect(() => {
     const updateDims = () => {
@@ -285,16 +284,9 @@ export default function VideoScreen() {
       {/* <div className="m-3">
         <SelectPlayerOptionsBtns />
       </div> */}
+      <div className="bg-black">
       {selectedIndex == 1 ? (
         <div className="grid justify-center text-center mb-4">
-          {/* <iframe
-            width = {dims.wd || 800}
-            height={dims.ht || 450}
-            src={embedLink.concat(videoId)}
-            title="YouTube video player"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-            referrerPolicy="strict-origin-when-cross-origin"
-          ></iframe> */}
           <div id="player"></div>
           <div className="mt-3">{videoDone ? "Video has Finished" : null} </div>
         </div>
@@ -303,6 +295,7 @@ export default function VideoScreen() {
           <YT_Video embedID={videoId} />
         </div>
       )}
+      </div>
     </>
 
     // <div className="m-auto mt-20 w-8/12">

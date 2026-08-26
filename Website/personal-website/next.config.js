@@ -11,6 +11,8 @@ const nextConfig = {
       'ytimg.com',
       'img.youtube.com',
       'lh3.googleusercontent.com',
+      'yt3.googleusercontent.com',
+      '*.googleusercontent.com'
     ],
   },
 };

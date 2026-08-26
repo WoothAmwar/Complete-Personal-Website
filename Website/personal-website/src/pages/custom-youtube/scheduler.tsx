@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import Link from "next/link";
-import "../../app/globals.css";
 // import Image from 'next/image';
 import Head from "next/head";
 
@@ -147,7 +146,7 @@ export default function Scheduler() {
                 }
         
                 const data = await response.json();
-                console.log("DTA", data);
+                // console.log("DTA", data);
                 return data;
                 
             } catch (err) {
@@ -188,7 +187,7 @@ export default function Scheduler() {
                     {(selectedIndex == -1) ? (
                         <div className="border-2 border-blue-500 p-3">Select an Option</div>
                     ) : (
-                        <Button onClick={handleClick}>{scheduleBtnOptions[selectedIndex]}</Button>
+                        <Button onClick={handleClick}>Click Here to "{scheduleBtnOptions[selectedIndex]}"</Button>
                     )}
                     <Button
                         size="small"
@@ -328,44 +327,46 @@ export default function Scheduler() {
                     </ButtonGroup>
                 </ThemeProvider>
             </div>
-
-            <div className="grid sm: place-content-center lg:grid-cols-2 lg:justify-items-center border-4 border-stone-200 rounded-lg p-4 mx-5 my-4">
-                <ThemeProvider theme={selectBtnTheme}>
-                    <FormGroup>
-                        {items[selectedButton - 1].slice(0, Math.floor(items[selectedButton - 1].length / numSelectorCols)).map((element: any, index: number) => (
-                            <div key={index + selectedButton * 100} className="w-full my-2">
-                                <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
-                                    label={
-                                        <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
-                                            {/* <Image */}
-                                            <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
-                                            <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
-                                                {element["channelNames"]}
+            {items[selectedButton - 1].length > 0 ? 
+                <div className="grid sm: place-content-center lg:grid-cols-2 lg:justify-items-center border-4 border-stone-200 rounded-lg p-4 mx-5 my-4">
+                    <ThemeProvider theme={selectBtnTheme}>
+                        <FormGroup>
+                            {items[selectedButton - 1].slice(0, Math.floor(items[selectedButton - 1].length / numSelectorCols)).map((element: any, index: number) => (
+                                <div key={index + selectedButton * 100} className="w-full my-2">
+                                    <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
+                                        label={
+                                            <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
+                                                {/* <Image */}
+                                                <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
+                                                <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
+                                                    {element["channelNames"]}
+                                                </div>
                                             </div>
-                                        </div>
-                                    } />
-                            </div>
-                        ))}
-                    </FormGroup>
+                                        } />
+                                </div>
+                            ))}
+                        </FormGroup>
 
-                    <FormGroup>
-                        {items[selectedButton - 1].slice(Math.floor(items[selectedButton - 1].length / numSelectorCols)).map((element: any, index: number) => (
-                            <div key={index + selectedButton * 100} className="w-full my-2">
-                                <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
-                                    label={
-                                        <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
-                                            {/* <Image */}
-                                            <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
-                                            <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
-                                                {element["channelNames"]}
+                        <FormGroup>
+                            {items[selectedButton - 1].slice(Math.floor(items[selectedButton - 1].length / numSelectorCols)).map((element: any, index: number) => (
+                                <div key={index + selectedButton * 100} className="w-full my-2">
+                                    <FormControlLabel control={<Checkbox sx={{ color: "whitesmoke" }} onChange={() => { selectingChannel(element["channelNames"]) }} />}
+                                        label={
+                                            <div className="grid grid-rows-1 grid-flow-col w-full gap-x-2">
+                                                {/* <Image */}
+                                                <img src={element["channelImages"]} alt="Channel Image" width={wd / 2} height={ht / 2} />
+                                                <div className="font-['Helvetica'] text-xl font-semibold place-content-center">
+                                                    {element["channelNames"]}
+                                                </div>
                                             </div>
-                                        </div>
-                                    } />
-                            </div>
-                        ))}
-                    </FormGroup>
-                </ThemeProvider>
-            </div>
+                                        } />
+                                </div>
+                            ))}
+                        </FormGroup>
+                    </ThemeProvider>
+                </div>
+            : 
+                <div className="pt-3 flex justify-center items-center text-4xl font-semibold">No Channels in this Section</div>}
             <div className="grid justify-items-center mx-5 my-4">
                 {/* {selectedChannels.length > 0} */}
                 <SubmitSplitButton schedulePageIndex={selectedButton - 1} selectedChannels={selectedChannels} />

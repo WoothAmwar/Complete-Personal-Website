@@ -1,9 +1,9 @@
 import datetime
 import json
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
+from pymongo.mongo_client import MongoClient # type: ignore
+from pymongo.server_api import ServerApi # type: ignore
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 
 from random import randint
 
@@ -52,6 +52,17 @@ def clear_channels_database():
         return
     deleteAll = yt_channel_collection.delete_many({})
     print(deleteAll)
+
+def clear_tracker_database(googleID):
+    doIt = input("Are you sure you want to clear the entire content of tracked and watchlater of youtube/users: Y or N: ")
+    if doIt.upper() != "Y":
+        print("Did nothing")
+        return
+    deleteAll = db_users[googleID].delete_many({"category": "trackedVideo"})
+    db_users[googleID].delete_many({"category":"watchLaterVideo"})
+    db_users[googleID].delete_many({"category": "favoriteVideo"})
+    
+    
 
 
 def videos_del_db(chId):
@@ -224,6 +235,10 @@ def get_all_videos(googleID):
         vidSeparateId.append(yt_videos_collection.find(filter={"channelId": channel_id}))
     return vidSeparateId
 
+def get_video_of_channel(channelID):
+    vidSeparateId = list(yt_videos_collection.find(filter={"channelId": channelID})) or []
+    return vidSeparateId
+
 
 def get_user_channels(googleID, includeUpdateSchedule=False, updateSchedule="daily"):
     # TODO - Make it so it does not return channels with "unassigned" update Schedule
@@ -292,6 +307,17 @@ def get_channel_of_video(videoID):
     channelID = yt_videos_collection.find_one(filter={"videoId": videoID})["channelId"]
     channelInfo = yt_channel_collection.find_one(filter={"channelId": channelID})
     return channelInfo
+
+
+def get_channel_by_name(channel_name):
+    """
+    Looks up a channel's full info (including channelId) by its channel name.
+    Bridges functions keyed by channel name (e.g. get_channels_of_tag) to functions
+    keyed by channelId (e.g. get_video_of_channel).
+    :param channel_name: Channel name to look up
+    :return: The channel doc, or None if no channel with that name exists
+    """
+    return yt_channel_collection.find_one(filter={"channelNames": channel_name})
 
 
 def set_update_schedule_channel(googleID, channelNames, finalUpdateTime):
@@ -371,9 +397,9 @@ def get_watchlater_videos(googleID):
     return output
 
 
-def check_video_in_watchlater(googleID, fullVideoDetails):
+def check_video_in_watchlater(googleID, fullVideoDetails=None, videoId=None):
     curr_user = db_users[googleID]
-    findGiven = curr_user.find_one(filter={"category": "watchLaterVideo", "videoId": fullVideoDetails["videoId"]})
+    findGiven = curr_user.find_one(filter={"category": "watchLaterVideo", "videoId": fullVideoDetails["videoId"] if fullVideoDetails!=None else videoId })
     if findGiven is None:
         return False
     return True
@@ -388,7 +414,7 @@ def add_watchlater_video(googleID, fullVideoDetails):
 
     add_tracked_video(googleID, fullVideoDetails["videoId"], fullVideoDetails["videoTitle"], default_thumbnail)
 
-    if check_video_in_watchlater(googleID, fullVideoDetails):
+    if check_video_in_watchlater(googleID, fullVideoDetails=fullVideoDetails):
         return "Already In"
 
     video_channel_info = get_channel_of_video(fullVideoDetails["videoId"])
@@ -405,7 +431,7 @@ def add_watchlater_video(googleID, fullVideoDetails):
 
 def remove_watchlater_video(googleID, fullVideoDetails):
     curr_user = db_users[googleID]
-    if not check_video_in_watchlater(googleID, fullVideoDetails):
+    if not check_video_in_watchlater(googleID, fullVideoDetails=fullVideoDetails):
         return "Data entry not in database, cannot be deleted"
 
     curr_user.delete_one(filter={"category": "watchLaterVideo", "videoId": fullVideoDetails["videoId"]})
@@ -571,7 +597,7 @@ def add_color_of_tag(googleID, tag_name, tag_color):
 def change_color_of_tag(googleID, tag_name, new_tag_color):
     curr_user = db_users[googleID]
     curr_user.update_one(filter={"category": "tagColor", "tagName": tag_name},
-                         update={"$set": {"tagColor": new_tag_color}})
+                         update={"$set": {"tagColor": new_tag_color}}, upsert=True)
     return new_tag_color
 
 
@@ -709,6 +735,13 @@ def remove_tracked_video(googleID, videoID):
         curr_user.delete_one(filter={"category": "trackedVideo", "videoID": videoID})
         return videoID
     return "None"
+
+def check_video_in_tracked(googleID, fullVideoDetails=None, videoId=None):
+    curr_user = db_users[googleID]
+    findGiven = curr_user.find_one(filter={"category": "trackedVideo", "videoID": fullVideoDetails["videoId"] if fullVideoDetails!=None else videoId })
+    if findGiven is None:
+        return False
+    return True
 
 
 # --------- TESTING FUNCTIONS BELOW

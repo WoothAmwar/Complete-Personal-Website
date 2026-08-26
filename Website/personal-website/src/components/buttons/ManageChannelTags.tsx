@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/app/globals.css";
 
 import { useState, useEffect, useRef, JSX, Fragment, memo, useMemo, useCallback } from "react";
 
@@ -105,8 +104,8 @@ function ChannelTagUI(tagNames: string[], updateVal: number, onButtonClick: () =
                 ${(uiSymbols[2] != " ") ? (getTailwindBgColor(uiBackgrounds[2], 400)) : (DEFAULT_BG)}`}>
                 {uiSymbols[2]}
             </div>
-            <div className="border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6">
-                <button onClick={onButtonClick} className="m-auto place-content-center text-slate-400 w-full h-full">
+            <div className={`border-2 border-gray-600 border-solid rounded-full place-self-center w-6 h-6 ${DEFAULT_BG}`}>
+                <button onClick={onButtonClick} className="flex items-center justify-center text-slate-400 w-full h-full">
                     :
                 </button>
             </div>

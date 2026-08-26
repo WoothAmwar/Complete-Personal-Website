@@ -1,5 +1,7 @@
 .vercel
 .env*.local
+.env*.example
+*.env
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
@@ -7,3 +9,4 @@
 !.elasticbeanstalk/*.global.yml
 
 server/aws-elastic-beanstalk-cli-setup
+*.cpython-314.pyc

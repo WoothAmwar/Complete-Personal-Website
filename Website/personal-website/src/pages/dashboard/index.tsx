@@ -60,9 +60,17 @@ function FavoriteVideosDisplay(props: { currentUserGoogleID: string }) {
         getVideoInfo();
     }, []);
 
-    if (videoInfo == null || videoInfo.length == 0) {
+    if (videoInfo == null) {
         return (
             <div>Loading...</div>
+        )
+    }
+
+    if (videoInfo.length === 0) {
+        return (
+            <div>
+                No Favorite Videos
+            </div>
         )
     }
 
@@ -177,17 +185,18 @@ export default function Dashboard() {
                             </div>
                         
                             <div className="flex flex-col gap-4 stretch-0 px-4 justify-items-start">
-                                <div>
+                                <div className="flex flex-col gap-2">
                                     <TextField InputProps={{
                                         style: { color: '#e7e5e4' }
                                     }} size="small" id="outlined-basic" label="API Key" variant="outlined" value={newApiText} onChange={handleChangeApiText} color="primary" focused />
-                                    <Button onClick={updateYoutubeAPi}>Update API Key</Button>
+                                    <Button onClick={updateYoutubeAPi} variant="outlined">Update API Key</Button>
                                 </div>
-                                <div>
+                                <hr className="border-slate-800 border" />
+                                <div className="flex flex-col gap-2">
                                     <TextField InputProps={{
                                         style: { color: '#e7e5e4' }
                                     }} size="small" id="outlined-basic" label="Channel ID" variant="outlined" value={newChannelIdText} onChange={handleChangeChannelIDText} color="primary" focused />
-                                    <Button onClick={updateYoutubeChannelID}>Update YT ID</Button>
+                                    <Button onClick={updateYoutubeChannelID} variant="outlined">Update YT ID</Button>
                                 </div>
                             </div> 
 
@@ -216,9 +225,9 @@ export default function Dashboard() {
                         <FavoriteVideosDisplay currentUserGoogleID={currentUserGoogleID} />
                     </div>
 
-                    <div className="w-48 h-12 border-2 border-slate-800 rounded-full text-center place-content-center">
+                    <div className="max-w-72 flex px-4 py-2 border-4 border-slate-800 rounded-full items-center justify-center bg-slate-900">
                         <Link key={1} href="/custom-youtube/scheduler">
-                            <p className="font-['Garamond'] font-bold text-lg">YT Scheduler</p>
+                            <div className="font-['Garamond'] font-bold text-lg">Update Scheduler</div>
                         </Link>
                     </div>
                 </div>

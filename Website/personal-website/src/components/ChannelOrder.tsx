@@ -6,20 +6,6 @@ import { guidGenerator, VideoBox } from "./VideoBox";
 import { ManageShowTag } from "./buttons/ManageChannelTags";
 import { useQuery } from "@tanstack/react-query";
 
-const fetchVideos = async (currentUserGoogleId: string) => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
-    method: "GET",
-    mode: "cors",
-    headers: {
-      "Content-Type": "application/json",
-      "x-google-id": currentUserGoogleId,
-    },
-  });
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
-  return response.json();
-};
 
 const fetchChannels = async (currentUserGoogleId: string) => {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels`, {
@@ -36,14 +22,12 @@ const fetchChannels = async (currentUserGoogleId: string) => {
   return response.json();
 };
 
-export default function OrderByChannel(props: { channelsToInclude: string[], pageSize?: number }) {
+export default function OrderByChannel(props: { 
+  channelsToInclude: string[], 
+  responseVideoData: Array<any>, isLoadingVideos: boolean, 
+  pageSize?: number }) {
   const currentUserGoogleId = CurrentUserId();
   const pageSize = props.pageSize ?? 5; // number of channels per load
-
-  const { data: responseVideoData, isLoading: isLoadingVideos } = useQuery({
-    queryKey: ['videos', currentUserGoogleId],
-    queryFn: () => fetchVideos(currentUserGoogleId.toString()),
-  });
 
   const { data: responseChannelData, isLoading: isLoadingChannels } = useQuery({
     queryKey: ['channels', currentUserGoogleId],
@@ -76,10 +60,10 @@ export default function OrderByChannel(props: { channelsToInclude: string[], pag
   }, [filteredChannelData.length, pageSize]);
 
   useEffect(() => {
-    if (responseVideoData) {
-      setFilteredVideoData(responseVideoData);
+    if (props.responseVideoData) {
+      setFilteredVideoData(props.responseVideoData);
     }
-  }, [responseVideoData]);
+  }, [props.responseVideoData]);
 
   useEffect(() => {
     if (responseChannelData) {
@@ -90,16 +74,16 @@ export default function OrderByChannel(props: { channelsToInclude: string[], pag
   useEffect(() => {
     if (props.channelsToInclude[0] === "None") {
       if (responseChannelData) setFilteredChannelData(responseChannelData);
-      if (responseVideoData) setFilteredVideoData(responseVideoData);
+      if (props.responseVideoData) setFilteredVideoData(props.responseVideoData);
     } else if (props.channelsToInclude.length > 0) {
       var tempFilteredVideoData: any[] = [];
       var tempFilteredChannelData: any[] = [];
 
-      if (responseVideoData && responseChannelData) {
-        for (let i = 0; i < responseVideoData.length; i++) {
+      if (props.responseVideoData && responseChannelData) {
+        for (let i = 0; i < props.responseVideoData.length; i++) {
           if (props.channelsToInclude.indexOf(responseChannelData[i]["channelNames"]) != -1) {
             tempFilteredChannelData.push(responseChannelData[i]);
-            tempFilteredVideoData.push(responseVideoData[i]);
+            tempFilteredVideoData.push(props.responseVideoData[i]);
           }
         }
       }
@@ -107,7 +91,7 @@ export default function OrderByChannel(props: { channelsToInclude: string[], pag
       setFilteredChannelData(tempFilteredChannelData);
       setFilteredVideoData(tempFilteredVideoData);
     }
-  }, [props.channelsToInclude, responseChannelData, responseVideoData]);
+  }, [props.channelsToInclude, responseChannelData, props.responseVideoData]);
 
   if (props.channelsToInclude.length === 0) {
     return (
@@ -117,18 +101,21 @@ export default function OrderByChannel(props: { channelsToInclude: string[], pag
     );
   }
 
-  if (isLoadingChannels || isLoadingVideos) {
+  if (isLoadingChannels || props.isLoadingVideos) {
     return ["Loading..."];
   }
 
-  if (!responseVideoData || !responseChannelData || filteredVideoData.length === 0 || filteredChannelData.length === 0) {
+  if (!props.responseVideoData || !responseChannelData || filteredVideoData.length === 0 || filteredChannelData.length === 0) {
     return ["No data available"];
   }
 
 
   let finalRow: JSX.Element[] = [];
-  for (let i = 0; i < visibleChannels; i++) {
+  console.log("V:", filteredChannelData);
+  for (let i = 0; i < filteredChannelData.length; i++) {
     let currRow = [];
+    console.log("T:", i);
+    console.log("TB:", filteredChannelData[i]);
     currRow.push(
       <div key={filteredChannelData[i]["channelNames"]} className="text-left flex">
         <ManageShowTag channelName={filteredChannelData[i]["channelNames"]} />

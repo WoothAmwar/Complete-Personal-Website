@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/app/globals.css";
 import NavigationBar from "@/components/NavigationBar";
 // import Image from 'next/image';
 

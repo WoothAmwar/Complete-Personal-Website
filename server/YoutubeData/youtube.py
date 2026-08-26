@@ -4,7 +4,7 @@ import os
 import datetime
 import json
 
-from googleapiclient.discovery import build  # referred to as google-api-python-client
+from googleapiclient.discovery import build  # referred to as google-api-python-client  # type: ignore
 # import pyautogui
 from time import sleep
 
@@ -517,7 +517,7 @@ def test():
 
 def main():
     googleID = ""
-    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)
+    totalVideoIdList, totalVideoTitleList, totalVideoThumbnailList, totalUploadDateList = complete_reload(googleID, doReturn=True)  # type: ignore
     pass
 
 if __name__ == "__main__":

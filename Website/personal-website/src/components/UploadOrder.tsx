@@ -33,26 +33,27 @@ const fetchVideos = async(currentUserGoogleId: string) => {
     return response.json();
 }
 
-export default function OrderByTime(props: { pageSize?: number }) {
+export default function OrderByTime(props: { pageSize?: number, 
+    responseVideoData: Array<any>, isLoading: boolean }) {
     const currentUserGoogleId = CurrentUserId();
     const pageSize = props.pageSize ?? 12;
 
-    const { data: responseVideoData, isLoading } = useQuery({
-        queryKey: ['videos', currentUserGoogleId],
-        queryFn: () => fetchVideos(currentUserGoogleId.toString()),
-    });
+    // const { data: responseVideoData, isLoading } = useQuery({
+    //     queryKey: ['videos', currentUserGoogleId],
+    //     queryFn: () => fetchVideos(currentUserGoogleId.toString()),
+    // });
 
     const sortedVideos = useMemo(() => {
-        if (!responseVideoData) return [] as any[];
+        if (!props.responseVideoData) return [] as any[];
         const flat: any[] = [];
-        for (let i = 0; i < responseVideoData.length; i++) {
-            for (let j = 0; j < responseVideoData[i].length; j++) {
-                flat.push(responseVideoData[i][j]);
+        for (let i = 0; i < props.responseVideoData.length; i++) {
+            for (let j = 0; j < props.responseVideoData[i].length; j++) {
+                flat.push(props.responseVideoData[i][j]);
             }
         }
         flat.sort((a, b) => new Date(b["uploadDate"]).getTime() - new Date(a["uploadDate"]).getTime());
         return flat;
-    }, [responseVideoData]);
+    }, [props.responseVideoData]);
 
     const [visibleCount, setVisibleCount] = useState(pageSize);
     useEffect(() => { setVisibleCount(pageSize); }, [pageSize, sortedVideos.length]);
@@ -71,7 +72,7 @@ export default function OrderByTime(props: { pageSize?: number }) {
         return () => observer.disconnect();
     }, [sortedVideos.length, pageSize]);
 
-    if (isLoading) return <div>Loading...</div>;
+    if (props.isLoading) return <div>Loading...</div>;
     if (!sortedVideos || sortedVideos.length === 0) return <div>No videos available</div>;
 
     const items = sortedVideos.slice(0, visibleCount).map((details: any) => (
