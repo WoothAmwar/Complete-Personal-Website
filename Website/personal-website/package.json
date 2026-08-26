@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "26.x"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -37,7 +37,7 @@
     "videojs-youtube": "^3.0.1"
   },
   "devDependencies": {
-    "@types/node": "^26",
+    "@types/node": "^24",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
