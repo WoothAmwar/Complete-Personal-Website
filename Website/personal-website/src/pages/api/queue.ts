@@ -47,7 +47,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.error("Error messaging agent", err);
             res.status(502).json({ message: 'Error messaging agent' });
         }
-    } else {
+    } 
+
+    else if (req.method == 'POST') {
+        const queue_key = `${googleId}_queue`;
+        const id_to_add = req.body.data;
+        const queue_list = await redis.rpush(queue_key, id_to_add);
+        res.status(200).json({ queue_list });
+    }
+
+    else if (req.method == 'DELETE') {
+        const queue_key = `${googleId}_queue`;
+        const id_to_remove = req.body.data;
+        const queue_list = await redis.lrem(queue_key, 1, id_to_remove);
+        res.status(200).json({ queue_list });
+    }
+
+    else {
         res.status(405).json({ message: 'Method not allowed' });
     }
 }

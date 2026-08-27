@@ -1,29 +1,33 @@
-// import Image from "next/image";
+import { UserIcon } from "@heroicons/react/20/solid";
 
 type ProfilePictureProps = {
-    imageLink: string | undefined,
-    imageSize: number;
+  imageLink: string | undefined;
+  imageSize: number;
 };
 
-export default function ProfilePicture({imageLink, imageSize}: ProfilePictureProps) {
-    if (imageLink === undefined) {
-        return (
-            <p>Image not Found</p>
-        )
-    }
+/** Falls back to a neutral placeholder rather than an error string. */
+export default function ProfilePicture({ imageLink, imageSize }: ProfilePictureProps) {
+  if (!imageLink) {
     return (
-        // <Image
-        <img
-          style={{
-            borderRadius: "50%",
-            borderColor: "azure",
-            borderWidth: "2px",
-            display: "block"
-          }}
-          src={imageLink}
-          alt="user2 image"
-          width={imageSize}
-          height={imageSize}
-        />
-    )
+      <span
+        className="flex shrink-0 items-center justify-center rounded-pill border border-line-subtle bg-inset text-ink-muted"
+        style={{ width: imageSize, height: imageSize }}
+        aria-hidden="true"
+      >
+        <UserIcon style={{ width: imageSize * 0.45, height: imageSize * 0.45 }} />
+      </span>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className="shrink-0 rounded-pill border border-line-subtle object-cover"
+      style={{ width: imageSize, height: imageSize }}
+      src={imageLink}
+      alt=""
+      width={imageSize}
+      height={imageSize}
+    />
+  );
 }

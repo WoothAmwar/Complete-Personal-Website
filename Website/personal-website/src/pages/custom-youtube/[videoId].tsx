@@ -1,248 +1,218 @@
-import { useRouter } from "next/router";
-
-import { SetStateAction, useEffect, useRef, useState } from "react";
-// import "video.js/dist/video-js.css";
-
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
-
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { styled } from "@mui/system";
-
-import { red } from "@mui/material/colors";
-
+import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  QueueListIcon,
+} from "@heroicons/react/20/solid";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
-import { channel } from "diagnostics_channel";
+import { useQueue } from "@/components/queue/QueueProvider";
+import { cx } from "@/components/ui/primitives";
 
-const initialOptions = {
-  controls: true,
-  fluid: true,
-  controlBar: {
-    volumePanel: {
-      inline: false,
-    },
-  },
-};
+/* ==========================================================================
+   Queue navigation
+   ========================================================================== */
 
-function YT_Video(props: { embedID: string }) {
-  const videoNode = useRef<HTMLVideoElement | null>(null);
-  const player = useRef<any>(null);
-  const initialized = useRef(false);
+/**
+ * Steps through the queue from wherever you are.
+ *
+ * If the video being watched is in the queue, the arrows are its neighbours.
+ * If it is not (a video opened from the tracker, say), forward starts the
+ * queue from the top and back is unavailable. Only the arrows live here: the
+ * queue itself is shown on the subscriptions page.
+ */
+function QueueNavigation({ videoId }: { videoId: string }) {
+  const queue = useQueue();
 
-  useEffect(() => {
-    let disposed = false;
-    (async () => {
-      if (!videoNode.current || initialized.current) return;
-      initialized.current = true; // prevent duplicate initialization
-      const videojs = (await import("video.js")).default;
-      // await import("videojs-youtube");
-      if (disposed) return;
-      player.current = videojs(videoNode.current, {
-        ...initialOptions,
-        sources: [
-          { type: "video/youtube", src: "https://www.youtube.com/watch?v=" + props.embedID },
-        ],
-      }).ready(function () {
-        // Player Ready
-      });
-    })();
-
-    return () => {
-      disposed = true;
-      if (player.current) {
-        player.current.dispose();
-      }
+  const { previousId, nextId, position } = useMemo(() => {
+    const index = queue.ids.indexOf(videoId);
+    if (index === -1) {
+      return {
+        previousId: null,
+        nextId: queue.ids[0] ?? null,
+        position: null as string | null,
+      };
+    }
+    return {
+      previousId: index > 0 ? queue.ids[index - 1] : null,
+      nextId: index < queue.ids.length - 1 ? queue.ids[index + 1] : null,
+      position: `${index + 1} of ${queue.ids.length}`,
     };
-  }, [props.embedID]);
+  }, [queue.ids, videoId]);
+
+  const buttonClass =
+    "inline-flex h-10 items-center gap-2 rounded-control border border-line bg-surface px-4 " +
+    "text-[13px] font-medium text-ink transition-colors duration-200 ease-pm " +
+    "hover:border-line-strong hover:bg-hovered active:translate-y-px";
+
+  const disabledClass =
+    "inline-flex h-10 cursor-not-allowed items-center gap-2 rounded-control border border-line-subtle " +
+    "bg-inset px-4 text-[13px] font-medium text-ink-muted";
 
   return (
-    <div>
-      <video ref={videoNode} className="video-js" />
-    </div>
+    <nav
+      aria-label="Queue navigation"
+      className="flex items-center justify-between gap-3"
+    >
+      {previousId ? (
+        <Link href={`/custom-youtube/${previousId}`} className={buttonClass}>
+          <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+          Previous
+        </Link>
+      ) : (
+        <span className={disabledClass} aria-disabled="true">
+          <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+          Previous
+        </span>
+      )}
+
+      <span className="flex items-center gap-2 text-[12px] text-ink-muted">
+        <QueueListIcon className="h-4 w-4" aria-hidden="true" />
+        {position ? (
+          <span className="font-mono">{position}</span>
+        ) : queue.ids.length > 0 ? (
+          <span>Not in the queue</span>
+        ) : (
+          <span>The queue is empty</span>
+        )}
+      </span>
+
+      {nextId ? (
+        <Link href={`/custom-youtube/${nextId}`} className={buttonClass}>
+          Next
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      ) : (
+        <span className={disabledClass} aria-disabled="true">
+          Next
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+        </span>
+      )}
+    </nav>
   );
 }
 
-const updateBtnTheme = createTheme({
-  palette: {
-    primary: {
-      main: red[500],
-    },
-    secondary: {
-      main: red[700],
-    },
-  },
-});
-
-const CustomPlayerBtn = styled(Button)((props: { selected: boolean }) => ({
-  backgroundColor: props.selected
-    ? updateBtnTheme.palette.secondary.main
-    : updateBtnTheme.palette.primary.main,
-  color: props.selected
-    ? updateBtnTheme.palette.secondary.contrastText
-    : updateBtnTheme.palette.primary.contrastText,
-  "&:hover": {
-    backgroundColor: props.selected
-      ? updateBtnTheme.palette.secondary.dark
-      : updateBtnTheme.palette.primary.dark,
-  },
-}));
+/* ==========================================================================
+   Player
+   ========================================================================== */
 
 export default function VideoScreen() {
   const router = useRouter();
-  const [selectedIndex, setSelectedIndex] = useState(1);
-  const [webVidTitle, setWebVidTitle] = useState("Video");
+  const videoId = router.query.videoId?.toString();
+  const currentUserGoogleId = CurrentUserId();
 
-  const ytPlayerRef = useRef<any>(null);
-  const [duration, setDuration] = useState<number | null>(null);
-  const [currentTime, setCurrentTime] = useState<number | null>(null);
-  const [videoDone, setVideoDone] = useState<boolean>(false);
-  
-  var embedLink = "https://www.youtube.com/embed/";
-  var videoId = router.query.videoId?.toString();
+  const [title, setTitle] = useState("Video");
+  const [finished, setFinished] = useState(false);
 
-  const RESIZE_MULTIPLIER = 0.96;
-  const [dims, setDims] = useState<{ wd: number, ht: number }>({ wd: 0, ht: 0 });
+  const playerRef = useRef<any>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stage, setStage] = useState({ width: 0, height: 0 });
+
+  // The player is sized from the stage element rather than the window, so the
+  // controls underneath always have room and never get pushed off screen.
   useEffect(() => {
-    const updateDims = () => {
-      setDims({
-        wd: Math.floor(window.innerWidth * RESIZE_MULTIPLIER),
-        ht: Math.floor(window.innerHeight * RESIZE_MULTIPLIER),
+    const node = stageRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      setStage({
+        width: Math.floor(entry.contentRect.width),
+        height: Math.floor(entry.contentRect.height),
       });
-    };
-    updateDims();
-    // Makes the dims responsive 
-    window.addEventListener('resize', updateDims);
-    return () => window.removeEventListener('resize', updateDims);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
 
-  const currentUserGoogleId = CurrentUserId();
+  // Title lookup, unchanged: subscriptions first, then the tracker.
   useEffect(() => {
-    var foundTitle = false;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
-        {
-            method: 'GET', 
-            // credentials: 'include',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleId.toString()
-              }
-        })
-      .then(response => response.json())
-      .then(data => {
-        data.forEach((channelinfo: any[]) => {
-          channelinfo.forEach(videoinfo => {
-            if (videoinfo.videoId == videoId) {
-              setWebVidTitle(videoinfo?.videoTitle);
-              foundTitle = true;
-            }
-          })
-        });
-      })
-    if (!foundTitle) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, 
-        {
-            method: 'GET', 
-            // credentials: 'include',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleId.toString()
-              }
-        })
-      .then(response => response.json())
-      .then(data => {
-        data.forEach((videoinfo: { videoID: string | undefined; videoTitle: SetStateAction<string>; }) => {
-          if (videoinfo?.videoID == videoId) {
-            setWebVidTitle(videoinfo?.videoTitle);
-            foundTitle = true;
-          }
-        });
-      })
-    }
-  }, [currentUserGoogleId, videoId])
+    if (!videoId || !currentUserGoogleId) return;
+    let cancelled = false;
 
-  const SelectPlayerOptionsBtns = () => {
-    const handleClick = (buttonNumber: number) => {
-      console.info(`You clicked index${buttonNumber}`);
-      setSelectedIndex(buttonNumber);
+    const headers = {
+      "Content-Type": "application/json",
+      "x-google-id": currentUserGoogleId.toString(),
     };
 
-    return (
-      <main>
-        <div className="grid justify-items-end mx-5 mt-4">
-          <ThemeProvider theme={updateBtnTheme}>
-            <ButtonGroup variant="contained" aria-label="Basic button group">
-              <CustomPlayerBtn
-                selected={selectedIndex === 1}
-                onClick={() => handleClick(1)}
-              >
-                Youtube
-              </CustomPlayerBtn>
-              {/* <CustomPlayerBtn
-                selected={selectedIndex === 2}
-                onClick={() => handleClick(2)}
-              >
-                Custom
-              </CustomPlayerBtn> */}
-            </ButtonGroup>
-          </ThemeProvider>
-        </div>
-      </main>
-    );
-  };
+    (async () => {
+      try {
+        const videos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
+          method: "GET",
+          mode: "cors",
+          headers,
+        }).then((response) => response.json());
 
+        for (const group of videos ?? []) {
+          for (const video of group ?? []) {
+            if (video?.videoId === videoId) {
+              if (!cancelled) setTitle(video.videoTitle);
+              return;
+            }
+          }
+        }
+
+        const tracked = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
+          method: "GET",
+          mode: "cors",
+          headers,
+        }).then((response) => response.json());
+
+        for (const video of tracked ?? []) {
+          if (video?.videoID === videoId) {
+            if (!cancelled) setTitle(video.videoTitle);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Could not look up the video title", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserGoogleId, videoId]);
+
+  // Build the YouTube player once per video.
   useEffect(() => {
-    if (selectedIndex !== 1 || !videoId) return;
+    if (!videoId) return;
+    setFinished(false);
 
     let cancelled = false;
-    let pollId: ReturnType<typeof setInterval> | null = null;
 
     const createPlayer = () => {
       if (cancelled) return;
-      if (ytPlayerRef.current) {
-        ytPlayerRef.current.destroy();
-        ytPlayerRef.current = null;
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
       }
-      let done = false;
-      ytPlayerRef.current = new (window as any).YT.Player('player', {
-        height: dims.ht || 450,
-        width: dims.wd || 800,
-        videoId: videoId,
-        playerVars: {
-          playsinline: 1,
-        },
+      playerRef.current = new (window as any).YT.Player("player", {
+        height: stage.height || 450,
+        width: stage.width || 800,
+        videoId,
+        playerVars: { playsinline: 1 },
         events: {
-          onReady: (event: any) => {
-            event.target.playVideo();
-            setDuration(event.target.getDuration());
-            pollId = setInterval(() => {
-              if (ytPlayerRef.current) {
-                setCurrentTime(ytPlayerRef.current.getCurrentTime());
-              }
-            }, 1000);
-          },
+          onReady: (event: any) => event.target.playVideo(),
           onStateChange: (event: any) => {
-            if (event.data == (window as any).YT.PlayerState.PLAYING && !done) {
-              done = true;
-            }
-            else if (event.data == (window as any).YT.PlayerState.ENDED) {
-              setVideoDone(true);
+            if (event.data === (window as any).YT.PlayerState.ENDED) {
+              setFinished(true);
             }
           },
         },
       });
     };
 
-    if ((window as any).YT && (window as any).YT.Player) {
+    if ((window as any).YT?.Player) {
       createPlayer();
     } else {
-      const tag = document.createElement('script');
+      const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      const firstScript = document.getElementsByTagName("script")[0];
+      firstScript.parentNode?.insertBefore(tag, firstScript);
 
       const previousCallback = (window as any).onYouTubeIframeAPIReady;
       (window as any).onYouTubeIframeAPIReady = () => {
@@ -253,25 +223,37 @@ export default function VideoScreen() {
 
     return () => {
       cancelled = true;
-      if (pollId) clearInterval(pollId);
-      if (ytPlayerRef.current) {
-        ytPlayerRef.current.destroy();
-        ytPlayerRef.current = null;
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
       }
     };
-    // dims is deliberately excluded: resizing the window should resize the existing
-    // player rather than destroy/recreate it and restart playback.
-  }, [selectedIndex, videoId]);
+    // Stage size is deliberately excluded: a resize should resize the existing
+    // player, not rebuild it and restart playback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoId]);
 
   useEffect(() => {
-    if (!dims.wd || !dims.ht) return;
-    ytPlayerRef.current?.setSize(dims.wd, dims.ht);
-  }, [dims.wd, dims.ht]);
+    if (!stage.width || !stage.height) return;
+    playerRef.current?.setSize(stage.width, stage.height);
+  }, [stage.width, stage.height]);
 
-  if (typeof videoId === "undefined") {
+  if (!videoId) {
     return (
-      <div>
-        <p>Is Not Working</p>
+      <div className="mx-auto max-w-content px-4 py-24 sm:px-6">
+        <h1 className="font-display text-2xl font-semibold text-ink">
+          No video selected
+        </h1>
+        <p className="mt-2 text-ink-muted">
+          Open a video from your subscriptions or your tracker.
+        </p>
+        <Link
+          href="/custom-youtube"
+          className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-hover"
+        >
+          <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+          Back to subscriptions
+        </Link>
       </div>
     );
   }
@@ -279,27 +261,44 @@ export default function VideoScreen() {
   return (
     <>
       <Head>
-        <title>{webVidTitle}</title>
+        <title>{title}</title>
       </Head>
-      {/* <div className="m-3">
-        <SelectPlayerOptionsBtns />
-      </div> */}
-      <div className="bg-black">
-      {selectedIndex == 1 ? (
-        <div className="grid justify-center text-center mb-4">
-          <div id="player"></div>
-          <div className="mt-3">{videoDone ? "Video has Finished" : null} </div>
+
+      <div className="mx-auto flex w-full max-w-content flex-col gap-5 px-4 py-6 sm:px-6">
+        {/* The stage caps its own height so the title and the queue arrows are
+            always on screen with the video, whatever the window shape. */}
+        <div
+          ref={stageRef}
+          className="mx-auto aspect-video w-full overflow-hidden rounded-surface bg-black"
+          style={{ maxWidth: "calc((100dvh - 15rem) * 16 / 9)" }}
+        >
+          <div id="player" />
         </div>
-      ) : (
-        <div className="m-auto mt-20 w-8/12">
-          <YT_Video embedID={videoId} />
+
+        {/* <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <span
+            className={cx(
+              "text-[12px] transition-opacity duration-300",
+              finished ? "text-ink-muted opacity-100" : "opacity-0"
+            )}
+            aria-live="polite"
+          >
+            {finished ? "Finished" : ""}
+          </span>
+        </div> */}
+
+        <div className="border-t border-line-subtle pt-4">
+          <QueueNavigation videoId={videoId} />
         </div>
-      )}
+
+        <Link
+          href="/custom-youtube"
+          className="inline-flex items-center gap-1.5 self-start text-[13px] font-medium text-ink-muted transition-colors hover:text-ink"
+        >
+          <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+          Back to subscriptions
+        </Link>
       </div>
     </>
-
-    // <div className="m-auto mt-20 w-8/12">
-    //     <YT_Video embedID={videoId} />
-    // </div>
   );
 }

@@ -1,201 +1,252 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from "react";
+import Head from "next/head";
 import Link from "next/link";
-// import Image from 'next/image';
-
-import Button from "@mui/material/Button";
-import TextField from '@mui/material/TextField';
+import { PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
-import Head from "next/head";
+import {
+  Button,
+  EmptyState,
+  INPUT_CLASS,
+  PageHeader,
+  Skeleton,
+  cx,
+} from "@/components/ui/primitives";
 
+interface TrackedVideoInfo {
+  id: string;
+  category: string;
+  videoID: string;
+  videoTitle: string;
+  videoThumbnail: string;
+}
+
+/** Pulls the id out of a normal watch URL. Returns "" when it is not one. */
 const extractedVideoId = (full_url: string): string => {
-  // https://www.youtube.com/watch?v=szgs2_VxUow
   const split_url = full_url.split("=");
   const default_yt_url = split_url.at(0);
   const video_id = split_url.at(1);
 
-  if (default_yt_url?.includes("https://www.youtube.com/watch?v") == false || video_id == undefined) {
-    return ""
+  if (default_yt_url?.includes("https://www.youtube.com/watch?v") === false || video_id === undefined) {
+    return "";
   }
-  return video_id
-}
+  return video_id;
+};
 
-interface TrackedVideoInfo {
-  id: string,
-  category: string,
-  videoID: string,
-  videoTitle: string,
-  videoThumbnail: string
+function TrackedCard({
+  video,
+  onRemove,
+}: {
+  video: TrackedVideoInfo;
+  onRemove: (videoID: string) => void;
+}) {
+  return (
+    <article className="group flex flex-col">
+      <Link
+        href={`/custom-youtube/${video.videoID}`}
+        className="relative block aspect-video overflow-hidden rounded-surface bg-inset"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={video.videoThumbnail}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-pm group-hover:scale-[1.03]"
+        />
+      </Link>
+
+      <div className="mt-2.5 flex flex-1 items-start gap-1">
+        <Link href={`/custom-youtube/${video.videoID}`} className="min-w-0 flex-1">
+          {/* Fixed to two lines so every card in the grid is the same height,
+              however long the title runs. */}
+          <h2 className="line-clamp-2 min-h-[2.6em] text-[14px] font-medium leading-[1.3] text-ink">
+            {video.videoTitle}
+          </h2>
+        </Link>
+        <button
+          onClick={() => onRemove(video.videoID)}
+          aria-label={`Remove ${video.videoTitle}`}
+          title="Remove from the tracker"
+          className={cx(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-ink-muted",
+            "opacity-0 transition-all duration-200 ease-pm focus-visible:opacity-100 group-hover:opacity-100",
+            "hover:bg-hovered hover:text-danger"
+          )}
+        >
+          <TrashIcon className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    </article>
+  );
 }
 
 export default function TrackerPage() {
-
-  // const [message, setMessage] = useState("Loading...");
-  const [newUrlText, setNewUrlText] = useState("");
-
   const currentUserGoogleID = CurrentUserId();
-  const [allVideoInfo, setAllVideoInfo] = useState<any[]>([]);
 
-  const [isLoading, setIsLoading] = useState<Boolean>(true);
-
-  const handleChangeUrlText = useCallback((event: any) => {
-    setNewUrlText(event.target.value);
-  }, []);
-
-  const addVideoByURL = async () => {
-    if (extractedVideoId(newUrlText) == "") {
-      console.log("Unable to, not valid URL");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${extractedVideoId(newUrlText)}`, {
-        method: 'PUT',
-        mode: 'cors',
-        // credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-google-id': currentUserGoogleID
-        },
-        body: JSON.stringify({ data: "Filler" }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (data != "None") {
-        setAllVideoInfo(prevVideoInfo => [...prevVideoInfo, data]);
-      }
-      setNewUrlText("");
-      return true;
-    } catch (err) {
-      console.error("Error adding tracked video", err);
-      return null;
-    }
-  }
-
+  const [videos, setVideos] = useState<TrackedVideoInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [url, setUrl] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const fetchVideoInfo = useCallback(async () => {
+    if (!currentUserGoogleID) return;
     try {
-      var full_video_info:TrackedVideoInfo[] = [];
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
-        method: 'GET',
-        mode: 'cors',
+        method: "GET",
+        mode: "cors",
         headers: {
-          'Content-Type': 'application/json',
-          'x-google-id': currentUserGoogleID
+          "Content-Type": "application/json",
+          "x-google-id": currentUserGoogleID,
         },
-        // credentials: 'include',
       });
       const data = await response.json();
-      if (data) {
-        // setAllVideoInfo(data);
-        for (var videoIdx in data) {
-          full_video_info.push(data[videoIdx]);
-        }
-      }
-      setAllVideoInfo(full_video_info);
-      setIsLoading(false);
+      setVideos(Array.isArray(data) ? data : Object.values(data ?? {}));
     } catch (error) {
-      console.error("Error fetching video info:", error);
+      console.error("Could not load the tracker", error);
+    } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentUserGoogleID]);
 
   useEffect(() => {
     fetchVideoInfo();
   }, [fetchVideoInfo]);
 
-  const SingleLink_YT = (props: { video_info: TrackedVideoInfo }) => {
-    const currentUserGoogleID = CurrentUserId();
-    
-    const removeTrackedVideo = async (videoID: string) => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoID}`, {
-          method: 'DELETE',
-          mode: 'cors',
-          // credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-google-id': currentUserGoogleID
-          },
-          body: JSON.stringify({ data: "Filler" }),
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        if (data == "None") {
-          console.log("Error: Has not been deleted");
-          return -1;
-        }
-        setAllVideoInfo(prevVideoInfo => prevVideoInfo.filter(video => video.videoID !== videoID));
-        setNewUrlText("");
-      } catch (err) {
-        console.error("Error removing tracked video", err);
-        return null;
-      }
+  const addVideoByURL = async () => {
+    const videoId = extractedVideoId(url.trim());
+    if (!videoId) {
+      setUrlError("That is not a YouTube watch URL. It should look like https://www.youtube.com/watch?v=...");
+      return;
     }
-  
-    return (
-      <div className="grid grid-cols-1 grid-rows-2 grid-flow-col">
-        <div>
-          <Link key={props.video_info.videoThumbnail} href={"/custom-youtube/".concat(props.video_info.videoID)}>
-            <div className="relative rounded-xl overflow-hidden aspect-video">
-              {/* <Image */}
-              <img src={props.video_info.videoThumbnail} alt="Video Thumbnail" className="object-cover" />
-            </div>
-          </Link>
-        </div>
-        <div className="mt-2 text-center">
-          <Link key={props.video_info.videoThumbnail} href={"/custom-youtube/".concat(props.video_info.videoID)}>
-            <div className="h-1/2 font-['Garamond'] lg:text-lg md:text-md text-sm text-blue-400 border-2 border-blue-400 rounded-lg p-2 pt-0 tracking-tighter line-clamp-4">
-              {props.video_info.videoTitle}
-            </div>
-          </Link>
-          <button onClick={() => removeTrackedVideo(props.video_info.videoID)} className="mt-1 font-['Garamond'] text-lg text-red-400 align-content-center border-2 border-red-400 rounded-lg w-full">
-            Remove
-          </button>
-        </div>
-      </div>
-    )
-  }
 
-  if (isLoading) {
-    return (
-      <div>
-        <h2 className="text-center font-semibold text-lg py-4">
-          Getting Youtube Tracker 1.0 Ready
-        </h2>
-      </div>
-    )
-  }
+    setAdding(true);
+    setUrlError(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoId}`, {
+        method: "PUT",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+          "x-google-id": currentUserGoogleID,
+        },
+        body: JSON.stringify({ data: "Filler" }),
+      });
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+      const data = await response.json();
+      if (data === "None") {
+        setUrlError("That video is already in your tracker.");
+        return;
+      }
+      setVideos((previous) => [...previous, data]);
+      setUrl("");
+    } catch (err) {
+      console.error("Could not track the video", err);
+      setUrlError("The video could not be added. Try again.");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const removeTrackedVideo = async (videoID: string) => {
+    const snapshot = videos;
+    setVideos((previous) => previous.filter((video) => video.videoID !== videoID));
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoID}`, {
+        method: "DELETE",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+          "x-google-id": currentUserGoogleID,
+        },
+        body: JSON.stringify({ data: "Filler" }),
+      });
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    } catch (err) {
+      console.error("Could not remove the tracked video", err);
+      setVideos(snapshot);
+    }
+  };
+
   return (
     <>
       <Head>
-          <title>Saved Videos</title>
+        <title>Tracker</title>
       </Head>
-      <main className="flex flex-col items-center">
-        <h2 className="text-center font-semibold text-lg py-4">
-          Watch Later Video List
-        </h2>
 
-        <div className="my-2 mx-4 grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-x-4">
-          {allVideoInfo.map((video_info, index) => (
-            <div key={index}>
-              <SingleLink_YT video_info={video_info} />
+      <PageHeader
+        title="Tracker"
+        description="Videos you saved by pasting a link. They stay here until you remove them, whatever happens to your subscriptions."
+      />
+
+      {/* The add form sits above the grid, because on an empty tracker it is
+          the only thing to do, and on a full one it is still the entry point. */}
+      <form
+        className="mb-8 max-w-xl"
+        onSubmit={(event) => {
+          event.preventDefault();
+          addVideoByURL();
+        }}
+      >
+        <label htmlFor="tracker-url" className="text-[13px] font-medium text-ink">
+          Add a video
+        </label>
+        <div className="mt-1.5 flex gap-2">
+          <input
+            id="tracker-url"
+            className={INPUT_CLASS}
+            value={url}
+            placeholder="https://www.youtube.com/watch?v=..."
+            onChange={(event) => {
+              setUrl(event.target.value);
+              setUrlError(null);
+            }}
+          />
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={adding || url.trim().length === 0}
+          >
+            <PlusIcon className="h-4 w-4" aria-hidden="true" />
+            {adding ? "Adding..." : "Add"}
+          </Button>
+        </div>
+        {urlError ? (
+          <p className="mt-1.5 text-[12px] text-danger">{urlError}</p>
+        ) : (
+          <p className="mt-1.5 text-[12px] text-ink-muted">
+            Paste the link straight from the address bar.
+          </p>
+        )}
+      </form>
+
+      {isLoading ? (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-x-5 lg:grid-cols-4 xl:grid-cols-5">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <div key={index} className="flex flex-col gap-2.5">
+              <Skeleton className="aspect-video w-full rounded-surface" />
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-2/3" />
             </div>
           ))}
         </div>
-        <div className="my-2 lg:w-1/4 md:w-1/2 w-5/6 grid grid-cols-3 grid-rows-1">
-          <TextField fullWidth InputProps={{
-            style: { color: '#e7e5e4' }
-          }} className="col-span-2" size="small" id="outlined-basic" label="Youtube Video URL" variant="outlined" value={newUrlText} onChange={handleChangeUrlText} color="primary" focused />
-          <Button onClick={addVideoByURL}>Add YT Video URL</Button>
+      ) : videos.length === 0 ? (
+        <EmptyState
+          title="Nothing tracked yet"
+          body="Paste a YouTube link above and it will be waiting here next time you open the page."
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:gap-x-5 lg:grid-cols-4 xl:grid-cols-5">
+          {videos.map((video) => (
+            <TrackedCard
+              key={video.videoID}
+              video={video}
+              onRemove={removeTrackedVideo}
+            />
+          ))}
         </div>
-
-      </main>
+      )}
     </>
   );
 }

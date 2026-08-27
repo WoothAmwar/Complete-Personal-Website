@@ -1,134 +1,111 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import Link from "next/link";
-import { CurrentUserId } from "@/helperFunctions/cookieManagement";
-import { guidGenerator, VideoBox } from "./VideoBox";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { VideoBox } from "./VideoBox";
+import { Button, EmptyState, Skeleton } from "@/components/ui/primitives";
 
 /**
- * Finds the number of milliseconds that passed from the video release date to present moment
- * @param time1 String - the Date, from the database, that the video was relased
- * @returns String - The number of milliseconds since the video was uploaded
+ * The feed, ordered by upload date across every channel.
+ *
+ * One flat grid, newest first, paged in as the reader nears the bottom. Cards
+ * are a fixed shape so rows stay level however long the titles run.
  */
-function time_difference(time1: string) {
-    var vidTime = new Date(Date.parse(time1));
-    return (Date.now() - vidTime.getTime());
-}
+export default function OrderByTime(props: {
+  pageSize?: number;
+  responseVideoData: Array<any>;
+  isLoading: boolean;
+}) {
+  const pageSize = props.pageSize ?? 16;
 
-const fetchVideos = async(currentUserGoogleId: string) => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, 
-        {
-            method: 'GET', 
-            // credentials: 'include',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleId.toString()
-            }
-        }
-    );
-    if (!response.ok) {
-        throw new Error("Network response was not ok for fetch videos in UploadOrder");
+  const sortedVideos = useMemo(() => {
+    if (!props.responseVideoData) return [] as any[];
+    const flat: any[] = [];
+    for (const group of props.responseVideoData) {
+      if (Array.isArray(group)) flat.push(...group);
     }
-    return response.json();
-}
+    flat.sort(
+      (a, b) => new Date(b["uploadDate"]).getTime() - new Date(a["uploadDate"]).getTime()
+    );
+    return flat;
+  }, [props.responseVideoData]);
 
-export default function OrderByTime(props: { pageSize?: number, 
-    responseVideoData: Array<any>, isLoading: boolean }) {
-    const currentUserGoogleId = CurrentUserId();
-    const pageSize = props.pageSize ?? 12;
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [pageSize, sortedVideos.length]);
 
-    // const { data: responseVideoData, isLoading } = useQuery({
-    //     queryKey: ['videos', currentUserGoogleId],
-    //     queryFn: () => fetchVideos(currentUserGoogleId.toString()),
-    // });
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
 
-    const sortedVideos = useMemo(() => {
-        if (!props.responseVideoData) return [] as any[];
-        const flat: any[] = [];
-        for (let i = 0; i < props.responseVideoData.length; i++) {
-            for (let j = 0; j < props.responseVideoData[i].length; j++) {
-                flat.push(props.responseVideoData[i][j]);
-            }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + pageSize, sortedVideos.length));
         }
-        flat.sort((a, b) => new Date(b["uploadDate"]).getTime() - new Date(a["uploadDate"]).getTime());
-        return flat;
-    }, [props.responseVideoData]);
+      },
+      { rootMargin: "600px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [sortedVideos.length, pageSize]);
 
-    const [visibleCount, setVisibleCount] = useState(pageSize);
-    useEffect(() => { setVisibleCount(pageSize); }, [pageSize, sortedVideos.length]);
-
-    const sentinelRef = useRef<HTMLDivElement | null>(null);
-    useEffect(() => {
-        if (!sentinelRef.current) return;
-        if (typeof IntersectionObserver === 'undefined') return;
-        const observer = new IntersectionObserver((entries) => {
-            const [entry] = entries;
-            if (entry.isIntersecting) {
-                setVisibleCount((prev) => Math.min(prev + pageSize, sortedVideos.length));
-            }
-        }, { rootMargin: '400px' });
-        observer.observe(sentinelRef.current);
-        return () => observer.disconnect();
-    }, [sortedVideos.length, pageSize]);
-
-    if (props.isLoading) return <div>Loading...</div>;
-    if (!sortedVideos || sortedVideos.length === 0) return <div>No videos available</div>;
-
-    const items = sortedVideos.slice(0, visibleCount).map((details: any) => (
-        <VideoBox key={details["videoId"]} includeDate={true} fullVideoDetails={details} />
-    ));
-
-    const hasMore = visibleCount < sortedVideos.length;
-
+  if (props.isLoading) {
     return (
-        <>
-            {items}
-            {hasMore && (
-                <div className="my-6 flex justify-center">
-                    <button className="px-4 py-2 rounded-md bg-neutral-800" onClick={() => setVisibleCount(v => Math.min(v + pageSize, sortedVideos.length))}>Load more</button>
-                </div>
-            )}
-            {hasMore && <div ref={sentinelRef} className="h-1" />}
-        </>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-2 sm:gap-x-5 lg:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="flex flex-col gap-2.5">
+            <Skeleton className="aspect-video w-full rounded-surface" />
+            <Skeleton className="h-3.5 w-full" />
+            <Skeleton className="h-3.5 w-2/3" />
+          </div>
+        ))}
+      </div>
     );
-}
+  }
 
+  if (sortedVideos.length === 0) {
+    return (
+      <EmptyState
+        title="No videos yet"
+        body="Once your subscriptions are imported, every upload lands here newest first."
+      />
+    );
+  }
 
-/**
- * Comparison function, sort in descending order (newest on top/first)
- * @param v1 String - value from time_difference for video 1
- * @param v2 String - value from time_difference for video 2
- * @returns Integer to describe which of the two was larger
- */
-function compareVidDescending(v1: string, v2: string) {
-    var a = parseInt(v1);
-    var b = parseInt(v2);
+  const hasMore = visibleCount < sortedVideos.length;
 
-    if (a < b) {
-        return -1;
-    }
-    if (a > b) {
-        return 1;
-    }
-    return 0;
-}
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-2 sm:gap-x-5 lg:grid-cols-3 xl:grid-cols-4">
+        {sortedVideos.slice(0, visibleCount).map((details: any) => (
+          <VideoBox
+            key={details["videoId"]}
+            includeDate={true}
+            fullVideoDetails={details}
+          />
+        ))}
+      </div>
 
-/**
- * Comparison function, sort in ascending order (oldest on top/first)
- * @param v1 String - value from time_difference for video 1
- * @param v2 String - value from time_difference for video 2
- * @returns Integer to describe which of the two was larger
- */
-function compareVidAscending(v1: string, v2: string) {
-    var a = parseInt(v1);
-    var b = parseInt(v2);
-
-    if (a < b) {
-        return -1;
-    }
-    if (a > b) {
-        return 1;
-    }
-    return 0;
+      {hasMore ? (
+        <>
+          <div className="flex justify-center py-8">
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setVisibleCount((value) => Math.min(value + pageSize, sortedVideos.length))
+              }
+            >
+              Show more videos
+            </Button>
+          </div>
+          <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+        </>
+      ) : (
+        <p className="py-10 text-center text-[13px] text-ink-muted">
+          You have reached the oldest upload.
+        </p>
+      )}
+    </>
+  );
 }

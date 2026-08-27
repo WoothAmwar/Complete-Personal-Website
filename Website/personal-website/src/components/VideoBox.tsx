@@ -1,370 +1,353 @@
-import { useState, useEffect, type CSSProperties } from 'react';
+import { Fragment, useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
-// import Image from 'next/image';
-
-import { Fragment } from 'react'
-import { Menu, Transition } from '@headlessui/react'
-import { ChevronDownIcon } from '@heroicons/react/20/solid'
+import { Menu, Transition } from "@headlessui/react";
+import {
+  BookmarkIcon,
+  BookmarkSlashIcon,
+  EllipsisVerticalIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
+  StarIcon,
+} from "@heroicons/react/20/solid";
+import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { useQueue } from "@/components/queue/QueueProvider";
+import { cx } from "@/components/ui/primitives";
 
 export function guidGenerator() {
-    var S4 = function () {
-        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
-    };
-    return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+  const S4 = () => (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+  return `${S4()}${S4()}-${S4()}-${S4()}-${S4()}-${S4()}${S4()}${S4()}`;
 }
 
-function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(' ')
-}
+/* ==========================================================================
+   Favorites and watch later. Request shapes are unchanged.
+   ========================================================================== */
 
 export const getFavoriteVideos = async (currentUserGoogleID: string, getIdInfo: boolean) => {
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
-            method: 'GET',
-            mode: 'cors',
-            // credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleID.toString()
-            }
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "x-google-id": currentUserGoogleID.toString(),
+      },
+    });
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
-        const pure_data = await response.json();
-        const raw_data = pure_data["data"];
-        // console.log("RAW 1.2:", raw_data);
-        // var data = JSON.parse(raw_data["data"]);
-        // var data = raw_data;
-        if (!getIdInfo) {
-            return raw_data;
-        }
-        // console.log("RAW:", pure_data);
-        var data_ids: string[] = [];
-        for (var i = 0; i < raw_data.length; i++) {
-            data_ids.push(raw_data[i]["videoId"])
-        }
-        // console.log("RAW 1.3:", data_ids);
-        return data_ids;
-    } catch (err) {
-        console.error("Error getting favorites:",currentUserGoogleID, " | ", getIdInfo, " > ", err);
-        return null;
-    }
-}
-
-
-const addFavorite = async (currentUserGoogleID: string, fullVideoDetails: any) => {
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
-            method: 'PUT',
-            mode: 'cors',
-            // credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleID
-            },
-            body: JSON.stringify({ data: fullVideoDetails }),
-        });
-
-        // Check if response is ok (status in the range 200-299)
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("DTA", data);
-        return data;
-    } catch (err) {
-        console.error("Error adding favorite", err);
-        return null;
-    }
+    const raw_data = (await response.json())["data"];
+    if (!getIdInfo) return raw_data;
+    return raw_data.map((entry: any) => entry["videoId"]) as string[];
+  } catch (err) {
+    console.error("Could not read favorites", err);
+    return null;
+  }
 };
 
-const deleteFavorite = async (currentUserGoogleID: string, fullVideoDetails: any) => {
-    try {
-        console.log("FULL:", fullVideoDetails);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
-            method: 'DELETE',
-            mode: 'cors',
-            // credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleID
-            },
-            body: JSON.stringify({ data: fullVideoDetails }),
-        });
-
-        // Check if response is ok (status in the range 200-299)
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("DTA", data);
-        return data;
-    } catch (err) {
-        console.error("Error adding favorite", err);
-        return null;
-    }
+const writeFavorite = async (
+  method: "PUT" | "DELETE",
+  currentUserGoogleID: string,
+  fullVideoDetails: any
+) => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
+      method,
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "x-google-id": currentUserGoogleID,
+      },
+      body: JSON.stringify({ data: fullVideoDetails }),
+    });
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    return response.json();
+  } catch (err) {
+    console.error("Could not update favorites", err);
+    return null;
+  }
 };
-
 
 export const getWatchlaterVideos = async (currentUserGoogleID: string, getIdInfo: boolean) => {
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
-            method: 'GET',
-            mode: 'cors',
-            // credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleID.toString()
-            }
-        });
-        if (!response.ok) {
-            // console.log("ERR 2.1:");
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "x-google-id": currentUserGoogleID.toString(),
+      },
+    });
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
-        const pure_data = await response.json();
-        const raw_data = pure_data["data"];
-        // console.log("RAW 1.1:", raw_data);
-        // var data = JSON.parse(raw_data["data"]);
-        // var data = raw_data;
-
-        if (!getIdInfo) {
-            return raw_data;
-        }
-        var data_ids: string[] = [];
-        for (var i = 0; i < raw_data.length; i++) {
-            data_ids.push(raw_data[i]["videoId"])
-        }
-        // console.log("RAW 1.2:", data_ids)
-        return data_ids;
-    } catch (err) {
-        console.error("Error getting watch laters", err);
-        return null;
-    }
-}
-
-
-const addWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any) => {
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
-            method: 'PUT',
-            mode: 'cors',
-            // credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleID
-            },
-            body: JSON.stringify({ data: fullVideoDetails }),
-        });
-
-        // Check if response is ok (status in the range 200-299)
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("DTA", data);
-        return data;
-    } catch (err) {
-        console.error("Error adding watch later", err);
-        return null;
-    }
+    const raw_data = (await response.json())["data"];
+    if (!getIdInfo) return raw_data;
+    return raw_data.map((entry: any) => entry["videoId"]) as string[];
+  } catch (err) {
+    console.error("Could not read watch later", err);
+    return null;
+  }
 };
 
-const deleteWatchlater = async (currentUserGoogleID: string, fullVideoDetails: any) => {
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
-            method: 'DELETE',
-            mode: 'cors',
-            // credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': currentUserGoogleID
-            },
-            body: JSON.stringify({ data: fullVideoDetails }),
-        });
-
-        // Check if response is ok (status in the range 200-299)
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("DTA", data);
-        return data;
-    } catch (err) {
-        console.error("Error deleting watch later", err);
-        return null;
-    }
+const writeWatchlater = async (
+  method: "PUT" | "DELETE",
+  currentUserGoogleID: string,
+  fullVideoDetails: any
+) => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
+      method,
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "x-google-id": currentUserGoogleID,
+      },
+      body: JSON.stringify({ data: fullVideoDetails }),
+    });
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    return response.json();
+  } catch (err) {
+    console.error("Could not update watch later", err);
+    return null;
+  }
 };
 
-function VideoActionItems({ videoID, fullVideoDetails }: { videoID: string, fullVideoDetails: any }) {
-    const currentUserGoogleID = CurrentUserId();
-    const [favoriteVideos, setFavoriteVideos] = useState<string[] | null>();
-    const [favCounter, setFavCounter] = useState(0);
-    const [watchlaterVideos, setWatchlaterVideos] = useState<string[] | null>();
-    const [watchlaterCounter, setWatchlaterCounter] = useState(0);
+/* ==========================================================================
+   Overflow menu
+   ========================================================================== */
 
-    useEffect(() => {
-        const fetchFavoriteVideos = async () => {
-            try {
-                const receivedFavVideos = await getFavoriteVideos(currentUserGoogleID.toString(), true);
-                // console.log("Setting Fav");
-                setFavoriteVideos(receivedFavVideos);
-            } catch (error) {
-                console.error("Failed to fetch favorite videos", error);
-            }
-        };
-        const fetchWatchlaterVideos = async () => {
-            try {
-                const receivedWatchVideos = await getWatchlaterVideos(currentUserGoogleID.toString(), true);
-                // console.log("Setting Fav");
-                setWatchlaterVideos(receivedWatchVideos);
-            } catch (error) {
-                console.error("Failed to fetch watch later videos", error);
-            }
-        };
+const ITEM_CLASS =
+  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-ink transition-colors";
 
-        fetchFavoriteVideos();
-        fetchWatchlaterVideos();
-    }, [favCounter, watchlaterCounter, currentUserGoogleID]);
+function VideoActionItems({
+  videoID,
+  fullVideoDetails,
+}: {
+  videoID: string;
+  fullVideoDetails: any;
+}) {
+  const currentUserGoogleID = CurrentUserId();
+  const queue = useQueue();
 
-    const videoIsFavorite = (videoID: string) => {
-        var foundFav = false;
-        favoriteVideos?.forEach((element: string) => {
-            if (element === videoID) {
-                foundFav = true;
-            }
-        });
-        return foundFav;
-    }
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [watchlaterIds, setWatchlaterIds] = useState<string[]>([]);
+  const [revision, setRevision] = useState(0);
 
-    const videoIsWatchlater = (videoID: string) => {
-        var foundWatchlater = false;
-        watchlaterVideos?.forEach((element: string) => {
-            if (element === videoID) {
-                foundWatchlater = true;
-            }
-        });
-        return foundWatchlater;
-    }
+  useEffect(() => {
+    if (!currentUserGoogleID) return;
+    let cancelled = false;
 
-    return (
-        <Menu as="div" className="relative inline-block text-left">
-            <div>
-                <Menu.Button className="mx-2 inline-flex w-full justify-center rounded-full text-lg font-semibold text-gray-300 shadow-sm hover:bg-slate-900">
-                    <div className="options ml-1"></div>
-                </Menu.Button>
-            </div>
+    (async () => {
+      const [favorites, watchlater] = await Promise.all([
+        getFavoriteVideos(currentUserGoogleID.toString(), true),
+        getWatchlaterVideos(currentUserGoogleID.toString(), true),
+      ]);
+      if (cancelled) return;
+      setFavoriteIds(Array.isArray(favorites) ? favorites : []);
+      setWatchlaterIds(Array.isArray(watchlater) ? watchlater : []);
+    })();
 
-            <Transition
-                as={Fragment}
-                enter="transition ease-out duration-100"
-                enterFrom="transform opacity-0 scale-95"
-                enterTo="transform opacity-100 scale-100"
-                leave="transition ease-in duration-75"
-                leaveFrom="transform opacity-100 scale-100"
-                leaveTo="transform opacity-0 scale-95"
-            >
-                <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-slate-900 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="text-slate-100 text-center text-md">
-                        <Menu.Item>
-                            {({ active }) => (
-                                <div>
-                                    {videoIsFavorite(videoID) ? (
-                                        <button onClick={() => { deleteFavorite(currentUserGoogleID.toString(), fullVideoDetails); setFavCounter(favCounter + 1); }} className={classNames(
-                                            active ? 'bg-slate-700' : 'bg-slate-900',
-                                            'block px-4 py-1 w-full'
-                                        )}>
-                                            <p>&#x2605; Unfavorite</p>
-                                        </button>
-                                    ) : (
-                                        <button onClick={() => { addFavorite(currentUserGoogleID.toString(), fullVideoDetails); setFavCounter(favCounter + 1); }} className={classNames(
-                                            active ? 'bg-slate-700' : 'bg-slate-900',
-                                            'block px-4 py-1 w-full'
-                                        )}>
-                                            <p>&#x2606; Favorite</p>
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </Menu.Item>
-                        <Menu.Item>
-                            {({ active }) => (
-                                <div>
-                                    {videoIsWatchlater(videoID) ? (
-                                        <button onClick={() => { deleteWatchlater(currentUserGoogleID.toString(), fullVideoDetails); setWatchlaterCounter(watchlaterCounter + 1); }} className={classNames(
-                                            active ? 'bg-slate-700' : 'bg-slate-900',
-                                            'block px-4 py-1 w-full'
-                                        )}>
-                                            <p>&#x2605; Remove Watch Later</p>
-                                        </button>
-                                    ) : (
-                                        <button onClick={() => { addWatchlater(currentUserGoogleID.toString(), fullVideoDetails); setWatchlaterCounter(watchlaterCounter + 1); }} className={classNames(
-                                            active ? 'bg-slate-700' : 'bg-slate-900',
-                                            'block px-4 py-1 w-full'
-                                        )}>
-                                            <p>&#x2606; Add Watch Later</p>
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </Menu.Item>
-                    </div>
-                </Menu.Items>
-            </Transition>
-        </Menu>
-    )
+    return () => {
+      cancelled = true;
+    };
+  }, [revision, currentUserGoogleID]);
+
+  const isFavorite = favoriteIds.includes(videoID);
+  const isWatchlater = watchlaterIds.includes(videoID);
+  const isQueued = queue.has(videoID);
+  const queuePending = queue.pending.has(videoID);
+
+  return (
+    <Menu as="div" className="relative">
+      <Menu.Button
+        aria-label="Video actions"
+        className={cx(
+          "flex h-8 w-8 items-center justify-center rounded-control text-ink-muted",
+          "transition-colors duration-200 ease-pm hover:bg-hovered hover:text-ink"
+        )}
+      >
+        <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
+      </Menu.Button>
+
+      <Transition
+        as={Fragment}
+        enter="transition ease-out duration-150"
+        enterFrom="opacity-0 scale-95"
+        enterTo="opacity-100 scale-100"
+        leave="transition ease-in duration-100"
+        leaveFrom="opacity-100 scale-100"
+        leaveTo="opacity-0 scale-95"
+      >
+        <Menu.Items className="absolute right-0 z-30 mt-1.5 w-56 origin-top-right overflow-hidden rounded-surface border border-line-subtle bg-elevated py-1 shadow-lg focus:outline-none">
+          {/* Queue first: it is the action this page exists for. */}
+          <Menu.Item>
+            {({ active }) => (
+              <button
+                disabled={queuePending}
+                onClick={() => (isQueued ? queue.remove(videoID) : queue.add(videoID))}
+                className={cx(ITEM_CLASS, active && "bg-hovered", queuePending && "opacity-50")}
+              >
+                {isQueued ? (
+                  <MinusCircleIcon className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+                ) : (
+                  <PlusCircleIcon className="h-4 w-4 text-accent" aria-hidden="true" />
+                )}
+                {isQueued ? "Remove from queue" : "Add to queue"}
+              </button>
+            )}
+          </Menu.Item>
+
+          <div className="my-1 border-t border-line-subtle" />
+
+          <Menu.Item>
+            {({ active }) => (
+              <button
+                onClick={async () => {
+                  await writeFavorite(
+                    isFavorite ? "DELETE" : "PUT",
+                    currentUserGoogleID.toString(),
+                    fullVideoDetails
+                  );
+                  setRevision((value) => value + 1);
+                }}
+                className={cx(ITEM_CLASS, active && "bg-hovered")}
+              >
+                {isFavorite ? (
+                  <StarIcon className="h-4 w-4 text-amber-400" aria-hidden="true" />
+                ) : (
+                  <StarOutlineIcon className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+                )}
+                {isFavorite ? "Remove from favorites" : "Add to favorites"}
+              </button>
+            )}
+          </Menu.Item>
+
+          <Menu.Item>
+            {({ active }) => (
+              <button
+                onClick={async () => {
+                  await writeWatchlater(
+                    isWatchlater ? "DELETE" : "PUT",
+                    currentUserGoogleID.toString(),
+                    fullVideoDetails
+                  );
+                  setRevision((value) => value + 1);
+                }}
+                className={cx(ITEM_CLASS, active && "bg-hovered")}
+              >
+                {isWatchlater ? (
+                  <BookmarkSlashIcon className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+                ) : (
+                  <BookmarkIcon className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+                )}
+                {isWatchlater ? "Remove from watch later" : "Save to watch later"}
+              </button>
+            )}
+          </Menu.Item>
+        </Menu.Items>
+      </Transition>
+    </Menu>
+  );
 }
 
-export function VideoBox(props: { includeDate: boolean, fullVideoDetails: any, width?: number, height?: number, includeInfo?: boolean}) {
-    const embedLink = "/custom-youtube/";
-    const videoId: string = props.fullVideoDetails["videoId"];
-    const thumb: string = props.fullVideoDetails["videoThumbnail"];
-    const title: string = props.fullVideoDetails["videoTitle"];
+/* ==========================================================================
+   Video card
+   ========================================================================== */
 
-    const cardStyle: CSSProperties | undefined =
-        props.width !== undefined ? { width: props.width } : undefined;
-    const thumbClassName = props.height !== undefined
-        ? "relative mb-1 rounded-xl overflow-hidden"
-        : "relative mb-1 rounded-xl overflow-hidden aspect-video";
-    // const thumbStyle: CSSProperties | undefined =
-    //     props.height !== undefined ? { height: props.height } : undefined;
+export function VideoBox(props: {
+  includeDate: boolean;
+  fullVideoDetails: any;
+  width?: number;
+  height?: number;
+  includeInfo?: boolean;
+  /** Compact rows are used in the queue rail, where space is tight. */
+  layout?: "card" | "row";
+  onRemove?: () => void;
+  removeLabel?: string;
+}) {
+  const embedLink = "/custom-youtube/";
+  const videoId: string = props.fullVideoDetails?.["videoId"];
+  const thumb: string = props.fullVideoDetails?.["videoThumbnail"];
+  const title: string = props.fullVideoDetails?.["videoTitle"];
+  const queue = useQueue();
 
+  const showInfo = props.includeInfo !== false;
+  const cardStyle: CSSProperties | undefined =
+    props.width !== undefined ? { width: props.width } : undefined;
+
+  if (props.layout === "row") {
     return (
-        <div className="rounded-xl mb-2" style={cardStyle}>
-            <Link href={embedLink.concat(videoId)}>
-                <div className={thumbClassName}>
-                    <img
-                        src={thumb}
-                        alt="Thumbnail"
-                        className="absolute inset-0 w-full h-full object-cover"
-                    />
-                </div>
-            </Link>
-            {props.includeInfo==undefined || props.includeInfo==true ? 
-            <div className="grid grid-flow-col grid-cols-5 row-span-1">
-                <div className="mr-5 col-span-4">
-                    <Link href={embedLink.concat(videoId)}>
-                        <p className="font-semibold text-md tracking-tighter line-clamp-2">{title}</p>
-                        {props.includeDate ? (
-                            <p className="font-['Garamond'] text-slate-300 text-sm">Uploaded: {props.fullVideoDetails["uploadDate"].substr(0, 10)}</p>
-                        ) : (<p></p>)}
-                    </Link>
-                </div>
-                <div className="mr-2 col-start-5 flex justify-end">
-                    <VideoActionItems videoID={videoId} fullVideoDetails={props.fullVideoDetails} />
-                </div>
-            </div>
-            : 
-            <></>
-            }
-        </div>
+      <div className="group flex items-start gap-2.5">
+        <Link
+          href={embedLink.concat(videoId)}
+          className="relative aspect-video w-[104px] shrink-0 overflow-hidden rounded-control bg-inset"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={thumb}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </Link>
+        <Link href={embedLink.concat(videoId)} className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-[13px] font-medium leading-snug text-ink">
+            {title}
+          </p>
+        </Link>
+        {props.onRemove ? (
+          <button
+            onClick={props.onRemove}
+            aria-label={props.removeLabel ?? "Remove from queue"}
+            title={props.removeLabel ?? "Remove from queue"}
+            disabled={queue.pending.has(videoId)}
+            className={cx(
+              "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-control text-ink-muted",
+              "opacity-0 transition-all duration-200 ease-pm focus-visible:opacity-100 group-hover:opacity-100",
+              "hover:bg-hovered hover:text-ink disabled:opacity-40"
+            )}
+          >
+            <MinusCircleIcon className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
     );
+  }
+
+  return (
+    <article className="group flex flex-col" style={cardStyle}>
+      <Link
+        href={embedLink.concat(videoId)}
+        className="relative block aspect-video overflow-hidden rounded-surface bg-inset"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={thumb}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-pm group-hover:scale-[1.03]"
+        />
+      </Link>
+
+      {showInfo ? (
+        <div className="mt-2.5 flex items-start gap-1">
+          <Link href={embedLink.concat(videoId)} className="min-w-0 flex-1">
+            {/* Two lines and then an ellipsis, so every card in a grid is the
+                same height whatever the title length. */}
+            <h3 className="line-clamp-2 min-h-[2.6em] text-[14px] font-medium leading-[1.3] text-ink">
+              {title}
+            </h3>
+            {props.includeDate && props.fullVideoDetails?.["uploadDate"] ? (
+              <p className="mt-1 font-mono text-[11px] text-ink-muted">
+                {String(props.fullVideoDetails["uploadDate"]).slice(0, 10)}
+              </p>
+            ) : null}
+          </Link>
+          <div className="shrink-0">
+            <VideoActionItems videoID={videoId} fullVideoDetails={props.fullVideoDetails} />
+          </div>
+        </div>
+      ) : null}
+    </article>
+  );
 }

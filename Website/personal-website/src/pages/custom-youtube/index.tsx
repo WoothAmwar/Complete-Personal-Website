@@ -1,247 +1,43 @@
-import { useState, useEffect, ReactNode, memo, useCallback, FormEventHandler } from 'react';
-import Link from "next/link";
-
-import OrderByChannel from "../../components/ChannelOrder";
-import OrderByTime from "../../components/UploadOrder";
-import VideoQueue from "../../components/VideoQueue";
-import {
-  CurrentUserId
-} from "@/helperFunctions/cookieManagement";
-
-import { useSearchParams } from 'next/navigation';
-
-import { Fragment } from 'react'
-import { Menu, Transition } from '@headlessui/react'
-import { ChevronDownIcon } from '@heroicons/react/20/solid'
-import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
+import { useQuery } from "@tanstack/react-query";
+import {
+  CalendarDaysIcon,
+  QueueListIcon,
+  Squares2X2Icon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
 
-const queryClient = new QueryClient();
+import OrderByChannel from "@/components/ChannelOrder";
+import OrderByTime from "@/components/UploadOrder";
+import VideoQueue from "@/components/VideoQueue";
+import { AgentPrompt } from "@/components/youtube/AgentPrompt";
+import { TagFilter } from "@/components/youtube/TagFilter";
+import { useQueue } from "@/components/queue/QueueProvider";
+import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import {
+  Button,
+  IconButton,
+  SegmentedControl,
+  cx,
+  type Segment,
+} from "@/components/ui/primitives";
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
+type OrderMethod = "byChannel" | "byTime";
 
-const fetchTags = async (currentUserGoogleId: string) => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/tags`, {
-    method: 'GET',
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-google-id': currentUserGoogleId.toString()
-    }
-  });
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  return response.json();
-};
-
-const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) => {
-  if (tagName === "None") {
-    return [];
-  }
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/channelsOfTag/${tagName}`, {
-    method: 'GET',
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-google-id': currentUserGoogleId.toString()
-    }
-  });
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  return response.json();
-};
-
-const promptAgent = async(currentUserGoogleId: string, prompt: string) => {
-  const response = await fetch(`/api/queue`, {
-    method: 'PUT', 
-    headers: {
-      'Content-Type': 'application/json',
-      'x-google-id': currentUserGoogleId.toString()
-    },
-    body: JSON.stringify({data: prompt})
-  })
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-}
-
-
-
-function DropDown() {
-  return (
-    <Menu as="div" className="relative inline-block text-left">
-      <div>
-        <Menu.Button className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-          Options
-          <ChevronDownIcon className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" />
-        </Menu.Button>
-      </div>
-
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-25 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-          <div className="py-1">
-            <Menu.Item>
-              {({ active }) => (
-                <Link
-                  href="/custom-youtube?order=byChannel"
-                  className={classNames(
-                    active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                    'block px-4 py-2 text-sm'
-                  )}
-                >
-                  YT By Channel
-                </Link>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <Link
-                  href="/custom-youtube?order=byTime"
-                  className={classNames(
-                    active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                    'block px-4 py-2 text-sm'
-                  )}
-                >
-                  YT By Time
-                </Link>
-              )}
-            </Menu.Item>
-          </div>
-        </Menu.Items>
-      </Transition>
-    </Menu>
-  )
-}
-
-const UseTime = (props: { responseVideoData: Array<any>, isLoadingVideos: boolean }) => {
-  return (
-    <div>
-      <div className="grid xl: grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-8 font-mono">
-        <OrderByTime pageSize={12}
-          responseVideoData={props.responseVideoData} isLoading={props.isLoadingVideos} />
-      </div>
-    </div>
-  );
-}
-
-function UseChannel(props: { showChannels: string[], responseVideoData: Array<any>, isLoadingVideos: boolean }) {
-  return (
-    <div>
-      <div className="grid grid-cols-1 font-mono">
-        <OrderByChannel
-          channelsToInclude={props.showChannels}
-          responseVideoData={props.responseVideoData}
-          isLoadingVideos={props.isLoadingVideos}
-          pageSize={5} />
-      </div>
-    </div>
-  );
-}
-
-
-/**
- * Determines what way to sort videos and which component to render
- * @returns String - byTime, byChannel
- */
-function QueryOrder() {
-  const searchParams = useSearchParams();
-
-  if (searchParams?.has("order")) {
-    const search = searchParams.get('order');
-    // URL -> `/dashboard?search=my-project`
-    // `search` -> 'my-project'
-    if (search == null) {
-      return "byChannel";
-    }
-    return search;
-  } else {
-    return "byChannel";
-  }
-
-}
-
-
-// Define the props interface for TagSelectionDropDown
-interface TagSelectionDropDownProps {
-  onTagSelect: (tagName: string) => void;
-}
-
-const TagSelectionDropDown: React.FC<TagSelectionDropDownProps> = memo(function TagDropDown({ onTagSelect }) {
-  const currentUserGoogleId = CurrentUserId();
-  const { data: totalTagOptions, isLoading, isError } = useQuery({
-    queryKey: ['tags', currentUserGoogleId],
-    queryFn: () => fetchTags(currentUserGoogleId.toString()),
-  });
-
-  if (isLoading) return <div>Loading tags...</div>;
-  if (isError) return <div>Error fetching tags</div>;
-
-  return (
-    <Menu as="div" className="relative inline-block text-left">
-      <div>
-        <Menu.Button className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-          Filter by Tag
-          <ChevronDownIcon className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" />
-        </Menu.Button>
-      </div>
-
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-25 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-          <div className="py-1">
-            {totalTagOptions.map((tagName: string, index: number) => (
-              <Menu.Item key={index}>
-                {({ active }) => (
-                  <button
-                    className={classNames(
-                      active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                      'block px-4 py-2 text-sm'
-                    )}
-                    onClick={() => { onTagSelect(tagName) }}
-                  >
-                    {tagName}
-                  </button>
-                )}
-              </Menu.Item>
-            ))}
-            <Menu.Item key={12032019}>
-              {({ active }) => (
-                <button
-                  className={classNames(
-                    active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                    'block px-4 py-2 text-sm'
-                  )}
-                  onClick={() => { onTagSelect("None") }}
-                >
-                  None
-                </button>
-              )}
-            </Menu.Item>
-          </div>
-        </Menu.Items>
-      </Transition>
-    </Menu>
-  )
-});
+const ORDER_SEGMENTS: ReadonlyArray<Segment<OrderMethod>> = [
+  {
+    value: "byChannel",
+    label: "By channel",
+    icon: <Squares2X2Icon className="h-4 w-4" aria-hidden="true" />,
+  },
+  {
+    value: "byTime",
+    label: "By date",
+    icon: <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />,
+  },
+];
 
 const fetchVideos = async (currentUserGoogleId: string) => {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
@@ -252,97 +48,185 @@ const fetchVideos = async (currentUserGoogleId: string) => {
       "x-google-id": currentUserGoogleId,
     },
   });
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
+  if (!response.ok) throw new Error("Network response was not ok");
   return response.json();
 };
 
-function HomePage() {
-  const currentUserGoogleId = CurrentUserId();
-
-  const [orderMethod, setOrderMethod] = useState("byChannel");
-  const [selectedTag, setSelectedTag] = useState<string>("None");
-  const [agentPrompt, setAgentPrompt] = useState('');
-
-  const { data: responseVideoData, isLoading: isLoadingVideos } = useQuery({
-    queryKey: ['videos', currentUserGoogleId],
-    queryFn: () => fetchVideos(currentUserGoogleId.toString()),
-  });
-
-  const { data: channelsFromFilter, isLoading, isError } = useQuery({
-    queryKey: ['channels', currentUserGoogleId, selectedTag],
-    queryFn: () => fetchChannelsOfTag(currentUserGoogleId.toString(), selectedTag),
-    enabled: selectedTag !== "None", // Only fetch if a tag is selected
-  });
-
-  var getQueryOrder = QueryOrder();
-
-  useEffect(() => {
-    setOrderMethod(getQueryOrder);
-  }, [getQueryOrder])
-
-  const handleTagSelect = (tagName: string) => {
-    setSelectedTag(tagName);
-  };
-
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    if (agentPrompt.length > 0) {
-      // console.log("ID:", currentUserGoogleId, ":", agentPrompt);
-      promptAgent(currentUserGoogleId, agentPrompt);
+const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) => {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/channels/channelsOfTag/${encodeURIComponent(tagName)}`,
+    {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "x-google-id": currentUserGoogleId,
+      },
     }
-    console.log("Current textarea content:", agentPrompt);
-  };
+  );
+  if (!response.ok) throw new Error("Network response was not ok");
+  return response.json();
+};
+
+/** The queue rail, shared by the docked column and the small-screen sheet. */
+function QueuePanel({
+  videos,
+  isLoading,
+  onClose,
+}: {
+  videos: Array<Array<any>>;
+  isLoading: boolean;
+  onClose: () => void;
+}) {
+  const queue = useQueue();
 
   return (
-    <main className="flex flex-col justify-items-center mx-5">
-      <div className="grid grid-colsitems-center font-mono">
-        <h2 className="flex flex-row text-center font-semibold text-lg py-4">
-          {orderMethod == "byChannel" ? <div className="ml-5"><TagSelectionDropDown onTagSelect={handleTagSelect} /></div> : <></>}
-          {/* <p className="lg:col-start-2 lg:col-span-2 ">Tagged</p> */}
-          <div className="grow"></div>
-          <div className="justify-self-end mr-5">{DropDown()}</div>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-surface border border-line-subtle bg-surface">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-line-subtle px-3 py-2.5">
+        <h2 className="flex items-center gap-2 text-[13px] font-semibold text-ink">
+          <QueueListIcon className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+          Queue
+          {queue.ids.length > 0 ? (
+            <span className="rounded-pill bg-inset px-1.5 py-0.5 font-mono text-[11px] text-ink-muted">
+              {queue.ids.length}
+            </span>
+          ) : null}
         </h2>
-      {isLoading && <div>Loading channels...</div>}
-      {isError && <div>Error fetching channels</div>}
-      </div>
-      <div className="flex gap-3">
-        <div className="min-h-0 scroll-smooth sticky top-0 h-screen overflow-y-auto">
-          {orderMethod == "byChannel"
-            ?
-            <UseChannel showChannels={channelsFromFilter || ["None"]} responseVideoData={responseVideoData} isLoadingVideos={isLoadingVideos} />
-            :
-            <UseTime responseVideoData={responseVideoData} isLoadingVideos={isLoadingVideos} />
-          }
-        </div>
-        <div className="static flex flex-col gap-2">
-          <VideoQueue fullVideoDetails={responseVideoData} isLoading={isLoadingVideos} />
+        <IconButton label="Hide the queue" size="sm" onClick={onClose}>
+          <XMarkIcon className="h-4 w-4" aria-hidden="true" />
+        </IconButton>
+      </header>
 
-          <form onSubmit={handleSubmit} className="cursor-move m-2">
-            {/* <label htmlFor="message">Generate Video Queue</label> */}
-            <textarea
-            className="resize-y text-sm bg-slate-800 rounded-lg p-2"
-              id="message"
-              value={agentPrompt}
-              onChange={(e) => setAgentPrompt(e.target.value)}
-              placeholder="Ex: Add gaming videos about Minecraft to queue..."
-            />
-            <button type="submit" className="underline">Enter</button>
-          </form> 
-        </div>
+      <div className="min-h-0 flex-1 overflow-y-auto pm-scroll">
+        <VideoQueue fullVideoDetails={videos} isLoading={isLoading} />
       </div>
-    </main>
-  )
+
+      <div className="shrink-0">
+        <AgentPrompt />
+      </div>
+    </div>
+  );
 }
 
-export default function HomePageWrapper() {
+export default function SubscriptionsPage() {
+  const router = useRouter();
+  const currentUserGoogleId = CurrentUserId();
+  const queue = useQueue();
+
+  const [orderMethod, setOrderMethod] = useState<OrderMethod>("byChannel");
+  const [selectedTag, setSelectedTag] = useState("None");
+
+  // The order lives in the URL so a view can be linked to and survives a reload.
+  useEffect(() => {
+    const fromQuery = router.query.order;
+    setOrderMethod(fromQuery === "byTime" ? "byTime" : "byChannel");
+  }, [router.query.order]);
+
+  const changeOrder = (next: OrderMethod) => {
+    setOrderMethod(next);
+    router.replace({ query: { ...router.query, order: next } }, undefined, {
+      shallow: true,
+    });
+  };
+
+  const { data: videos, isLoading: isLoadingVideos } = useQuery({
+    queryKey: ["videos", currentUserGoogleId],
+    queryFn: () => fetchVideos(currentUserGoogleId.toString()),
+    enabled: Boolean(currentUserGoogleId),
+  });
+
+  const { data: channelsForTag } = useQuery({
+    queryKey: ["channelsOfTag", currentUserGoogleId, selectedTag],
+    queryFn: () => fetchChannelsOfTag(currentUserGoogleId.toString(), selectedTag),
+    enabled: Boolean(currentUserGoogleId) && selectedTag !== "None",
+  });
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <Head>
-        <title>Subscription Videos</title>
+        <title>Subscriptions</title>
       </Head>
-      <HomePage />
-    </QueryClientProvider>
-  )
+
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Toolbar. Order is a toggle rather than a menu so both views are
+            visible at once; the tag filter stays a menu because the list of
+            tags is open-ended. */}
+        <div className="flex shrink-0 flex-wrap items-center gap-2 py-4">
+          <SegmentedControl
+            label="Order videos"
+            segments={ORDER_SEGMENTS}
+            value={orderMethod}
+            onChange={changeOrder}
+          />
+
+          {orderMethod === "byChannel" ? (
+            <TagFilter
+              googleId={currentUserGoogleId.toString()}
+              selected={selectedTag}
+              onSelect={setSelectedTag}
+            />
+          ) : null}
+
+          {/* The queue rail only has room from lg up, so the control that
+              brings it back is hidden below that rather than left inert. */}
+          <div className="ml-auto hidden lg:block">
+            {queue.panelOpen ? null : (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => queue.setPanelOpen(true)}
+              >
+                <QueueListIcon className="h-4 w-4" aria-hidden="true" />
+                Queue
+                {queue.ids.length > 0 ? (
+                  <span className="font-mono text-[11px] text-ink-muted">
+                    {queue.ids.length}
+                  </span>
+                ) : null}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1 gap-5">
+          {/* The feed owns its own vertical scroll so the queue beside it stays
+              put. Scroll-snap is on the container, targets are the channel
+              sections inside ChannelOrder. */}
+          <div
+            className={cx(
+              "min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden pm-scroll pr-1",
+              orderMethod === "byChannel" && "snap-feed"
+            )}
+          >
+            {orderMethod === "byChannel" ? (
+              <OrderByChannel
+                channelsToInclude={
+                  selectedTag === "None" ? ["None"] : channelsForTag ?? []
+                }
+                responseVideoData={videos}
+                isLoadingVideos={isLoadingVideos}
+                pageSize={4}
+              />
+            ) : (
+              <OrderByTime
+                responseVideoData={videos}
+                isLoading={isLoadingVideos}
+                pageSize={16}
+              />
+            )}
+          </div>
+
+          {queue.panelOpen ? (
+            <aside className="hidden min-h-0 w-[304px] shrink-0 pb-4 lg:block">
+              <QueuePanel
+                videos={videos ?? []}
+                isLoading={isLoadingVideos}
+                onClose={() => queue.setPanelOpen(false)}
+              />
+            </aside>
+          ) : null}
+        </div>
+      </div>
+    </>
+  );
 }
