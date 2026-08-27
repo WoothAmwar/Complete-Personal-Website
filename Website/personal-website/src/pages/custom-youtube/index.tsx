@@ -56,7 +56,7 @@ const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) 
 };
 
 const promptAgent = async(currentUserGoogleId: string, prompt: string) => {
-  const response = await fetch(`api/queue`, {
+  const response = await fetch(`/api/queue`, {
     method: 'PUT', 
     headers: {
       'Content-Type': 'application/json',
@@ -289,6 +289,7 @@ function HomePage() {
   const handleSubmit = (e: any) => {
     e.preventDefault();
     if (agentPrompt.length > 0) {
+      // console.log("ID:", currentUserGoogleId, ":", agentPrompt);
       promptAgent(currentUserGoogleId, agentPrompt);
     }
     console.log("Current textarea content:", agentPrompt);

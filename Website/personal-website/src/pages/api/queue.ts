@@ -27,10 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     // Posting to the agent lambda
     else if (req.method == 'PUT') {
-        const userPrompt = req.body;
-        console.log("PROMPT:", userPrompt);
+        const userPrompt = req.body.data;
         try {
-            const agentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue`,
+            const agentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue/${googleId}/${userPrompt}`,
             {
                 method: 'PUT',
                 headers: {
