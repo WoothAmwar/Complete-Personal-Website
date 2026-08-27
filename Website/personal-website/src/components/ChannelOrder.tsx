@@ -40,6 +40,9 @@ export default function OrderByChannel(props: {
   var wd = 360; // 480
   var ht = (wd / 480) * 270; // 270
 
+  useEffect(() => {
+    console.log("INIT:", props);
+  })
   const [visibleChannels, setVisibleChannels] = useState(Math.min(pageSize, filteredChannelData.length));
   useEffect(() => {
     setVisibleChannels(Math.min(pageSize, filteredChannelData.length));
@@ -57,7 +60,7 @@ export default function OrderByChannel(props: {
     }, { rootMargin: '400px' });
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [filteredChannelData.length, pageSize]);
+  }, [filteredChannelData.length, filteredVideoData.length, pageSize, props.isLoadingVideos, isLoadingChannels]);
 
   useEffect(() => {
     if (props.responseVideoData) {
@@ -111,11 +114,11 @@ export default function OrderByChannel(props: {
 
 
   let finalRow: JSX.Element[] = [];
-  console.log("V:", filteredChannelData);
-  for (let i = 0; i < filteredChannelData.length; i++) {
+  // console.log("V:", filteredChannelData);
+  for (let i = 0; i < Math.min(visibleChannels, filteredChannelData.length); i++) {
     let currRow = [];
-    console.log("T:", i);
-    console.log("TB:", filteredChannelData[i]);
+    // console.log("T:", i);
+    // console.log("TB:", filteredChannelData[i]);
     currRow.push(
       <div key={filteredChannelData[i]["channelNames"]} className="text-left flex">
         <ManageShowTag channelName={filteredChannelData[i]["channelNames"]} />
