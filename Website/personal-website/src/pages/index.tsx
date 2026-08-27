@@ -153,7 +153,7 @@ export default function Home() {
           <p className="mt-5 max-w-prose text-[17px] leading-relaxed text-ink-muted">
             A channel that posts twice a year does not need the attention of one
             that posts twice a day. You know what videos will be shown to you when you visit, 
-            and it won't update constantly giving you reason to constantly check back.
+            and it will not update constantly giving you reason to constantly check back.
             Move channels between these four whenever you like.
           </p>
         </Reveal>
