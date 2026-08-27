@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     else if (req.method == 'PUT') {
         const userPrompt = req.body.data;
         try {
-            const agentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue/${googleId}/${userPrompt}`,
+            const agentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue`,
             {
                 method: 'PUT',
                 headers: {
