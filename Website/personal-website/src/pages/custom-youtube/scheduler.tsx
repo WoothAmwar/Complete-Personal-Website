@@ -187,7 +187,7 @@ export default function Scheduler() {
                     {(selectedIndex == -1) ? (
                         <div className="border-2 border-blue-500 p-3">Select an Option</div>
                     ) : (
-                        <Button onClick={handleClick}>Click Here to "{scheduleBtnOptions[selectedIndex]}"</Button>
+                        <Button onClick={handleClick}>Click Here to {scheduleBtnOptions[selectedIndex]}</Button>
                     )}
                     <Button
                         size="small"
