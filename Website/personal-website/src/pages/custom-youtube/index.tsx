@@ -55,6 +55,21 @@ const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) 
   return response.json();
 };
 
+const promptAgent = async(currentUserGoogleId: string, prompt: string) => {
+  const response = await fetch(`api/queue`, {
+    method: 'PUT', 
+    headers: {
+      'Content-Type': 'application/json',
+      'x-google-id': currentUserGoogleId.toString()
+    },
+    body: JSON.stringify({data: prompt})
+  })
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+}
+
+
 
 function DropDown() {
   return (
@@ -295,10 +310,9 @@ function HomePage() {
     setSelectedTag(tagName);
   };
 
-  
-
   const handleSubmit = (e: any) => {
     e.preventDefault();
+    promptAgent(currentUserGoogleId, agentPrompt);
     console.log("Current textarea content:", agentPrompt);
   };
 

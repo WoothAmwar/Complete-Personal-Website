@@ -40,9 +40,6 @@ export default function OrderByChannel(props: {
   var wd = 360; // 480
   var ht = (wd / 480) * 270; // 270
 
-  useEffect(() => {
-    console.log("INIT:", props);
-  })
   const [visibleChannels, setVisibleChannels] = useState(Math.min(pageSize, filteredChannelData.length));
   useEffect(() => {
     setVisibleChannels(Math.min(pageSize, filteredChannelData.length));
