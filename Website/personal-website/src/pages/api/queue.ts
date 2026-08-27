@@ -29,17 +29,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     else if (req.method == 'PUT') {
         const userPrompt = req.body;
         console.log("PROMPT:", userPrompt);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue`,
-        {
-            method: 'PUT',
-            mode: 'cors',
-            // credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-google-id': googleId
-            },
-            body: JSON.stringify({ data: userPrompt }),
-        })
-        .catch(err => console.error("Error messaging agent", err));
+        try {
+            const agentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-google-id': googleId
+                },
+                body: JSON.stringify({ data: userPrompt }),
+            });
+            if (!agentRes.ok) {
+                res.status(502).json({ message: 'Agent service error' });
+                return;
+            }
+            res.status(200).json({ message: 'ok' });
+        } catch (err) {
+            console.error("Error messaging agent", err);
+            res.status(502).json({ message: 'Error messaging agent' });
+        }
+    } else {
+        res.status(405).json({ message: 'Method not allowed' });
     }
 }

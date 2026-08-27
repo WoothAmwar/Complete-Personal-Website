@@ -258,30 +258,6 @@ const fetchVideos = async (currentUserGoogleId: string) => {
   return response.json();
 };
 
-const agentMessageAboutQueue = async (props: {currentuserGoogleID: string, userPrompt: string}) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/set-agent-queue`, {
-        method: 'PUT',
-        mode: 'cors',
-        // credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-google-id': props.currentuserGoogleID
-        },
-        body: JSON.stringify({ data: props.userPrompt }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const data = await response.json();
-      return true;
-    } catch (err) {
-      console.error("Error sending message to agent", err);
-      return null;
-    }
-  }
-
-
 function HomePage() {
   const currentUserGoogleId = CurrentUserId();
 
@@ -312,7 +288,9 @@ function HomePage() {
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    promptAgent(currentUserGoogleId, agentPrompt);
+    if (agentPrompt.length > 0) {
+      promptAgent(currentUserGoogleId, agentPrompt);
+    }
     console.log("Current textarea content:", agentPrompt);
   };
 
