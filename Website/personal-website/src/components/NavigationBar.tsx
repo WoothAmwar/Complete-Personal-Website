@@ -182,7 +182,7 @@ function AccountBadge() {
         href="/"
         className="rounded-control px-3 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
       >
-        Sign in
+        Homepage
       </Link>
     );
   }

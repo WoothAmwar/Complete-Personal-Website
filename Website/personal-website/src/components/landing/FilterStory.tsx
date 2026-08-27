@@ -20,7 +20,42 @@ const ROWS = 3;
 const TILE_COUNT = COLUMNS * ROWS;
 
 /** The tiles that survive the filter. Scattered, not a neat block. */
-const SIGNAL = new Set([3, 7, 10, 14, 16]);
+const SIGNAL = new Set([3, 7, 10, 14]);
+
+/**
+ * One thumbnail per channel, for the wall of noise.
+ *
+ * Real YouTube frames rather than stock photography, because the section is
+ * arguing about a feed and a grid of landscapes would not read as one. Each id
+ * is the most recent long-form upload from that channel's RSS feed
+ * (youtube.com/feeds/videos.xml?channel_id=...) at the time of writing, picked
+ * over Shorts so every tile is 16:9. The list is a snapshot on purpose: it is
+ * static art direction, not live data, so the wall is identical on every render
+ * and between sessions.
+ *
+ * mqdefault is the 320x180 crop. i.ytimg.com serves it without an API key, and
+ * hqdefault would letterbox 16:9 into a 4:3 frame with black bars.
+ */
+const THUMBNAILS = [
+  "https://i.ytimg.com/vi/Qtl8lJwbd4g/mqdefault.jpg", // MrBeast
+  "https://i.ytimg.com/vi/3x3BSLl94Yk/mqdefault.jpg", // Ryan Trahan
+  "https://i.ytimg.com/vi/65hjeAq6Oq0/mqdefault.jpg", // fern
+  "https://i.ytimg.com/vi/UuqSy1jPSUw/mqdefault.jpg", // Fireship
+  "https://i.ytimg.com/vi/jowG5tweqSY/mqdefault.jpg", // SMii7Y
+  "https://i.ytimg.com/vi/J1WoNuemKOg/mqdefault.jpg", // Veritasium
+  "https://i.ytimg.com/vi/Cyl3X88KEgg/mqdefault.jpg", // Kurzgesagt
+  "https://i.ytimg.com/vi/KL9_1GbmCic/mqdefault.jpg", // AI Explained
+  "https://i.ytimg.com/vi/h0EGCnBjTVk/mqdefault.jpg", // Mark Rober
+  "https://i.ytimg.com/vi/vMoL_PKkh3Q/mqdefault.jpg", // Ludwig
+  "https://i.ytimg.com/vi/oeqUHEp4sYM/mqdefault.jpg", // Linus Tech Tips
+  "https://i.ytimg.com/vi/6BjR_UP2dzM/mqdefault.jpg", // Dude Perfect
+  "https://i.ytimg.com/vi/2gpRaJMjHbc/mqdefault.jpg", // Wendover Productions
+  "https://i.ytimg.com/vi/1ZTvCXR8At0/mqdefault.jpg", // Nick DiGiovanni
+  "https://i.ytimg.com/vi/ngPkbaZliaU/mqdefault.jpg", // Marques Brownlee
+  "https://i.ytimg.com/vi/89thRe3elQM/mqdefault.jpg", // Half as Interesting
+  "https://i.ytimg.com/vi/ID-K64Jk6JM/mqdefault.jpg", // NileRed
+  "https://i.ytimg.com/vi/fEMHMd7fovM/mqdefault.jpg", // Ali Abdaal
+];
 
 export function FilterStory() {
   const wrapper = useRef<HTMLDivElement>(null);
@@ -35,9 +70,8 @@ export function FilterStory() {
       Array.from({ length: TILE_COUNT }, (_, index) => ({
         index,
         signal: SIGNAL.has(index),
-        // Seeded so the wall is identical on every render and between sessions.
-        src: `https://picsum.photos/seed/pm-wall-${index}/320/180`,
-        // Drawn under the image. Photography is remote and may be slow or
+        src: THUMBNAILS[index % THUMBNAILS.length],
+        // Drawn under the image. The thumbnails are remote and may be slow or
         // blocked, and a grid of empty rectangles would break the whole point
         // of the section, so every tile keeps a tint of its own to fall back
         // to. Built from surface tokens rather than fixed colors, so it stays

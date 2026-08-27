@@ -67,15 +67,16 @@ function GoogleSignIn({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-ink-muted">
+      {/* <p className="text-sm text-ink-muted">
         Pure Media reads your public subscription list. It never posts, comments
         or changes anything on your YouTube account.
-      </p>
+      </p> */}
       <Button
         variant="primary"
         size="lg"
         onClick={() => login()}
         disabled={status === "working"}
+        className="text-lg"
       >
         {status === "working" ? "Signing in..." : "Continue with Google"}
       </Button>
@@ -115,11 +116,11 @@ function DevSignIn({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-ink-muted">
+      <p className="text-ink-muted">
         Mock auth is on, so this signs in as a local fixture account without
         contacting Google.
       </p>
-      <Button variant="primary" size="lg" onClick={devSignIn}>
+      <Button className="text-lg" variant="primary" size="lg" onClick={devSignIn}>
         Sign in as Dev User
       </Button>
     </div>
@@ -157,14 +158,14 @@ export default function LoginButton({ size = "lg" }: { size?: "md" | "lg" }) {
   return (
     <>
       <Button variant="primary" size={size} onClick={() => setOpen(true)}>
-        Sign in with Google
+        Sign in
       </Button>
       <Modal
         open={open}
         onClose={() => setOpen(false)}
         title="Sign in"
-        description="Your subscriptions, tags and queue are stored against your Google account."
-        size="sm"
+        // description="Your subscriptions, tags and queue are stored against your Google account."
+        size="md"
       >
         {useMockAuth ? (
           <DevSignIn onDone={() => setOpen(false)} />

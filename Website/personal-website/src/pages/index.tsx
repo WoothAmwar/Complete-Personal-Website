@@ -183,10 +183,10 @@ export default function Home() {
       <section className="py-32 sm:py-44">
         <Reveal>
           <hr className="rule-fade mb-16" />
-          <h2 className="max-w-[14ch] font-display text-[clamp(2.25rem,6.5vw,5rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-ink">
+          {/* <h2 className="max-w-[14ch] font-display text-[clamp(2.25rem,6.5vw,5rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-ink">
             Bring your subscriptions over.
-          </h2>
-          <p className="mt-6 max-w-prose text-[17px] leading-relaxed text-ink-muted">
+          </h2> */}
+          <p className="mt-6 max-w-prose leading-relaxed text-ink-muted">
             Sign in with the Google account your subscriptions live on. Nothing
             is posted, nothing is changed, and you can sign out from the
             dashboard at any time.
