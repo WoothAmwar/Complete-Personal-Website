@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import {
   Button,
   EmptyState,
@@ -92,7 +93,7 @@ export default function TrackerPage() {
   const fetchVideoInfo = useCallback(async () => {
     if (!currentUserGoogleID) return;
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
+      const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
         method: "GET",
         mode: "cors",
         headers: {
@@ -123,7 +124,7 @@ export default function TrackerPage() {
     setAdding(true);
     setUrlError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoId}`, {
+      const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoId}`, {
         method: "PUT",
         mode: "cors",
         headers: {
@@ -153,7 +154,7 @@ export default function TrackerPage() {
     const snapshot = videos;
     setVideos((previous) => previous.filter((video) => video.videoID !== videoID));
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoID}`, {
+      const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/tracker/${videoID}`, {
         method: "DELETE",
         mode: "cors",
         headers: {

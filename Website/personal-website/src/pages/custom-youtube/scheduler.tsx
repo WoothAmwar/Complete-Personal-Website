@@ -3,6 +3,7 @@ import Head from "next/head";
 import { ArrowRightIcon, CheckIcon } from "@heroicons/react/20/solid";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import {
   Button,
@@ -99,7 +100,7 @@ export default function Scheduler() {
     if (!currentUserGoogleId) return;
 
     const fetchBucket = async (bucket: Bucket): Promise<Channel[]> => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/${bucket}`, {
+      const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/channels/${bucket}`, {
         method: "GET",
         mode: "cors",
         headers: {
@@ -159,7 +160,7 @@ export default function Scheduler() {
 
     setApplying(true);
     try {
-      const response = await fetch(
+      const response = await fetchWithRetry(
         `${process.env.NEXT_PUBLIC_API_URL}/channels/${destination}`,
         {
           method: "PUT",

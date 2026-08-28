@@ -16,6 +16,7 @@ import { AgentPrompt } from "@/components/youtube/AgentPrompt";
 import { TagFilter } from "@/components/youtube/TagFilter";
 import { useQueue } from "@/components/queue/QueueProvider";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { ApiError, fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import {
   Button,
   IconButton,
@@ -40,7 +41,7 @@ const ORDER_SEGMENTS: ReadonlyArray<Segment<OrderMethod>> = [
 ];
 
 const fetchVideos = async (currentUserGoogleId: string) => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
+  const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
     method: "GET",
     mode: "cors",
     headers: {
@@ -48,12 +49,12 @@ const fetchVideos = async (currentUserGoogleId: string) => {
       "x-google-id": currentUserGoogleId,
     },
   });
-  if (!response.ok) throw new Error("Network response was not ok");
+  if (!response.ok) throw new ApiError(response.status, "Network response was not ok");
   return response.json();
 };
 
 const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) => {
-  const response = await fetch(
+  const response = await fetchWithRetry(
     `${process.env.NEXT_PUBLIC_API_URL}/channels/channelsOfTag/${encodeURIComponent(tagName)}`,
     {
       method: "GET",
@@ -64,7 +65,7 @@ const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) 
       },
     }
   );
-  if (!response.ok) throw new Error("Network response was not ok");
+  if (!response.ok) throw new ApiError(response.status, "Network response was not ok");
   return response.json();
 };
 

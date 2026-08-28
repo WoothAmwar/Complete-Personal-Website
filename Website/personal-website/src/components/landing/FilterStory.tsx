@@ -23,16 +23,6 @@ const TILE_COUNT = COLUMNS * ROWS;
 const SIGNAL = new Set([3, 7, 10, 14]);
 
 /**
- * One thumbnail per channel, for the wall of noise.
- *
- * Real YouTube frames rather than stock photography, because the section is
- * arguing about a feed and a grid of landscapes would not read as one. Each id
- * is the most recent long-form upload from that channel's RSS feed
- * (youtube.com/feeds/videos.xml?channel_id=...) at the time of writing, picked
- * over Shorts so every tile is 16:9. The list is a snapshot on purpose: it is
- * static art direction, not live data, so the wall is identical on every render
- * and between sessions.
- *
  * mqdefault is the 320x180 crop. i.ytimg.com serves it without an API key, and
  * hqdefault would letterbox 16:9 into a 4:3 frame with black bars.
  */

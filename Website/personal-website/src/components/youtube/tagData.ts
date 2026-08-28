@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 
+import { ApiError, fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
+
 /**
  * Shared access to the channel tag endpoints.
  *
@@ -19,13 +21,13 @@ function headers(googleId: string) {
 }
 
 async function getJson(path: string, googleId: string) {
-  const response = await fetch(api(path), {
+  const response = await fetchWithRetry(api(path), {
     method: "GET",
     mode: "cors",
     headers: headers(googleId),
   });
   if (!response.ok) {
-    throw new Error(`GET ${path} failed with ${response.status}`);
+    throw new ApiError(response.status, `GET ${path} failed with ${response.status}`);
   }
   return response.json();
 }
@@ -100,7 +102,7 @@ export async function addTagToChannel(
   channelName: string,
   tagName: string
 ) {
-  const response = await fetch(
+  const response = await fetchWithRetry(
     api(`/channels/channelWithTags/${encodeURIComponent(channelName)}`),
     {
       method: "PUT",
@@ -118,7 +120,7 @@ export async function removeTagFromChannel(
   channelName: string,
   tagName: string
 ) {
-  const response = await fetch(
+  const response = await fetchWithRetry(
     api(`/channels/channelWithTags/${encodeURIComponent(channelName)}`),
     {
       method: "DELETE",
@@ -133,7 +135,7 @@ export async function removeTagFromChannel(
 
 export async function createTag(googleId: string, rawName: string) {
   const db_text = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-  const response = await fetch(api("/channels/tags"), {
+  const response = await fetchWithRetry(api("/channels/tags"), {
     method: "PUT",
     mode: "cors",
     headers: headers(googleId),
@@ -146,7 +148,7 @@ export async function createTag(googleId: string, rawName: string) {
 }
 
 export async function deleteTag(googleId: string, tagName: string) {
-  const response = await fetch(api("/channels/tags"), {
+  const response = await fetchWithRetry(api("/channels/tags"), {
     method: "DELETE",
     mode: "cors",
     headers: headers(googleId),
@@ -161,7 +163,7 @@ export async function setTagColor(
   tagName: string,
   tagColor: string
 ) {
-  const response = await fetch(
+  const response = await fetchWithRetry(
     api(`/channels/colorsOfTag/${encodeURIComponent(tagName)}`),
     {
       method: "PUT",

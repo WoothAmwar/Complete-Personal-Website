@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/20/solid";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import { useQueue } from "@/components/queue/QueueProvider";
 import { cx } from "@/components/ui/primitives";
 
@@ -140,7 +141,7 @@ export default function VideoScreen() {
 
     (async () => {
       try {
-        const videos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
+        const videos = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
           method: "GET",
           mode: "cors",
           headers,
@@ -155,7 +156,7 @@ export default function VideoScreen() {
           }
         }
 
-        const tracked = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
+        const tracked = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/tracker`, {
           method: "GET",
           mode: "cors",
           headers,

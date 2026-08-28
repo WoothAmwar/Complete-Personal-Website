@@ -15,6 +15,7 @@ import NavigationBar from "@/components/NavigationBar";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { QueueProvider } from "@/components/queue/QueueProvider";
 import { LinkButton } from "@/components/ui/primitives";
+import { ApiError } from "@/helperFunctions/fetchWithRetry";
 
 import "@/app/globals.css";
 
@@ -49,7 +50,14 @@ const mono = JetBrains_Mono({
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { refetchOnWindowFocus: false, staleTime: 60_000 },
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 60_000,
+      // fetchWithRetry already spent a backoff budget on the 429, so retrying
+      // here would just multiply the request count against a throttled backend.
+      retry: (failureCount, error) =>
+        !(error instanceof ApiError && error.status === 429) && failureCount < 3,
+    },
   },
 });
 

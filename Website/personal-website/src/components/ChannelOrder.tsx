@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { ApiError, fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import { VideoBox } from "./VideoBox";
 import { ManageShowTag } from "./buttons/ManageChannelTags";
 import { Button, EmptyState, Skeleton } from "@/components/ui/primitives";
 
 const fetchChannels = async (currentUserGoogleId: string) => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels`, {
+  const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/channels`, {
     method: "GET",
     mode: "cors",
     headers: {
@@ -15,7 +16,7 @@ const fetchChannels = async (currentUserGoogleId: string) => {
       "x-google-id": currentUserGoogleId,
     },
   });
-  if (!response.ok) throw new Error("Network response was not ok");
+  if (!response.ok) throw new ApiError(response.status, "Network response was not ok");
   return response.json();
 };
 

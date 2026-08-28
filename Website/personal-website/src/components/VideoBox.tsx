@@ -12,6 +12,7 @@ import {
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import { useQueue } from "@/components/queue/QueueProvider";
 import { cx } from "@/components/ui/primitives";
 
@@ -26,7 +27,7 @@ export function guidGenerator() {
 
 export const getFavoriteVideos = async (currentUserGoogleID: string, getIdInfo: boolean) => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
+    const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
       method: "GET",
       mode: "cors",
       headers: {
@@ -51,7 +52,7 @@ const writeFavorite = async (
   fullVideoDetails: any
 ) => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
+    const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/videos/favorites`, {
       method,
       mode: "cors",
       headers: {
@@ -70,7 +71,7 @@ const writeFavorite = async (
 
 export const getWatchlaterVideos = async (currentUserGoogleID: string, getIdInfo: boolean) => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
+    const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
       method: "GET",
       mode: "cors",
       headers: {
@@ -95,7 +96,7 @@ const writeWatchlater = async (
   fullVideoDetails: any
 ) => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
+    const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/videos/watchlater`, {
       method,
       mode: "cors",
       headers: {

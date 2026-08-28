@@ -10,6 +10,7 @@ import {
 import { Button, LinkButton } from "@/components/ui/primitives";
 import { Modal } from "@/components/ui/Modal";
 import { CurrentUserCookieInfo } from "../../helperFunctions/cookieManagement";
+import { fetchWithRetry } from "../../helperFunctions/fetchWithRetry";
 
 interface UserInfo {
   id: string;
@@ -21,7 +22,7 @@ interface UserInfo {
 
 /** Registers the account with the API. Unchanged contract. */
 function registerUser(googleId: string) {
-  return fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+  return fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
     method: "PUT",
     mode: "cors",
     headers: { "Content-Type": "application/json" },

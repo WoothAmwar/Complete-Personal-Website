@@ -10,6 +10,7 @@ import ProfilePicture from "@/components/uiComponents/ProfilePicture";
 import { VideoBox, getFavoriteVideos } from "@/components/VideoBox";
 import { useQueue } from "@/components/queue/QueueProvider";
 import { CurrentUserCookieInfo, CurrentUserId } from "@/helperFunctions/cookieManagement";
+import { fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import {
   Button,
   EmptyState,
@@ -240,7 +241,7 @@ export default function Dashboard() {
 
   const saveCredential = useCallback(
     async (path: "apiKey" | "channelID", value: string) => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${path}`, {
+      const response = await fetchWithRetry(`${process.env.NEXT_PUBLIC_API_URL}/users/${path}`, {
         method: "PUT",
         mode: "cors",
         headers: {
