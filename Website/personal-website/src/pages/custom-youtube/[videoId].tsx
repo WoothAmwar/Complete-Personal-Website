@@ -119,24 +119,6 @@ export default function VideoScreen() {
   }, [queue.entries, videoId]);
 
   const playerRef = useRef<any>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const [stage, setStage] = useState({ width: 0, height: 0 });
-
-  // The player is sized from the stage element rather than the window, so the
-  // controls underneath always have room and never get pushed off screen.
-  useEffect(() => {
-    const node = stageRef.current;
-    if (!node || typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(([entry]) => {
-      setStage({
-        width: Math.floor(entry.contentRect.width),
-        height: Math.floor(entry.contentRect.height),
-      });
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
 
   // Title lookup, unchanged: subscriptions first, then the tracker.
   useEffect(() => {
@@ -201,8 +183,10 @@ export default function VideoScreen() {
         playerRef.current = null;
       }
       playerRef.current = new (window as any).YT.Player("player", {
-        height: stage.height || 450,
-        width: stage.width || 800,
+        // The stage sizes the iframe in CSS, so the player never has to be
+        // measured or resized from here.
+        height: "100%",
+        width: "100%",
         videoId,
         playerVars: { playsinline: 1 },
         events: {
@@ -238,15 +222,7 @@ export default function VideoScreen() {
         playerRef.current = null;
       }
     };
-    // Stage size is deliberately excluded: a resize should resize the existing
-    // player, not rebuild it and restart playback.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
-
-  useEffect(() => {
-    if (!stage.width || !stage.height) return;
-    playerRef.current?.setSize(stage.width, stage.height);
-  }, [stage.width, stage.height]);
 
   if (!videoId) {
     return (
@@ -276,11 +252,15 @@ export default function VideoScreen() {
 
       <div className="mx-auto flex w-full max-w-content flex-col gap-5 px-4 py-6 sm:px-6">
         {/* The stage caps its own height so the title and the queue arrows are
-            always on screen with the video, whatever the window shape. */}
+            always on screen with the video, whatever the window shape. The
+            iframe fills it in CSS.
+            Note: sizing it from measured pixels raced the
+            player's own creation, and it lost whenever the YouTube API had to
+            be fetched first, leaving a small player in the corner until the
+            window was resized. */}
         <div
-          ref={stageRef}
-          className="mx-auto aspect-video w-full overflow-hidden rounded-surface bg-black"
-          style={{ maxWidth: "calc((100dvh - 15rem) * 16 / 9)" }}
+          className="mx-auto aspect-video w-full overflow-hidden rounded-surface bg-black [&>iframe]:h-full [&>iframe]:w-full"
+          style={{ maxWidth: "calc((100dvh - 8rem) * 16 / 9)" }}
         >
           <div id="player" />
         </div>
