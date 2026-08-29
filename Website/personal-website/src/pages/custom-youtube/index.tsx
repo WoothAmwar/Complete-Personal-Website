@@ -70,15 +70,7 @@ const fetchChannelsOfTag = async (currentUserGoogleId: string, tagName: string) 
 };
 
 /** The queue rail, shared by the docked column and the small-screen sheet. */
-function QueuePanel({
-  videos,
-  isLoading,
-  onClose,
-}: {
-  videos: Array<Array<any>>;
-  isLoading: boolean;
-  onClose: () => void;
-}) {
+function QueuePanel({ onClose }: { onClose: () => void }) {
   const queue = useQueue();
 
   return (
@@ -99,7 +91,7 @@ function QueuePanel({
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto pm-scroll">
-        <VideoQueue fullVideoDetails={videos} isLoading={isLoading} />
+        <VideoQueue />
       </div>
 
       <div className="shrink-0">
@@ -219,11 +211,7 @@ export default function SubscriptionsPage() {
 
           {queue.panelOpen ? (
             <aside className="hidden min-h-0 w-[304px] shrink-0 pb-4 lg:block">
-              <QueuePanel
-                videos={videos ?? []}
-                isLoading={isLoadingVideos}
-                onClose={() => queue.setPanelOpen(false)}
-              />
+              <QueuePanel onClose={() => queue.setPanelOpen(false)} />
             </aside>
           ) : null}
         </div>

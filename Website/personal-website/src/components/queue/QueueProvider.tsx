@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { normalizeEntry, type QueueEntry } from "@/helperFunctions/queueEntry";
+
 /**
  * Single source of truth for the play queue.
  *
@@ -17,22 +19,26 @@ import {
  * under the player. That way an add made in one place is reflected everywhere
  * without a page reload.
  *
- * The API contract is unchanged from before this provider existed:
- *   GET    /api/queue                 -> { queue_list: string[] }
- *   POST   /api/queue  { data: id }   -> append to the queue
- *   DELETE /api/queue  { data: id }   -> remove one occurrence
- *   PUT    /api/queue  { data: text } -> hand a prompt to the agent
+ * Entries carry their own title and thumbnail, so the rail draws itself from
+ * this state alone and never joins against the subscriptions feed.
+ *
+ *   GET    /api/queue                    -> { queue: QueueEntry[] }
+ *   POST   /api/queue  { data: entry }   -> append, ignoring an id already queued
+ *   DELETE /api/queue  { data: id }      -> remove it
+ *   PUT    /api/queue  { data: text }    -> hand a prompt to the agent
  * The route reads the caller from the `profile` cookie, so no headers are added.
  */
 
 type QueueStatus = "idle" | "loading" | "ready" | "error";
 
 interface QueueContextValue {
-  /** Ordered video ids, first is next up. */
+  /** Ordered entries, first is next up. Everything needed to render a row. */
+  entries: QueueEntry[];
+  /** The same queue as bare ids, for position and membership checks. */
   ids: string[];
   status: QueueStatus;
   has: (videoId: string) => boolean;
-  add: (videoId: string) => Promise<void>;
+  add: (entry: QueueEntry) => Promise<void>;
   remove: (videoId: string) => Promise<void>;
   refresh: () => Promise<void>;
   /** Whether the queue rail is showing. Persisted per browser. */
@@ -47,7 +53,7 @@ const PANEL_KEY = "pm-queue-panel";  // used to check state of if open or closed
 const QueueContext = createContext<QueueContextValue | null>(null);
 
 export function QueueProvider({ children }: { children: ReactNode }) {
-  const [ids, setIds] = useState<string[]>([]);
+  const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [status, setStatus] = useState<QueueStatus>("idle");
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [panelOpen, setPanelOpenState] = useState(true);
@@ -89,7 +95,13 @@ export function QueueProvider({ children }: { children: ReactNode }) {
       }
       const data = await response.json();
       if (!mounted.current) return;
-      setIds(Array.isArray(data?.queue_list) ? data.queue_list.map(String) : []);
+      setEntries(
+        Array.isArray(data?.queue)
+          ? (data.queue
+              .map(normalizeEntry)
+              .filter(Boolean) as QueueEntry[])
+          : []
+      );
       setStatus("ready");
     } catch (err) {
       console.error("Could not read the queue", err);
@@ -111,23 +123,26 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const add = useCallback(
-    async (videoId: string) => {
+    async (entry: QueueEntry) => {
+      const videoId = entry?.videoId;
       if (!videoId) return;
       markPending(videoId, true);
       // Optimistic: the card flips to "queued" immediately, and we reconcile
       // against the server list right after.
-      setIds((prev) => (prev.includes(videoId) ? prev : [...prev, videoId]));
+      setEntries((prev) =>
+        prev.some((queued) => queued.videoId === videoId) ? prev : [...prev, entry]
+      );
       try {
         const response = await fetch("/api/queue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: videoId }),
+          body: JSON.stringify({ data: entry }),
         });
         if (!response.ok) throw new Error(`Queue add failed: ${response.status}`);
         await refresh();
       } catch (err) {
         console.error("Could not add to the queue", err);
-        setIds((prev) => prev.filter((id) => id !== videoId));
+        setEntries((prev) => prev.filter((queued) => queued.videoId !== videoId));
       } finally {
         markPending(videoId, false);
       }
@@ -139,12 +154,8 @@ export function QueueProvider({ children }: { children: ReactNode }) {
     async (videoId: string) => {
       if (!videoId) return;
       markPending(videoId, true);
-      const snapshot = ids;
-      setIds((prev) => {
-        const index = prev.indexOf(videoId);
-        if (index === -1) return prev;
-        return [...prev.slice(0, index), ...prev.slice(index + 1)];
-      });
+      const snapshot = entries;
+      setEntries((prev) => prev.filter((queued) => queued.videoId !== videoId));
       try {
         const response = await fetch("/api/queue", {
           method: "DELETE",
@@ -155,18 +166,23 @@ export function QueueProvider({ children }: { children: ReactNode }) {
         await refresh();
       } catch (err) {
         console.error("Could not remove from the queue", err);
-        setIds(snapshot);
+        setEntries(snapshot);
       } finally {
         markPending(videoId, false);
       }
     },
-    [ids, markPending, refresh]
+    [entries, markPending, refresh]
   );
+
+  // Position and membership are still asked for by id: the previous/next arrows
+  // under the player, the count badges, and the "queued" state on a card menu.
+  const ids = useMemo(() => entries.map((entry) => entry.videoId), [entries]);
 
   const has = useCallback((videoId: string) => ids.includes(videoId), [ids]);
 
   const value = useMemo(
     () => ({
+      entries,
       ids,
       status,
       has,
@@ -177,7 +193,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
       setPanelOpen,
       pending,
     }),
-    [ids, status, has, add, remove, refresh, panelOpen, setPanelOpen, pending]
+    [entries, ids, status, has, add, remove, refresh, panelOpen, setPanelOpen, pending]
   );
 
   return <QueueContext.Provider value={value}>{children}</QueueContext.Provider>;

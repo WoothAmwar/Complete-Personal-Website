@@ -303,6 +303,16 @@ def get_unassigned_user_channels(googleID):
     return output
 
 
+def get_video_by_id(videoID):
+    """
+    Looks up a single video by its videoId.
+    :param videoID: The 11-character YouTube video id
+    :return: The video doc, or None if it is no longer stored (the daily reload
+             keeps only the three newest videos per channel)
+    """
+    return yt_videos_collection.find_one(filter={"videoId": videoID})
+
+
 def get_channel_of_video(videoID):
     channelID = yt_videos_collection.find_one(filter={"videoId": videoID})["channelId"]
     channelInfo = yt_channel_collection.find_one(filter={"channelId": channelID})

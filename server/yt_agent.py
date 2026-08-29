@@ -16,7 +16,7 @@ from langchain.chat_models import init_chat_model
 from langchain.rate_limiters import InMemoryRateLimiter
 
 from YoutubeData.youtube_data_adapter import data_adapter
-from YoutubeData.youtube_queue import RedisYt
+from YoutubeData.youtube_queue import RedisYt, build_entry
 
 MODEL_ID = "nvidia/nemotron-3.5-lightning:free"
 rate_limiter = InMemoryRateLimiter(
@@ -80,7 +80,20 @@ def build_tools(redis_client: RedisYt, google_id: str) -> list:
     Builds the tool set for one agent invocation. Tools close over a request-scoped
     RedisYt instance and google_id rather than accepting them as LLM-controlled
     arguments - the queue identity must never be something the model can pick.
+
+    The queue stores a title and thumbnail alongside each id so the site can render
+    it without the videos database. Those are resolved here, from Mongo, rather
+    than being tool arguments - the model must never be able to invent them.
     """
+
+    def _resolve_entry(video_id: str) -> tuple:
+        """Looks up the stored title and thumbnail for a video, if it still exists."""
+        try:
+            video = data_adapter.get_video_by_id(video_id) or {}
+        except Exception as e:
+            print(f"Could not look up metadata for {video_id}: {e}")
+            return None, None
+        return video.get("videoTitle"), video.get("videoThumbnail")
 
     @tool
     def get_video_queue() -> list:
@@ -92,7 +105,8 @@ def build_tools(redis_client: RedisYt, google_id: str) -> list:
         """Append a video to the end of the queue. video_id must be the 11-character
         YouTube video ID (alphanumeric)."""
         try:
-            add_result = redis_client.add_video(video_id)
+            title, thumbnail = _resolve_entry(video_id)
+            add_result = redis_client.add_video(video_id, title, thumbnail)
             if add_result is None:
                 return f"Could not add {video_id} - it either exists in the list already \
                     or is not valid"
@@ -113,7 +127,8 @@ def build_tools(redis_client: RedisYt, google_id: str) -> list:
     def overwrite_video_at_index(video_id: str, queue_index: int) -> str:
         """Overwrite the video ID at a specific 0-based index in the queue."""
         try:
-            redis_client.overwrite_video_at_index(video_id, queue_index)
+            title, thumbnail = _resolve_entry(video_id)
+            redis_client.overwrite_video_at_index(video_id, queue_index, title, thumbnail)
             return f"Set index {queue_index} to {video_id}"
         except (TypeError, ValueError, IndexError) as e:
             return f"Rejected: {e}"
@@ -131,7 +146,8 @@ def build_tools(redis_client: RedisYt, google_id: str) -> list:
     def replace_video(new_video_id: str, old_video_id: str) -> str:
         """Replace all instances of old_video_id with new_video_id."""
         try:
-            redis_client.replace_video(new_video_id, old_video_id)
+            title, thumbnail = _resolve_entry(new_video_id)
+            redis_client.replace_video(new_video_id, old_video_id, title, thumbnail)
             return f"Replaced {old_video_id} with {new_video_id}"
         except (TypeError, ValueError) as e:
             return f"Rejected: {e}"
@@ -139,7 +155,11 @@ def build_tools(redis_client: RedisYt, google_id: str) -> list:
     @tool
     def set_video_queue(video_ids: list[str]) -> str:
         """Overwrite the entire queue with a new ordered list of video IDs."""
-        redis_client.set_video_queue(video_ids)
+        entries = []
+        for video_id in video_ids:
+            title, thumbnail = _resolve_entry(video_id)
+            entries.append(build_entry(video_id, title, thumbnail))
+        redis_client.set_video_queue(entries)
         return f"Queue set to {len(video_ids)} videos"
 
     @tool

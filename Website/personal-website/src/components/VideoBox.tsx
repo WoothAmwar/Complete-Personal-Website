@@ -14,6 +14,7 @@ import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import { CurrentUserId } from "@/helperFunctions/cookieManagement";
 import { fetchWithRetry } from "@/helperFunctions/fetchWithRetry";
 import { useQueue } from "@/components/queue/QueueProvider";
+import { toQueueEntry } from "@/helperFunctions/queueEntry";
 import { cx } from "@/components/ui/primitives";
 
 export function guidGenerator() {
@@ -185,7 +186,16 @@ function VideoActionItems({
             {({ active }) => (
               <button
                 disabled={queuePending}
-                onClick={() => (isQueued ? queue.remove(videoID) : queue.add(videoID))}
+                onClick={() => {
+                  if (isQueued) {
+                    queue.remove(videoID);
+                    return;
+                  }
+                  // The queue stores the title and thumbnail alongside the id,
+                  // and the card already has both, so this costs no lookup.
+                  const entry = toQueueEntry(fullVideoDetails);
+                  if (entry) queue.add(entry);
+                }}
                 className={cx(ITEM_CLASS, active && "bg-hovered", queuePending && "opacity-50")}
               >
                 {isQueued ? (

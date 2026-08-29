@@ -105,9 +105,18 @@ export default function VideoScreen() {
   const router = useRouter();
   const videoId = router.query.videoId?.toString();
   const currentUserGoogleId = CurrentUserId();
+  const queue = useQueue();
 
   const [title, setTitle] = useState("Video");
   const [finished, setFinished] = useState(false);
+
+  // A queued video carries its own title, so it reads correctly even once the
+  // video has aged out of the database and the lookups below find nothing.
+  useEffect(() => {
+    if (!videoId) return;
+    const queued = queue.entries.find((entry) => entry.videoId === videoId);
+    if (queued) setTitle(queued.videoTitle);
+  }, [queue.entries, videoId]);
 
   const playerRef = useRef<any>(null);
   const stageRef = useRef<HTMLDivElement>(null);

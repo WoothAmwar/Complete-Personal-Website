@@ -33,6 +33,9 @@ class YoutubeDataAdapter:
     def check_video_in_tracked(self, googleID, fullVideoDetails=None, videoId=None):
         return db.check_video_in_tracked(googleID, fullVideoDetails=fullVideoDetails, videoId=videoId)
 
+    def get_video_by_id(self, videoID):
+        return db.get_video_by_id(videoID)
+
     def get_channel_of_video(self, videoID):
         return db.get_channel_of_video(videoID)
 
