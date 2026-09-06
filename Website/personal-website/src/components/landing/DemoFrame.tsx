@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { put } from "@vercel/blob";
 
 /**
  * The demo slot on the landing page.
  *
- * Drop a screen recording at `public/demo/pure-media.mp4` (and optionally a
+ * Drop a screen recording at `public/demo/pure-media.mov` (and optionally a
  * still at `public/demo/pure-media-poster.jpg`) and it plays here, muted and
  * looping, as the page's main visual. A `.gif` works too: pass its path as
  * `src`.
@@ -16,14 +17,15 @@ import { useState } from "react";
  * layout does not shift when the recording lands.
  */
 export function DemoFrame({
-  src = "/demo/pure-media.mp4",
-  poster = "/demo/pure-media-poster.jpg",
+  src = "https://rxuol8idj2llrtml.public.blob.vercel-storage.com/pure-media.mov",
+  poster = "/demo/pure-media.jpg",
 }: {
   src?: string;
   poster?: string;
 }) {
   const [available, setAvailable] = useState(true);
   const isImage = /\.(gif|png|jpe?g|webp|avif)$/i.test(src);
+  
 
   return (
     <div className="relative aspect-[16/9] w-full overflow-hidden rounded-surface border border-line-subtle bg-surface">
@@ -41,9 +43,9 @@ export function DemoFrame({
             className="absolute inset-0 h-full w-full object-cover"
             src={src}
             poster={poster}
-            autoPlay
-            muted
-            loop
+            autoPlay={true}
+            muted={true}
+            loop={false}
             playsInline
             preload="metadata"
             onError={() => setAvailable(false)}
@@ -76,7 +78,7 @@ export function DemoFrame({
             </p>
             <p className="max-w-sm text-sm text-ink-muted">
               Add a recording at{" "}
-              <span className="font-mono text-ink-soft">public/demo/pure-media.mp4</span>{" "}
+              <span className="font-mono text-ink-soft">public/demo/pure-media.mov</span>{" "}
               and it plays here.
             </p>
           </div>

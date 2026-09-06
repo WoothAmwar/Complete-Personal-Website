@@ -1,7 +1,17 @@
 .vercel
 .env*.local
 .env*.example
+.env.example
+.env.*
 *.env
+
+AGENTS.md
+CLAUDE.md
+
+.claude/*
+skills-lock.json
+
+pure-media-architecture.*
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
@@ -10,3 +20,6 @@
 
 server/aws-elastic-beanstalk-cli-setup
 *.cpython-314.pyc
+.env*
+
+*.mov
