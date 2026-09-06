@@ -13,7 +13,9 @@
 ## Live Demo
 
 Check out the live version of the site:  
-[Personal Media Website](https://complete-website-humanwooths-projects.vercel.app)
+[Personal Media Website](https://mediaviewer.vercel.app)
+
+[Media Website hosted from my personal website](https://video.anwarkader.com/)
 
 ---
 
